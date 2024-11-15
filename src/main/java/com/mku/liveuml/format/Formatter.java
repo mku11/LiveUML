@@ -40,7 +40,7 @@ public class Formatter {
                                  HashSet<Method> selectedMethods, HashSet<Field> selectedFields) {
         String classBackgroundColor = getSelectionColor(object, selectedVertices, selectedEdges, selectedMethods, selectedFields);
         String body = "<html><body style='font-family: monospace; font-size: 10px; font-weight: bold;'>";
-        body += "<div><div><center style='margin: 2px; font-size: 14px;" + classBackgroundColor + "'>" + object.name + "</center><div>";
+        body += "<div><div><center style='margin: 4px; font-size: 14px;" + classBackgroundColor + "'>" + object.name + "</center><div>";
         if(!compact) {
             if (object.fields.size() > 0) {
                 body += "<hr class=\"solid\">";
