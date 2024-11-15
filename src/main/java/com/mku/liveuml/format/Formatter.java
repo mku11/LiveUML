@@ -96,7 +96,7 @@ public class Formatter {
     }
 
     public static String getFieldFormatted(Field field) {
-        return getFieldQualifier(field) + " " + field.name + " : " + field.getTypeName();
+        return getFieldQualifier(field) + " " + field.getName() + " : " + field.getTypeName();
     }
 
     public static String getMethodSignature(Method method, boolean usePrefix) {
@@ -130,11 +130,11 @@ public class Formatter {
     }
 
     private static String getFieldQualifier(Field field) {
-        if (field.accessModifiers.contains(AccessModifier.Protected))
+        if (field.getAccessModifiers().contains(AccessModifier.Protected))
             return "#";
-        else if (field.accessModifiers.contains(AccessModifier.Private))
+        else if (field.getAccessModifiers().contains(AccessModifier.Private))
             return "-";
-        else if (field.accessModifiers.contains(AccessModifier.Public))
+        else if (field.getAccessModifiers().contains(AccessModifier.Public))
             return "+";
         return "";
     }

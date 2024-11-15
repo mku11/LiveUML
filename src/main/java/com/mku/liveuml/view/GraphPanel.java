@@ -242,7 +242,7 @@ public class GraphPanel extends JPanel {
         List<JMenuItem> items = new ArrayList<>();
         if(s.getFields().size() > 0) {
             for (Field f : s.getFields()) {
-                if (f.accessModifiers.contains(AccessModifier.Private))
+                if (f.getAccessModifiers().contains(AccessModifier.Private))
                     continue;
                 JMenuItem fItem = new JMenuItem(com.mku.liveuml.format.Formatter.getFieldFormatted(f));
                 fItem.addActionListener(e -> {
@@ -402,7 +402,7 @@ public class GraphPanel extends JPanel {
     }
 
     private void goToFieldReference(UMLClass s, Field f) {
-        openFileLine(s.getFilePath(), f.line);
+        openFileLine(s.getFilePath(), f.getLine());
     }
 
     private void openFileLine(String filePath, int line) {

@@ -263,8 +263,8 @@ public class Main {
         for(Field f: fieldMethodMap.keySet()) {
             Method m = fieldMethodMap.get(f);
             HashMap<String, String> ownerMap = new HashMap<>();
-            fieldMethodOwnerMap.put(f.name, ownerMap);
-            ownerMap.put("fieldOwner", f.owner);
+            fieldMethodOwnerMap.put(f.getName(), ownerMap);
+            ownerMap.put("fieldOwner", f.getOwner());
             ownerMap.put("methodName", m == null ? null:m.getSignature());
             ownerMap.put("methodOwner", m == null?null:m.owner);
         }
@@ -279,8 +279,8 @@ public class Main {
             fieldMethodOwnerMap.put(m.getSignature(), ownerMap);
             ownerMap.put("methodName", m.name);
             ownerMap.put("methodOwner", m.owner);
-            ownerMap.put("fieldName", f == null ? null:f.name);
-            ownerMap.put("fieldOwner", f == null?null:f.owner);
+            ownerMap.put("fieldName", f == null ? null:f.getName());
+            ownerMap.put("fieldOwner", f == null?null:f.getOwner());
         }
         return fieldMethodOwnerMap;
     }
@@ -302,7 +302,7 @@ public class Main {
     private static HashMap<String,String> getFieldsOwnerMap(HashSet<Field> fields) {
         HashMap<String,String> fieldOwnerMap = new HashMap<>();
         for(Field f: fields) {
-            fieldOwnerMap.put(f.name, f.owner);
+            fieldOwnerMap.put(f.getName(), f.getOwner());
         }
         return fieldOwnerMap;
     }
@@ -370,7 +370,7 @@ public class Main {
             UMLClass fieldOwnerObj = vertices.get(fieldOwner);
             Field field = null;
             for(Field f : fieldOwnerObj.getFields()) {
-                if(f.name.equals(fieldName)) {
+                if(f.getName().equals(fieldName)) {
                     field = f;
                     break;
                 }
@@ -427,7 +427,7 @@ public class Main {
             Field field = null;
             if(fieldName != null && fieldOwnerObj != null) {
                 for(Field f : fieldOwnerObj.getFields()) {
-                    if(f.name.equals(fieldName)) {
+                    if(f.getName().equals(fieldName)) {
                         field = f;
                         break;
                     }
@@ -489,7 +489,7 @@ public class Main {
             UMLClass obj = vertices.get(ownerName);
             Field field = null;
             for(Field f : obj.getFields()) {
-                if(f.name.equals(name)) {
+                if(f.getName().equals(name)) {
                     field = f;
                     break;
                 }
@@ -511,33 +511,37 @@ public class Main {
             String name = (String) fmap.getOrDefault("name", null);
             Field field = null;
             for(Field f : obj.getFields()) {
-                if(f.name.equals(name)) {
+                if(f.getName().equals(name)) {
                     field = f;
                     break;
                 }
             }
             if(field == null) {
                 field = new Field(name);
-                field.name = name;
-                field.owner = obj.toString();
-                field.baseTypeName = (String) fmap.getOrDefault("baseTypeName", null);
-                field.primitiveType = (String) fmap.getOrDefault("primitiveType", null);
-                field.typeName = (String) fmap.getOrDefault("typeName", null);
-                field.typePackageName = (String) fmap.getOrDefault("typePackageName", null);
-                field.line = ((Double) fmap.getOrDefault("line", 0)).intValue();
-                List<String> modifiers = (List<String>) fmap.getOrDefault("modifiers", null);
+                field.setName(name);
+                field.setOwner(obj.toString());
+                field.setBaseTypeName((String) fmap.getOrDefault("baseTypeName", null));
+                field.setPrimitiveType((String) fmap.getOrDefault("primitiveType", null));
+                field.setTypeName((String) fmap.getOrDefault("typeName", null));
+                field.setTypePackageName((String) fmap.getOrDefault("typePackageName", null));
+                field.setLine(((Double) fmap.getOrDefault("line", 0)).intValue());
+                List<String> mods = (List<String>) fmap.getOrDefault("modifiers", null);
+                List<Modifier> modifiers = new ArrayList<>();
                 if (modifiers != null) {
-                    for (String modifier : modifiers) {
-                        field.modifiers.add(Modifier.valueOf(modifier));
+                    for (String mod : mods) {
+                        modifiers.add(Modifier.valueOf(mod));
                     }
                 }
-                List<String> accessModifiers = (List<String>) fmap.getOrDefault("accessModifiers", null);
+                field.setModifiers(modifiers);
+                List<String> accessMods = (List<String>) fmap.getOrDefault("accessModifiers", null);
+                List<AccessModifier> accessModifiers = new ArrayList<>();
                 if (accessModifiers != null) {
-                    for (String accessModifier : accessModifiers) {
-                        field.accessModifiers.add(AccessModifier.valueOf(accessModifier));
+                    for (String accessMod : accessMods) {
+                        accessModifiers.add(AccessModifier.valueOf(accessMod));
                     }
                 }
-                field.isArray = (boolean) fmap.getOrDefault("isArray", false);
+                field.setAccessModifiers(accessModifiers);
+                field.setArray((boolean) fmap.getOrDefault("isArray", false));
             }
             fields.add(field);
         }

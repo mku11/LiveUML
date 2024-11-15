@@ -25,20 +25,21 @@ package com.mku.liveuml.entities;
 import java.util.*;
 
 public class Field {
-    public String name;
-    public List<Modifier> modifiers = new LinkedList<>();
-    public List<AccessModifier> accessModifiers  = new LinkedList<>();
-    public boolean isArray;
-    public String baseTypeName;
-    public String typeName;
-    public String typePackageName;
-    public String primitiveType;
-    public String owner;
-    public int line;
+    private String name;
+    private List<Modifier> modifiers = new LinkedList<>();
+    private List<AccessModifier> accessModifiers  = new LinkedList<>();
+    private boolean isArray;
+    private String baseTypeName;
+    private String typeName;
+    private String typePackageName;
+    private String primitiveType;
+    private String owner;
+    private int line;
 
     public Field(String name) {
         this.name = name;
     }
+
     public String getTypeFullName() {
         String fullName = typePackageName + "." + typeName;
         if(isArray) {
@@ -47,6 +48,79 @@ public class Field {
                 fullName = fullName.substring(0, index);
         }
         return fullName;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public List<Modifier> getModifiers() {
+        return Collections.unmodifiableList(modifiers);
+    }
+
+    public void setModifiers(List<Modifier> modifiers) {
+        this.modifiers = modifiers;
+    }
+
+    public List<AccessModifier> getAccessModifiers() {
+        return Collections.unmodifiableList(accessModifiers);
+    }
+
+    public void setAccessModifiers(List<AccessModifier> accessModifiers) {
+        this.accessModifiers.clear();
+        this.accessModifiers.addAll(accessModifiers);
+    }
+
+    public boolean isArray() {
+        return isArray;
+    }
+
+    public void setArray(boolean array) {
+        isArray = array;
+    }
+
+    public String getBaseTypeName() {
+        return baseTypeName;
+    }
+
+    public void setBaseTypeName(String baseTypeName) {
+        this.baseTypeName = baseTypeName;
+    }
+
+    public void setTypeName(String typeName) {
+        this.typeName = typeName;
+    }
+
+    public String getTypePackageName() {
+        return typePackageName;
+    }
+
+    public void setTypePackageName(String typePackageName) {
+        this.typePackageName = typePackageName;
+    }
+
+    public String getPrimitiveType() {
+        return primitiveType;
+    }
+
+    public void setPrimitiveType(String primitiveType) {
+        this.primitiveType = primitiveType;
+    }
+
+    public String getOwner() {
+        return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
+    public int getLine() {
+        return line;
     }
 
     public void setLine(int line) {

@@ -81,7 +81,7 @@ public class Generator {
 
     private void createFieldAggregationRelationship(Field field, UMLClass fieldOwner, UMLClass fieldType) {
         UMLRelationship.Type relType = UMLRelationship.Type.Aggregation;
-        if (field.accessModifiers.contains(AccessModifier.Private) && !hasPublicSetter(field, fieldOwner, fieldType))
+        if (field.getAccessModifiers().contains(AccessModifier.Private) && !hasPublicSetter(field, fieldOwner, fieldType))
             relType = UMLRelationship.Type.Composition;
         UMLRelationship rel = new UMLRelationship(fieldOwner, fieldType, relType);
         String key = rel.toString();
@@ -110,7 +110,7 @@ public class Generator {
                 }
             }
             // check public setter
-            if (method.name.toLowerCase().startsWith(("set" + field.name).toLowerCase())
+            if (method.name.toLowerCase().startsWith(("set" + field.getName()).toLowerCase())
                     && !method.accessModifiers.contains(AccessModifier.Private)) {
                 for (Parameter param : method.parameters) {
                     if (param.getTypeName() != null && param.getTypeName().equals(fieldType.getName())) {
@@ -466,7 +466,7 @@ public class Generator {
 
     private Field getFieldAccessed(UMLClass accessed, FieldAccessExpr n) {
         for (Field f: accessed.getFields()) {
-            if (f.name.equals(n.getNameAsString())) {
+            if (f.getName().equals(n.getNameAsString())) {
                 return f;
             }
         }
@@ -677,29 +677,29 @@ public class Generator {
             for (VariableDeclarator variableDeclarator : f.getVariables()) {
 
                 Field field = new Field(variableDeclarator.getNameAsString());
-                field.owner = obj.toString();
+                field.setOwner(obj.toString());
                 try {
                     ResolvedType variableType = variableDeclarator.resolve().getType();
                     if (variableType.isPrimitive()) {
-                        field.primitiveType = variableType.asPrimitive().name().toLowerCase();
+                        field.setPrimitiveType(variableType.asPrimitive().name().toLowerCase());
                     } else if (variableType.isReferenceType()) {
                         ResolvedReferenceTypeDeclaration typeDecl = variableType.asReferenceType().getTypeDeclaration().get();
-                        field.typeName = typeDecl.getName();
-                        field.typePackageName = typeDecl.getPackageName();
+                        field.setTypeName(typeDecl.getName());
+                        field.setTypePackageName(typeDecl.getPackageName());
                     } else if (variableType.isArray()) {
-                        field.isArray = true;
+                        field.setArray(true);
                         ResolvedType baseType = ((ResolvedArrayType) variableType).getComponentType();
                         while(baseType instanceof ResolvedArrayType) {
                             baseType = ((ResolvedArrayType) baseType).getComponentType();
                         }
                         if(baseType.isPrimitive()) {
-                            field.primitiveType = variableType.describe();
+                            field.setPrimitiveType(variableType.describe());
                         } else if (baseType.isReferenceType()) {
                             ResolvedReferenceTypeDeclaration parameterTypeDecl = baseType.asReferenceType().getTypeDeclaration().get();
-                            field.typePackageName = parameterTypeDecl.getPackageName();
-                            field.typeName = variableType.describe();
-                            if(variableType.describe().startsWith(field.typePackageName))
-                                field.typeName = field.typeName.substring(field.typePackageName.length()+1);
+                            field.setTypePackageName(parameterTypeDecl.getPackageName());
+                            field.setTypeName(variableType.describe());
+                            if(variableType.describe().startsWith(field.getTypePackageName()))
+                                field.setTypeName(field.getTypeName().substring(field.getTypePackageName().length()+1));
                         }
                     } else if (!variableType.isArray()) {
                         System.err.println("Could not get type: " + variableType);
@@ -708,8 +708,8 @@ public class Generator {
                     ex.printStackTrace();
                 }
                 field.setLine(variableDeclarator.getBegin().get().line);
-                field.modifiers = modifiers;
-                field.accessModifiers = accessModifiers;
+                field.setModifiers(modifiers);
+                field.setAccessModifiers(accessModifiers);
                 fields.add(field);
             }
         }

@@ -24,6 +24,7 @@ SOFTWARE.
 package com.mku.liveuml.entities;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Parameter {
@@ -75,7 +76,7 @@ public class Parameter {
     }
 
     public List<Modifier> getModifiers() {
-        return new ArrayList<>(modifiers);
+        return Collections.unmodifiableList(modifiers);
     }
 
     public void setModifiers(List<Modifier> modifiers) {
