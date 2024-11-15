@@ -114,7 +114,7 @@ public class Main {
                 prefs.put("LAST_SOURCE_FOLDER", root.getPath());
 
                 setupFolder(root);
-                List<UMLClass> classes = Generator.getClasses(root);
+                List<UMLClass> classes = new Generator().getClasses(root);
                 panel.clear();
                 panel.createAndDisplay(classes);
                 panel.revalidate();
@@ -286,7 +286,6 @@ public class Main {
         }
         return fieldMethodOwnerMap;
     }
-
 
     private static HashMap<String,HashMap<String,String>> getMethodMethodOwnerMap(HashMap<Method, Method> fieldMethodMap) {
         HashMap<String,HashMap<String,String>> methodMethodOwnerMap = new HashMap<>();
