@@ -23,9 +23,9 @@ SOFTWARE.
 */
 package com.mku.liveuml.meta;
 
-import com.mku.liveuml.graph.UMLObject;
+import com.mku.liveuml.graph.UMLClass;
 
-public class Enumeration extends UMLObject {
+public class Enumeration extends UMLClass {
     public Enumeration(String name) {
         super(name);
     }

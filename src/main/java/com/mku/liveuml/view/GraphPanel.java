@@ -28,8 +28,8 @@ import com.mku.liveuml.format.Formatter;
 import com.mku.liveuml.meta.Constructor;
 import com.mku.liveuml.meta.Field;
 import com.mku.liveuml.meta.Method;
-import com.mku.liveuml.graph.Relationship;
-import com.mku.liveuml.graph.UMLObject;
+import com.mku.liveuml.graph.UMLRelationship;
+import com.mku.liveuml.graph.UMLClass;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultGraphType;
 import org.jgrapht.graph.builder.GraphTypeBuilder;
@@ -55,22 +55,14 @@ import java.util.List;
 import java.util.prefs.Preferences;
 
 public class GraphPanel extends JPanel {
-
-    public Graph<UMLObject, Relationship> graph;
-
-    VisualizationViewer<UMLObject, Relationship> vv;
-
-    LayoutAlgorithm<UMLObject> layoutAlgorithm;
-    private Dimension preferredSize;
+    public Graph<UMLClass, UMLRelationship> graph;
+    private VisualizationViewer<UMLClass, UMLRelationship> vv;
+    private final LayoutAlgorithm<UMLClass> layoutAlgorithm;
     private VisualizationScrollPane visualizationScrollPane;
-    public boolean allowLoops = false;
-
-    HashSet<UMLObject> selectedVertices = new HashSet<>();
-    HashSet<Relationship> selectedEdges = new HashSet<>();
-    HashSet<Method> selectedMethods = new HashSet<>();
-    HashSet<Field> selectedFields = new HashSet<>();
-
-    private boolean isCompactDisplay = true;
+    private final HashSet<UMLClass> selectedVertices = new HashSet<>();
+    private final HashSet<UMLRelationship> selectedEdges = new HashSet<>();
+    private final HashSet<Method> selectedMethods = new HashSet<>();
+    private final HashSet<Field> selectedFields = new HashSet<>();
 
     /**
      * create an instance of a simple graph with basic controls
@@ -80,27 +72,26 @@ public class GraphPanel extends JPanel {
         layoutAlgorithm = new FRLayoutAlgorithm<>();
     }
 
-    public void toggleCompact(UMLObject obj) {
+    public void toggleCompact(UMLClass obj) {
         obj.compact = !obj.compact;
     }
 
-    public void createAndDisplay(List<UMLObject> classes) {
+    public void createAndDisplay(List<UMLClass> classes) {
         graph = getGraph(classes);
         display(graph, null);
     }
 
-    public Graph<UMLObject, Relationship> createGraph() {
-        graph = GraphTypeBuilder.<UMLObject, Relationship>forGraphType(DefaultGraphType.directedMultigraph())
-                .allowingSelfLoops(allowLoops)
-                .edgeSupplier(SupplierUtil.createSupplier(Relationship.class))
+    public Graph<UMLClass, UMLRelationship> createGraph() {
+        graph = GraphTypeBuilder.<UMLClass, UMLRelationship>forGraphType(DefaultGraphType.directedMultigraph())
+                .edgeSupplier(SupplierUtil.createSupplier(UMLRelationship.class))
                 .buildGraph();
         return graph;
     }
 
-    public void display(Graph<UMLObject, Relationship> graph, Map<UMLObject, Point2D.Double> positions) {
-        preferredSize = estimateGraphSize(graph);
+    public void display(Graph<UMLClass, UMLRelationship> graph, Map<UMLClass, Point2D.Double> positions) {
+        Dimension preferredSize = estimateGraphSize(graph);
         this.graph = graph;
-        final VisualizationModel<UMLObject, Relationship> visualizationModel =
+        final VisualizationModel<UMLClass, UMLRelationship> visualizationModel =
                 VisualizationModel.builder(graph)
                         .layoutAlgorithm(layoutAlgorithm)
                         .layoutSize(preferredSize)
@@ -129,16 +120,16 @@ public class GraphPanel extends JPanel {
         }
 
         // this class will provide both label drawing and vertex shapes
-        VertexLabelAsShapeRenderer<UMLObject, Relationship> vlasr =
+        VertexLabelAsShapeRenderer<UMLClass, UMLRelationship> vlasr =
                 new VertexLabelAsShapeRenderer<>(visualizationModel.getLayoutModel(), vv.getRenderContext());
 
         vv.getRenderContext().setVertexLabelFunction(object -> {
-            return com.mku.liveuml.format.Formatter.display(object, isCompactDisplay && !object.compact,
+            return com.mku.liveuml.format.Formatter.display(object, !object.compact,
                     selectedVertices, selectedEdges, selectedMethods, selectedFields);
         });
         vv.getRenderContext().setVertexShapeFunction(vlasr);
         vv.getRenderContext().setEdgeStrokeFunction(rel -> {
-            if (rel.type == Relationship.Type.Dependency || rel.type == Relationship.Type.Realization) {
+            if (rel.type == UMLRelationship.Type.Dependency || rel.type == UMLRelationship.Type.Realization) {
                 // dashed line
                 return new BasicStroke(selectedEdges.contains(rel)?6:3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{9}, 0);
             }
@@ -164,7 +155,7 @@ public class GraphPanel extends JPanel {
             return new BasicStroke(2f);
         });
         vv.getRenderContext().setArrowFillPaintFunction((rel) -> {
-            if (rel.type == Relationship.Type.Composition) {
+            if (rel.type == UMLRelationship.Type.Composition) {
                 if (selectedEdges.contains(rel))
                     return Color.BLUE;
                 return Color.BLACK;
@@ -173,7 +164,7 @@ public class GraphPanel extends JPanel {
         });
 
         vv.getRenderContext().setArrowDrawPaintFunction((rel) -> {
-            if (rel.type == Relationship.Type.Composition) {
+            if (rel.type == UMLRelationship.Type.Composition) {
                 if (selectedEdges.contains(rel))
                     return Color.BLUE;
             }
@@ -184,7 +175,7 @@ public class GraphPanel extends JPanel {
         setMouseListener(vv);
     }
 
-    private Dimension estimateGraphSize(Graph<UMLObject, Relationship> graph) {
+    private Dimension estimateGraphSize(Graph<UMLClass, UMLRelationship> graph) {
         int vertices = graph.vertexSet().size();
         int width = (int) Math.sqrt(vertices) * 500;
         if(width == 0)
@@ -192,19 +183,19 @@ public class GraphPanel extends JPanel {
         return new Dimension(width, width * 2/3);
     }
 
-    private void addVisualizationPane(VisualizationViewer<UMLObject, Relationship> vv) {
+    private void addVisualizationPane(VisualizationViewer<UMLClass, UMLRelationship> vv) {
         if (visualizationScrollPane != null)
             remove(visualizationScrollPane);
         visualizationScrollPane = new VisualizationScrollPane(vv);
         add(visualizationScrollPane);
     }
 
-    private void setMouseListener(VisualizationViewer<UMLObject, Relationship> vv) {
+    private void setMouseListener(VisualizationViewer<UMLClass, UMLRelationship> vv) {
 
         // we use the latest fix in UMLMouseListenerTranslator until we upgard to jungrapht 1.5
         ((Component) vv).addMouseListener(new UMLMouseListenerTranslator<>(new GraphMouseListener<>() {
             @Override
-            public void graphClicked(UMLObject s, MouseEvent me) {
+            public void graphClicked(UMLClass s, MouseEvent me) {
                 vv.getVisualizationModel().getLayoutModel().get(s);
                 if (me.getButton() == MouseEvent.BUTTON3) {
                     // show context menu
@@ -217,17 +208,17 @@ public class GraphPanel extends JPanel {
             }
 
             @Override
-            public void graphPressed(UMLObject s, MouseEvent me) {
+            public void graphPressed(UMLClass s, MouseEvent me) {
             }
 
             @Override
-            public void graphReleased(UMLObject s, MouseEvent me) {
+            public void graphReleased(UMLClass s, MouseEvent me) {
 
             }
         }, vv));
     }
 
-    private void showContextMenu(UMLObject s, MouseEvent me) {
+    private void showContextMenu(UMLClass s, MouseEvent me) {
         JPopupMenu menu = new JPopupMenu();
         JMenuItem item = new JMenuItem(s.compact?"Collapse":"Expand");
         item.addActionListener(e -> EventQueue.invokeLater(() -> {
@@ -401,15 +392,15 @@ public class GraphPanel extends JPanel {
         });
     }
 
-    private void goToClassReference(UMLObject s) {
+    private void goToClassReference(UMLClass s) {
         openFileLine(s.filePath, s.line);
     }
 
-    private void goToMethodReference(UMLObject s, Method m) {
+    private void goToMethodReference(UMLClass s, Method m) {
         openFileLine(s.filePath, m.line);
     }
 
-    private void goToFieldReference(UMLObject s, Field f) {
+    private void goToFieldReference(UMLClass s, Field f) {
         openFileLine(s.filePath, f.line);
     }
 
@@ -436,10 +427,10 @@ public class GraphPanel extends JPanel {
         }
     }
 
-    private void findMethodReference(UMLObject s, Method m) {
+    private void findMethodReference(UMLClass s, Method m) {
         clearSelections();
-        for(Relationship rel : s.relationships.values()) {
-            if(rel.type == Relationship.Type.Dependency) {
+        for(UMLRelationship rel : s.relationships.values()) {
+            if(rel.type == UMLRelationship.Type.Dependency) {
                 if(rel.calledBy.containsKey(m)) {
                     Method callerMethod = rel.calledBy.get(m);
                     selectedMethods.add(callerMethod);
@@ -462,10 +453,10 @@ public class GraphPanel extends JPanel {
         selectedVertices.clear();
     }
 
-    private void findFieldReference(UMLObject s, Field f) {
+    private void findFieldReference(UMLClass s, Field f) {
         clearSelections();
-        for(Relationship rel : s.relationships.values()) {
-            if(rel.type == Relationship.Type.Dependency) {
+        for(UMLRelationship rel : s.relationships.values()) {
+            if(rel.type == UMLRelationship.Type.Dependency) {
                 if(rel.accessedBy.containsKey(f)) {
                     Method accessorMethod = rel.accessedBy.get(f);
                     selectedMethods.add(accessorMethod);
@@ -478,10 +469,10 @@ public class GraphPanel extends JPanel {
         vv.repaint();
     }
 
-    private void findClassReference(UMLObject s) {
+    private void findClassReference(UMLClass s) {
         clearSelections();
-        for(Relationship rel : s.relationships.values()) {
-            if(rel.type == Relationship.Type.Dependency) {
+        for(UMLRelationship rel : s.relationships.values()) {
+            if(rel.type == UMLRelationship.Type.Dependency) {
                 if(s == rel.to) {
                     for(Method accessorMethod : rel.classAccessors) {
                         selectedMethods.add(accessorMethod);
@@ -494,9 +485,9 @@ public class GraphPanel extends JPanel {
                     selectedVertices.add(rel.to);
                     selectedEdges.add(rel);
                 }
-            } else if(rel.type == Relationship.Type.Aggregation
-                    || rel.type == Relationship.Type.Composition
-                    || rel.type == Relationship.Type.Association
+            } else if(rel.type == UMLRelationship.Type.Aggregation
+                    || rel.type == UMLRelationship.Type.Composition
+                    || rel.type == UMLRelationship.Type.Association
             ) {
                 if(s == rel.to) {
                     for (Field field : rel.fieldAssociation) {
@@ -506,8 +497,8 @@ public class GraphPanel extends JPanel {
                     selectedVertices.add(rel.to);
                     selectedEdges.add(rel);
                 }
-            } else if(rel.type == Relationship.Type.Realization
-            || rel.type == Relationship.Type.Inheritance) {
+            } else if(rel.type == UMLRelationship.Type.Realization
+            || rel.type == UMLRelationship.Type.Inheritance) {
                 if(s == rel.to) {
                     selectedVertices.add(rel.from);
                     selectedVertices.add(rel.to);
@@ -518,41 +509,41 @@ public class GraphPanel extends JPanel {
         vv.repaint();
     }
 
-    private Shape getArrowShape(Relationship rel) {
-        if (rel.type == Relationship.Type.Aggregation || rel.type == Relationship.Type.Composition)
+    private Shape getArrowShape(UMLRelationship rel) {
+        if (rel.type == UMLRelationship.Type.Aggregation || rel.type == UMLRelationship.Type.Composition)
             return new Diamond(40, 20);
-        else if (rel.type == Relationship.Type.Inheritance || rel.type == Relationship.Type.Realization)
+        else if (rel.type == UMLRelationship.Type.Inheritance || rel.type == UMLRelationship.Type.Realization)
             return new ClosedArrow(40, 20);
-        else if (rel.type == Relationship.Type.Association || rel.type == Relationship.Type.Dependency)
+        else if (rel.type == UMLRelationship.Type.Association || rel.type == UMLRelationship.Type.Dependency)
             return new OpenArrow(40, 20);
         return null;
     }
 
-    private Graph<UMLObject, Relationship> getGraph(List<UMLObject> umlObjects) {
-        Graph<UMLObject, Relationship> graph = createGraph();
+    private Graph<UMLClass, UMLRelationship> getGraph(List<UMLClass> umlClasses) {
+        Graph<UMLClass, UMLRelationship> graph = createGraph();
 
-        for (UMLObject obj : umlObjects) {
+        for (UMLClass obj : umlClasses) {
             graph.addVertex(obj);
         }
 
-        updateRelationships(umlObjects, graph);
+        updateRelationships(umlClasses, graph);
         return graph;
     }
 
-    public void updateVertices(Graph<UMLObject, Relationship> graph, HashMap<String, UMLObject> vertices) {
-        for (Relationship rel: graph.edgeSet()) {
-            UMLObject from = vertices.getOrDefault(rel.from.toString(), null);
-            UMLObject to = vertices.getOrDefault(rel.to.toString(), null);
+    public void updateVertices(Graph<UMLClass, UMLRelationship> graph, HashMap<String, UMLClass> vertices) {
+        for (UMLRelationship rel: graph.edgeSet()) {
+            UMLClass from = vertices.getOrDefault(rel.from.toString(), null);
+            UMLClass to = vertices.getOrDefault(rel.to.toString(), null);
             from.relationships.put(rel.toString(), rel);
             to.relationships.put(rel.toString(), rel);
         }
     }
 
-    public void updateRelationships(List<UMLObject> umlObjects, Graph<UMLObject, Relationship> graph) {
-        for (UMLObject obj : umlObjects) {
+    public void updateRelationships(List<UMLClass> umlClasses, Graph<UMLClass, UMLRelationship> graph) {
+        for (UMLClass obj : umlClasses) {
             boolean hasValidRelationships = false;
-            for (Map.Entry<String, Relationship> rel : obj.relationships.entrySet()) {
-                if (!allowLoops && rel.getValue().from == rel.getValue().to)
+            for (Map.Entry<String, UMLRelationship> rel : obj.relationships.entrySet()) {
+                if (rel.getValue().from == rel.getValue().to)
                     continue;
                 if (!graph.containsVertex(rel.getValue().from) || !graph.containsVertex(rel.getValue().to)) {
                     continue;
@@ -573,11 +564,11 @@ public class GraphPanel extends JPanel {
         repaint();
     }
 
-    public Map<UMLObject, org.jungrapht.visualization.layout.model.Point> getVertexPositions() {
+    public Map<UMLClass, org.jungrapht.visualization.layout.model.Point> getVertexPositions() {
         return vv.getVisualizationModel().getLayoutModel().getLocations();
     }
 
-    class Diamond extends Path2D.Double {
+    static class Diamond extends Path2D.Double {
         public Diamond(double width, double height) {
             moveTo(0, 0);
             lineTo(-width / 2, -height / 2);
@@ -587,7 +578,7 @@ public class GraphPanel extends JPanel {
         }
     }
 
-    class OpenArrow extends Path2D.Double {
+    static class OpenArrow extends Path2D.Double {
         public OpenArrow(double width, double height) {
             moveTo(0, 0);
             lineTo(-width / 2, -height / 2);
@@ -597,7 +588,7 @@ public class GraphPanel extends JPanel {
         }
     }
 
-    class ClosedArrow extends Path2D.Double {
+    static class ClosedArrow extends Path2D.Double {
         public ClosedArrow(double width, double height) {
             moveTo(0, 0);
             lineTo(-width / 2, -height / 2);

@@ -45,7 +45,7 @@ public class Method {
     public List<Modifier> modifiers = new LinkedList<>();
     public List<AccessModifier> accessModifiers = new LinkedList<>();
 
-    public List<Variable> parameters = new LinkedList<>();
+    public List<Parameter> parameters = new LinkedList<>();
 
     public Method(String name) {
         this.name = name;
@@ -75,10 +75,10 @@ public class Method {
         String signature = "";
         signature += name + "(";
         String params = "";
-        for (Variable variable : parameters) {
+        for (Parameter parameter : parameters) {
             if (params.length() > 0)
                 params += ", ";
-            params += variable.getTypeName();
+            params += parameter.getTypeName();
         }
         signature += params;
         signature += ")";

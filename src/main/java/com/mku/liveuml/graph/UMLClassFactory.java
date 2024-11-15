@@ -26,15 +26,14 @@ package com.mku.liveuml.graph;
 import com.mku.liveuml.meta.Class;
 import com.mku.liveuml.meta.Enumeration;
 import com.mku.liveuml.meta.Interface;
-import com.mku.liveuml.graph.UMLObject;
 
-public class UMLObjectFactory {
-    public static UMLObject create(String name) {
+public class UMLClassFactory {
+    public static UMLClass create(String name) {
         String[] parts = name.split(":");
-        UMLObject.Type type = UMLObject.Type.valueOf(parts[0]);
+        UMLClass.Type type = UMLClass.Type.valueOf(parts[0]);
         String packageName = parts[1].substring(0, parts[1].lastIndexOf("."));
         String className = parts[1].substring(parts[1].lastIndexOf(".") + 1);
-        UMLObject obj = null;
+        UMLClass obj = null;
         switch (type) {
             case Class:
                 obj = new Class(className);

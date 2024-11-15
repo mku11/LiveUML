@@ -26,7 +26,7 @@ package com.mku.liveuml.meta;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Variable {
+public class Parameter {
 
     private String name;
     private String primitiveType;
@@ -34,7 +34,7 @@ public class Variable {
     private String typePackageName;
     private boolean isArray;
 
-    public Variable(String name) {
+    public Parameter(String name) {
         this.name = name;
     }
 

@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class UMLObject {
+public abstract class UMLClass {
     public String filePath;
     public String name;
     public String packageName;
@@ -52,9 +52,9 @@ public abstract class UMLObject {
         Class, Interface, Enumeration
     }
 
-    public HashMap<String, Relationship> relationships = new HashMap<>();
+    public HashMap<String, UMLRelationship> relationships = new HashMap<>();
 
-    protected UMLObject(String name) {
+    protected UMLClass(String name) {
         this.name = name;
     }
 

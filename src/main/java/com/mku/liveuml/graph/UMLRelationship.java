@@ -29,15 +29,15 @@ import com.mku.liveuml.meta.Method;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class Relationship {
+public class UMLRelationship {
 
     public enum Type {
         Association, Inheritance, Realization, Dependency, Aggregation, Composition
     }
 
     public Type type;
-    public UMLObject from;
-    public UMLObject to;
+    public UMLClass from;
+    public UMLClass to;
 
     public HashMap<Method, Method> calledBy = new HashMap<>();
     public HashMap<Method, Method> callTo = new HashMap<>();
@@ -49,10 +49,10 @@ public class Relationship {
 
     public HashSet<Field> fieldAssociation = new HashSet<>();
 
-    public Relationship() {
+    public UMLRelationship() {
 
     }
-    public Relationship(UMLObject from, UMLObject to, Type type) {
+    public UMLRelationship(UMLClass from, UMLClass to, Type type) {
         this.from = from;
         this.to = to;
         this.type = type;

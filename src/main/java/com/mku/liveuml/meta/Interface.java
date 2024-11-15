@@ -23,9 +23,9 @@ SOFTWARE.
 */
 package com.mku.liveuml.meta;
 
-import com.mku.liveuml.graph.UMLObject;
+import com.mku.liveuml.graph.UMLClass;
 
-public class Interface extends UMLObject {
+public class Interface extends UMLClass {
 
     public Interface(String name) {
         super(name);

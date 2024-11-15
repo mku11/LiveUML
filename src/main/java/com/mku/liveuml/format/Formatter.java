@@ -23,9 +23,9 @@ SOFTWARE.
 */
 package com.mku.liveuml.format;
 
-import com.mku.liveuml.graph.Relationship;
-import com.mku.liveuml.graph.UMLObject;
-import com.mku.liveuml.meta.Variable;
+import com.mku.liveuml.graph.UMLRelationship;
+import com.mku.liveuml.graph.UMLClass;
+import com.mku.liveuml.meta.Parameter;
 import com.mku.liveuml.meta.Field;
 import com.mku.liveuml.meta.Method;
 
@@ -35,8 +35,8 @@ public class Formatter {
     private static int MAX_CHARS = 50;
     private static String selectionBackgroundColor = "background-color: yellow;";
 
-    public static String display(UMLObject object, boolean compact,
-                                 HashSet<UMLObject> selectedVertices, HashSet<Relationship> selectedEdges,
+    public static String display(UMLClass object, boolean compact,
+                                 HashSet<UMLClass> selectedVertices, HashSet<UMLRelationship> selectedEdges,
                                  HashSet<Method> selectedMethods, HashSet<Field> selectedFields) {
         String classBackgroundColor = getSelectionColor(object, selectedVertices, selectedEdges, selectedMethods, selectedFields);
         String body = "<html><body style='font-family: monospace; font-size: 10px; font-weight: bold;'>";
@@ -72,11 +72,11 @@ public class Formatter {
         return body;
     }
 
-    private static String getSelectionColor(UMLObject object, HashSet<UMLObject> selectedVertices, HashSet<Relationship> selectedEdges,
+    private static String getSelectionColor(UMLClass object, HashSet<UMLClass> selectedVertices, HashSet<UMLRelationship> selectedEdges,
                                             HashSet<Method> selectedMethods, HashSet<Field> selectedFields) {
         if(selectedVertices.contains(object))
             return selectionBackgroundColor;
-        for (Relationship rel : object.relationships.values()) {
+        for (UMLRelationship rel : object.relationships.values()) {
             if (selectedEdges.contains(rel)) {
                 return selectionBackgroundColor;
             }
@@ -104,10 +104,10 @@ public class Formatter {
             signature += getMethodQualifier(method) + " ";
         signature += method.name + "(";
         String params = "";
-        for (Variable variable : method.parameters) {
+        for (Parameter parameter : method.parameters) {
             if (params.length() > 0)
                 params += ", ";
-            params += variable.getName() + " : " + variable.getTypeName();
+            params += parameter.getName() + " : " + parameter.getTypeName();
         }
         signature += params;
         signature += ")";

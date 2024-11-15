@@ -40,9 +40,9 @@ import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclar
 import com.github.javaparser.resolution.types.ResolvedArrayType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.google.common.base.Strings;
-import com.mku.liveuml.graph.Relationship;
-import com.mku.liveuml.graph.UMLObject;
-import com.mku.liveuml.meta.Variable;
+import com.mku.liveuml.graph.UMLRelationship;
+import com.mku.liveuml.graph.UMLClass;
+import com.mku.liveuml.meta.Parameter;
 import com.mku.liveuml.meta.*;
 import com.mku.liveuml.meta.Class;
 
@@ -54,24 +54,24 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Generator {
-    public static HashMap<String, UMLObject> objects = new HashMap<>();
+    public static HashMap<String, UMLClass> objects = new HashMap<>();
 
-    public static List<UMLObject> getClasses(File projectDir) {
+    public static List<UMLClass> getClasses(File projectDir) {
         objects.clear();
-        List<UMLObject> list = new LinkedList<>();
+        List<UMLClass> list = new LinkedList<>();
         getObjects(list, projectDir);
         getMethodCalls(list, projectDir);
         resolveTypes(list);
         return list;
     }
 
-    private static void resolveTypes(List<UMLObject> list) {
-        for (UMLObject fieldOwner : list) {
+    private static void resolveTypes(List<UMLClass> list) {
+        for (UMLClass fieldOwner : list) {
             for (Field field : fieldOwner.fields) {
                 if (!field.isPrimitiveType()) {
                     String fullName = field.getTypeFullName();
                     if (objects.containsKey(fullName)) {
-                        UMLObject fieldType = objects.get(fullName);
+                        UMLClass fieldType = objects.get(fullName);
                         // we allow loops if it's aggregation or composition
                         createFieldAggregationRelationship(field, fieldOwner, fieldType);
                     }
@@ -80,11 +80,11 @@ public class Generator {
         }
     }
 
-    private static void createFieldAggregationRelationship(Field field, UMLObject fieldOwner, UMLObject fieldType) {
-        Relationship.Type relType = Relationship.Type.Aggregation;
+    private static void createFieldAggregationRelationship(Field field, UMLClass fieldOwner, UMLClass fieldType) {
+        UMLRelationship.Type relType = UMLRelationship.Type.Aggregation;
         if (field.accessModifiers.contains(Field.AccessModifier.Private) && !hasPublicSetter(field, fieldOwner, fieldType))
-            relType = Relationship.Type.Composition;
-        Relationship rel = new Relationship(fieldOwner, fieldType, relType);
+            relType = UMLRelationship.Type.Composition;
+        UMLRelationship rel = new UMLRelationship(fieldOwner, fieldType, relType);
         String key = rel.toString();
         if (fieldOwner.relationships.containsKey(key)) {
             rel = fieldOwner.relationships.get(key);
@@ -100,11 +100,11 @@ public class Generator {
     }
 
     // TODO: check the method body it it's setting the specific field
-    private static boolean hasPublicSetter(Field field, UMLObject fieldOwner, UMLObject fieldType) {
+    private static boolean hasPublicSetter(Field field, UMLClass fieldOwner, UMLClass fieldType) {
         for (Method method : fieldOwner.methods) {
             // check public constructor param
             if (method.name.equals(fieldOwner.name) && !method.accessModifiers.contains(Method.AccessModifier.Private)) {
-                for (Variable param : method.parameters) {
+                for (Parameter param : method.parameters) {
                     if (param.getTypeName() != null && param.getTypeName().equals(fieldType.name)) {
                         return true;
                     }
@@ -113,7 +113,7 @@ public class Generator {
             // check public setter
             if (method.name.toLowerCase().startsWith(("set" + field.name).toLowerCase())
                     && !method.accessModifiers.contains(Method.AccessModifier.Private)) {
-                for (Variable param : method.parameters) {
+                for (Parameter param : method.parameters) {
                     if (param.getTypeName() != null && param.getTypeName().equals(fieldType.name)) {
                         return true;
                     }
@@ -123,18 +123,18 @@ public class Generator {
         return false;
     }
 
-    private static void getMethodCalls(List<UMLObject> list, File projectDir) {
+    private static void getMethodCalls(List<UMLClass> list, File projectDir) {
         new DirExplorer((level, path, file) -> path.endsWith(".java"), (level, path, file) -> {
             System.out.println(path);
             System.out.println(Strings.repeat("=", path.length()));
             try {
-                new VoidVisitorAdapter<UMLObject>() {
+                new VoidVisitorAdapter<UMLClass>() {
                     @Override
-                    public void visit(MethodCallExpr n, UMLObject arg) {
+                    public void visit(MethodCallExpr n, UMLClass arg) {
                         super.visit(n, arg);
                         System.out.println("Method Call: [" + n.getBegin().get().line + "] " + n);
-                        UMLObject caller = getMethodCallerObject(n);
-                        UMLObject callee = getMethodCalleeObject(n);
+                        UMLClass caller = getMethodCallerObject(n);
+                        UMLClass callee = getMethodCalleeObject(n);
                         if (callee != null && caller != null
                             && callee != caller) {
                             Method callerMethod = getMethodCallerMethod(caller, n);
@@ -146,10 +146,10 @@ public class Generator {
                     }
 
                     @Override
-                    public void visit(final ObjectCreationExpr n, final UMLObject arg) {
+                    public void visit(final ObjectCreationExpr n, final UMLClass arg) {
                         System.out.println("ObjectCreationExpr: [" + n.getBegin().get().line + "] " + n);
-                        UMLObject caller = getMethodCallerObject(n);
-                        UMLObject callee = getMethodCalleeObject(n);
+                        UMLClass caller = getMethodCallerObject(n);
+                        UMLClass callee = getMethodCalleeObject(n);
                         if (caller != null && callee != null) {
                             Method callerMethod = getMethodCallerMethod(caller, n);
                             Constructor constructor = getConstructor(callee, n);
@@ -162,11 +162,11 @@ public class Generator {
                         }
                     }
                     @Override
-                    public void visit(final FieldAccessExpr n, final UMLObject arg) {
+                    public void visit(final FieldAccessExpr n, final UMLClass arg) {
                         super.visit(n, arg);
                         System.out.println("Field Access: [" + n.getBegin().get().line + "] " + n);
-                        UMLObject accessor = getFieldAccessorObject(n);
-                        UMLObject accessedFieldObject = getFieldAccessedObject(n);
+                        UMLClass accessor = getFieldAccessorObject(n);
+                        UMLClass accessedFieldObject = getFieldAccessedObject(n);
                         if (accessor != null && accessedFieldObject != null
                             && accessor != accessedFieldObject) {
                             Method accessorMethod = getFieldAccessorMethod(accessor, n);
@@ -185,7 +185,7 @@ public class Generator {
         }).explore(projectDir);
     }
 
-    private static Method getMethodCallerMethod(UMLObject caller, ObjectCreationExpr n) {
+    private static Method getMethodCallerMethod(UMLClass caller, ObjectCreationExpr n) {
         CallableDeclaration methodDeclaration = null;
         Node node = n;
         while (node.hasParentNode()) {
@@ -208,9 +208,9 @@ public class Generator {
         return null;
     }
 
-    private static void createObjectCreationRelationship(UMLObject caller, Method callerMethod, UMLObject callee, Constructor constructor) {
-        Relationship.Type type = Relationship.Type.Dependency;
-        Relationship rel = new Relationship(caller, callee, type);
+    private static void createObjectCreationRelationship(UMLClass caller, Method callerMethod, UMLClass callee, Constructor constructor) {
+        UMLRelationship.Type type = UMLRelationship.Type.Dependency;
+        UMLRelationship rel = new UMLRelationship(caller, callee, type);
         String key = rel.toString();
         if (caller.relationships.containsKey(key)) {
             rel = caller.relationships.get(key);
@@ -225,9 +225,9 @@ public class Generator {
         rel.addMethodCall(callerMethod, constructor);
     }
 
-    private static void createObjectCreationRelationship(UMLObject caller, Method callerMethod, UMLObject callee) {
-        Relationship.Type type = Relationship.Type.Dependency;
-        Relationship rel = new Relationship(caller, callee, type);
+    private static void createObjectCreationRelationship(UMLClass caller, Method callerMethod, UMLClass callee) {
+        UMLRelationship.Type type = UMLRelationship.Type.Dependency;
+        UMLRelationship rel = new UMLRelationship(caller, callee, type);
         String key = rel.toString();
         if (caller.relationships.containsKey(key)) {
             rel = caller.relationships.get(key);
@@ -243,7 +243,7 @@ public class Generator {
     }
 
 
-    private static int getConstructorCount(UMLObject obj) {
+    private static int getConstructorCount(UMLClass obj) {
         int constructors = 0;
         for(Method method : obj.methods) {
             if(method instanceof Constructor) {
@@ -253,7 +253,7 @@ public class Generator {
         return constructors;
     }
 
-    private static Constructor getConstructor(UMLObject obj, ObjectCreationExpr n) {
+    private static Constructor getConstructor(UMLClass obj, ObjectCreationExpr n) {
         for(Method method : obj.methods) {
             if(method instanceof Constructor) {
                 if(method.parameters.size() == n.getArguments().size())
@@ -263,7 +263,7 @@ public class Generator {
         return null;
     }
 
-    private static UMLObject getMethodCallerObject(ObjectCreationExpr n) {
+    private static UMLClass getMethodCallerObject(ObjectCreationExpr n) {
         String packageName = null;
         String name = null;
         Node node = n;
@@ -283,7 +283,7 @@ public class Generator {
         return null;
     }
 
-    private static UMLObject getMethodCalleeObject(ObjectCreationExpr n) {
+    private static UMLClass getMethodCalleeObject(ObjectCreationExpr n) {
         try {
             ResolvedReferenceTypeDeclaration decl = n.calculateResolvedType().asReferenceType().getTypeDeclaration().get();
             String fullName = decl.getPackageName() + "." + decl.getClassName();
@@ -296,7 +296,7 @@ public class Generator {
         return null;
     }
 
-    private static UMLObject getMethodCalleeObject(MethodCallExpr n) {
+    private static UMLClass getMethodCalleeObject(MethodCallExpr n) {
         if (n.getScope().isEmpty())
             return null;
         try {
@@ -316,7 +316,7 @@ public class Generator {
     }
 
 
-    private static Method getMethodCalleeMethod(UMLObject callee, MethodCallExpr n) {
+    private static Method getMethodCalleeMethod(UMLClass callee, MethodCallExpr n) {
         try {
             String methodName = n.getNameAsString();
             for (Method m : callee.methods) {
@@ -330,7 +330,7 @@ public class Generator {
         return null;
     }
 
-    private static UMLObject getMethodCallerObject(MethodCallExpr n) {
+    private static UMLClass getMethodCallerObject(MethodCallExpr n) {
         String packageName = null;
         String name = null;
         Node node = n;
@@ -351,7 +351,7 @@ public class Generator {
         return null;
     }
 
-    private static Method getMethodCallerMethod(UMLObject caller, MethodCallExpr n) {
+    private static Method getMethodCallerMethod(UMLClass caller, MethodCallExpr n) {
         CallableDeclaration methodDeclaration = null;
         Node node = n;
         while (node.hasParentNode()) {
@@ -375,9 +375,9 @@ public class Generator {
         return null;
     }
 
-    private static void createMethodCallRelationship(UMLObject caller, Method callerMethod, UMLObject callee, Method calleeMethod) {
-        Relationship.Type type = Relationship.Type.Dependency;
-        Relationship rel = new Relationship(caller, callee, type);
+    private static void createMethodCallRelationship(UMLClass caller, Method callerMethod, UMLClass callee, Method calleeMethod) {
+        UMLRelationship.Type type = UMLRelationship.Type.Dependency;
+        UMLRelationship rel = new UMLRelationship(caller, callee, type);
         String key = rel.toString();
         if (caller.relationships.containsKey(key)) {
             rel = caller.relationships.get(key);
@@ -393,7 +393,7 @@ public class Generator {
     }
 
     // fields accessors
-    private static UMLObject getFieldAccessorObject(FieldAccessExpr n) {
+    private static UMLClass getFieldAccessorObject(FieldAccessExpr n) {
         String packageName = null;
         String name = null;
         Node node = n;
@@ -414,7 +414,7 @@ public class Generator {
     }
 
 
-    private static Method getFieldAccessorMethod(UMLObject callee, FieldAccessExpr n) {
+    private static Method getFieldAccessorMethod(UMLClass callee, FieldAccessExpr n) {
         CallableDeclaration methodDeclaration = null;
         Node node = n;
         while (node.hasParentNode()) {
@@ -443,7 +443,7 @@ public class Generator {
         return null;
     }
 
-    private static UMLObject getFieldAccessedObject(FieldAccessExpr n) {
+    private static UMLClass getFieldAccessedObject(FieldAccessExpr n) {
         if (n.getScope() == null || n.getScope().toString().equals("java")
                 || n.getScope().toString().startsWith("java.")
                 || n.getScope().toString().equals("System")
@@ -465,7 +465,7 @@ public class Generator {
         return null;
     }
 
-    private static Field getFieldAccessed(UMLObject accessed, FieldAccessExpr n) {
+    private static Field getFieldAccessed(UMLClass accessed, FieldAccessExpr n) {
         for (Field f: accessed.fields) {
             if (f.name.equals(n.getNameAsString())) {
                 return f;
@@ -474,9 +474,9 @@ public class Generator {
         return null;
     }
 
-    private static void createFieldAccessRelationship(UMLObject accessor, Method accessorMethod, UMLObject accessed, Field accessedField) {
-        Relationship.Type type = Relationship.Type.Dependency;
-        Relationship rel = new Relationship(accessor, accessed, type);
+    private static void createFieldAccessRelationship(UMLClass accessor, Method accessorMethod, UMLClass accessed, Field accessedField) {
+        UMLRelationship.Type type = UMLRelationship.Type.Dependency;
+        UMLRelationship rel = new UMLRelationship(accessor, accessed, type);
         String key = rel.toString();
         if (accessor.relationships.containsKey(key)) {
             rel = accessor.relationships.get(key);
@@ -491,17 +491,17 @@ public class Generator {
         rel.addFieldAccess(accessorMethod, accessedField);
     }
 
-    private static void getObjects(List<UMLObject> list, File projectDir) {
+    private static void getObjects(List<UMLClass> list, File projectDir) {
         new DirExplorer((level, path, file) -> path.endsWith(".java"), (level, path, file) -> {
             System.out.println(path);
             System.out.println(Strings.repeat("=", path.length()));
             try {
-                new VoidVisitorAdapter<UMLObject>() {
+                new VoidVisitorAdapter<UMLClass>() {
                     @Override
-                    public void visit(ClassOrInterfaceDeclaration n, UMLObject arg) {
+                    public void visit(ClassOrInterfaceDeclaration n, UMLClass arg) {
                         super.visit(n, arg);
                         System.out.println(n.isInterface() ? "Interface" : "Class: " + n.getName());
-                        UMLObject obj = parseClassOrInterface(n, file.getPath());
+                        UMLClass obj = parseClassOrInterface(n, file.getPath());
 //                        if (n.getImplementedTypes().stream().anyMatch(implementedType -> implementedType.getNameWithScope().equals(arg))) {
 //                            System.out.println(n.getFullyQualifiedName().get() + " implements " + arg);
 //                        }
@@ -514,12 +514,12 @@ public class Generator {
             }
 
             try {
-                new VoidVisitorAdapter<UMLObject>() {
+                new VoidVisitorAdapter<UMLClass>() {
                     @Override
-                    public void visit(EnumDeclaration n, UMLObject arg) {
+                    public void visit(EnumDeclaration n, UMLClass arg) {
                         super.visit(n, arg);
                         System.out.println("Enum: " + n.getName());
-                        UMLObject obj = parseEnum(n, file.getPath());
+                        UMLClass obj = parseEnum(n, file.getPath());
                         list.add(obj);
                     }
                 }.visit(StaticJavaParser.parse(file), null);
@@ -530,8 +530,8 @@ public class Generator {
         }).explore(projectDir);
     }
 
-    private static UMLObject parseEnum(EnumDeclaration n, String filePath) {
-        UMLObject obj = new Enumeration(n.getName().asString());
+    private static UMLClass parseEnum(EnumDeclaration n, String filePath) {
+        UMLClass obj = new Enumeration(n.getName().asString());
         obj.setFilePath(filePath);
         Node node = n;
         while (node.hasParentNode()) {
@@ -549,11 +549,11 @@ public class Generator {
         return obj;
     }
 
-    private static UMLObject parseClassOrInterface(ClassOrInterfaceDeclaration n, String filePath) {
-        UMLObject obj = getOrCreateObject(n, filePath);
+    private static UMLClass parseClassOrInterface(ClassOrInterfaceDeclaration n, String filePath) {
+        UMLClass obj = getOrCreateObject(n, filePath);
         Class superClassObj = getSuperClass(n, filePath);
         if (superClassObj != null) {
-            Relationship rel = getSuperClassRel(obj, superClassObj);
+            UMLRelationship rel = getSuperClassRel(obj, superClassObj);
             obj.relationships.put(rel.toString(), rel);
             superClassObj.relationships.put(rel.toString(), rel);
         }
@@ -561,7 +561,7 @@ public class Generator {
         List<Interface> interfacesImplemented = getImplementedInterfaces(n, filePath);
         if (interfacesImplemented != null) {
             for (Interface interfaceImplementedObj : interfacesImplemented) {
-                Relationship rel = getInterfaceRel(obj, interfaceImplementedObj);
+                UMLRelationship rel = getInterfaceRel(obj, interfaceImplementedObj);
                 obj.relationships.put(rel.toString(), rel);
                 interfaceImplementedObj.relationships.put(rel.toString(), rel);
             }
@@ -573,15 +573,15 @@ public class Generator {
         return obj;
     }
 
-    private static UMLObject getOrCreateObject(ClassOrInterfaceDeclaration n, String filePath) {
+    private static UMLClass getOrCreateObject(ClassOrInterfaceDeclaration n, String filePath) {
         String packageName = getPackageName(n);
         String className = n.getName().asString();
         return getOrCreateObject(packageName, className, n.isInterface(), filePath, n.getBegin().get().line);
     }
 
-    private static UMLObject getOrCreateObject(String packageName, String name, boolean isInterface, String filePath,
-                                               int line) {
-        UMLObject obj = null;
+    private static UMLClass getOrCreateObject(String packageName, String name, boolean isInterface, String filePath,
+                                              int line) {
+        UMLClass obj = null;
         String fullName = packageName + "." + name;
         if (objects.containsKey(fullName)) {
             obj = objects.get(fullName);
@@ -599,8 +599,8 @@ public class Generator {
         return obj;
     }
 
-    private static Relationship getSuperClassRel(UMLObject derivedClass, UMLObject superClass) {
-        return new Relationship(derivedClass, superClass, Relationship.Type.Inheritance);
+    private static UMLRelationship getSuperClassRel(UMLClass derivedClass, UMLClass superClass) {
+        return new UMLRelationship(derivedClass, superClass, UMLRelationship.Type.Inheritance);
     }
 
     private static Class getSuperClass(ClassOrInterfaceDeclaration node, String filePath) {
@@ -628,8 +628,8 @@ public class Generator {
     }
 
 
-    private static Relationship getInterfaceRel(UMLObject derivedClass, UMLObject superClass) {
-        return new Relationship(derivedClass, superClass, Relationship.Type.Realization);
+    private static UMLRelationship getInterfaceRel(UMLClass derivedClass, UMLClass superClass) {
+        return new UMLRelationship(derivedClass, superClass, UMLRelationship.Type.Realization);
     }
 
     private static List<Interface> getImplementedInterfaces(ClassOrInterfaceDeclaration node, String filePath) {
@@ -672,7 +672,7 @@ public class Generator {
         return packageName;
     }
 
-    private static List<Field> parseFields(NodeWithMembers n, UMLObject obj) {
+    private static List<Field> parseFields(NodeWithMembers n, UMLClass obj) {
         List<Field> fields = new LinkedList<>();
         List<FieldDeclaration> flds = n.getFields();
         for (FieldDeclaration f : flds) {
@@ -720,13 +720,13 @@ public class Generator {
         return fields;
     }
 
-    private static List<Method> parseMethods(UMLObject obj, NodeWithMembers n) {
+    private static List<Method> parseMethods(UMLClass obj, NodeWithMembers n) {
         List<Method> objMethods = new LinkedList<>();
         List<MethodDeclaration> methods = n.getMethods();
         for (MethodDeclaration decl : methods) {
             Method method = new Method(decl.getName().asString());
             method.owner = obj.toString();
-            NodeList<Parameter> params = decl.getParameters();
+            NodeList<com.github.javaparser.ast.body.Parameter> params = decl.getParameters();
             method.modifiers = parseMethodModifiers(decl);
             method.accessModifiers = parseMethodAccessModifiers(decl);
             Type returnType = decl.getType();
@@ -740,14 +740,14 @@ public class Generator {
             } else if (!resolvedReturnType.isArray() && !resolvedReturnType.isVoid() && !resolvedReturnType.isTypeVariable()) {
                 System.err.println("Could not get resolvedReturnType: " + resolvedReturnType);
             }
-            for (Parameter parameter : params) {
-                String paramName = parameter.getNameAsString();
-                Variable variable = new Variable(paramName);
-                parseVariableType(variable, parameter);
-                variable.modifiers = parseVariableModifiers(parameter);
-                method.parameters.add(variable);
-                if(!variable.isPrimitiveType())
-                    createParameterTypeRelationship(obj, method, variable);
+            for (com.github.javaparser.ast.body.Parameter param : params) {
+                String paramName = param.getNameAsString();
+                Parameter parameter = new Parameter(paramName);
+                parseParameterType(parameter, param);
+                parameter.modifiers = parseParameterModifiers(param);
+                method.parameters.add(parameter);
+                if(!parameter.isPrimitiveType())
+                    createParameterTypeRelationship(obj, method, parameter);
             }
             method.setLine(decl.getBegin().get().line);
             objMethods.add(method);
@@ -755,12 +755,12 @@ public class Generator {
         return objMethods;
     }
 
-    private static void createParameterTypeRelationship(UMLObject obj, Method method, Variable variable) {
-        Relationship.Type type = Relationship.Type.Dependency;
-        UMLObject refClass = objects.getOrDefault(variable.getTypePackageName() + "." + variable.getTypeName(), null);
+    private static void createParameterTypeRelationship(UMLClass obj, Method method, Parameter parameter) {
+        UMLRelationship.Type type = UMLRelationship.Type.Dependency;
+        UMLClass refClass = objects.getOrDefault(parameter.getTypePackageName() + "." + parameter.getTypeName(), null);
         if(refClass == null || refClass == obj)
             return;
-        Relationship rel = new Relationship(obj, refClass, type);
+        UMLRelationship rel = new UMLRelationship(obj, refClass, type);
         String key = rel.toString();
         if (obj.relationships.containsKey(key)) {
             rel = obj.relationships.get(key);
@@ -775,29 +775,29 @@ public class Generator {
         rel.addClassAccess(method);
     }
 
-    private static void parseVariableType(Variable variable, Parameter parameter) {
+    private static void parseParameterType(Parameter parameter, com.github.javaparser.ast.body.Parameter param) {
         try {
-            ResolvedType type = parameter.resolve().getType();
+            ResolvedType type = param.resolve().getType();
             if (type.isReferenceType()) {
                 ResolvedReferenceTypeDeclaration parameterTypeDecl = type.asReferenceType().getTypeDeclaration().get();
-                variable.setTypeName(parameterTypeDecl.getName());
-                variable.setTypePackageName(parameterTypeDecl.getPackageName());
+                parameter.setTypeName(parameterTypeDecl.getName());
+                parameter.setTypePackageName(parameterTypeDecl.getPackageName());
             } else if (type.isPrimitive()) {
-                variable.setPrimitiveType(type.asPrimitive().name().toLowerCase());
+                parameter.setPrimitiveType(type.asPrimitive().name().toLowerCase());
             } else if (type.isArray()) {
-                variable.setArray(true);
+                parameter.setArray(true);
                 ResolvedType baseType = ((ResolvedArrayType) type).getComponentType();
                 while(baseType instanceof ResolvedArrayType) {
                     baseType = ((ResolvedArrayType) baseType).getComponentType();
                 }
                 if(baseType.isPrimitive()) {
-                    variable.setPrimitiveType(type.describe());
+                    parameter.setPrimitiveType(type.describe());
                 } else if (baseType.isReferenceType()) {
                     ResolvedReferenceTypeDeclaration parameterTypeDecl = baseType.asReferenceType().getTypeDeclaration().get();
-                    variable.setTypePackageName(parameterTypeDecl.getPackageName());
-                    variable.setTypeName(type.describe());
-                    if(type.describe().startsWith(variable.getTypePackageName()))
-                        variable.setTypeName(variable.getTypeName().substring(variable.getTypePackageName().length()+1));
+                    parameter.setTypePackageName(parameterTypeDecl.getPackageName());
+                    parameter.setTypeName(type.describe());
+                    if(type.describe().startsWith(parameter.getTypePackageName()))
+                        parameter.setTypeName(parameter.getTypeName().substring(parameter.getTypePackageName().length()+1));
                 }
             } else if (!type.isArray() && !type.isVoid() && !type.isTypeVariable()) {
                 System.err.println("Could not get param type: " + type);
@@ -843,12 +843,12 @@ public class Generator {
         return methodAccessModifiers;
     }
 
-    private static List<Variable.Modifier> parseVariableModifiers(Parameter parameter) {
+    private static List<Parameter.Modifier> parseParameterModifiers(com.github.javaparser.ast.body.Parameter parameter) {
         NodeList<Modifier> modifiers = parameter.getModifiers();
-        List<Variable.Modifier> accessModifiers = new LinkedList<>();
+        List<Parameter.Modifier> accessModifiers = new LinkedList<>();
         for (Modifier modifier : modifiers) {
             if (modifier.getKeyword() == Modifier.Keyword.FINAL)
-                accessModifiers.add(Variable.Modifier.Final);
+                accessModifiers.add(Parameter.Modifier.Final);
         }
         return accessModifiers;
     }
@@ -886,7 +886,7 @@ public class Generator {
         return methodAccessModifiers;
     }
 
-    private static List<Method> parseConstructors(UMLObject obj, NodeWithMembers n) {
+    private static List<Method> parseConstructors(UMLClass obj, NodeWithMembers n) {
         List<Method> objConstructors = new LinkedList<>();
         List<ConstructorDeclaration> constructors = n.getConstructors();
         for (ConstructorDeclaration decl : constructors) {
@@ -894,15 +894,15 @@ public class Generator {
             constructor.owner = obj.toString();
             constructor.modifiers = parseMethodModifiers(decl);
             constructor.accessModifiers = parseMethodAccessModifiers(decl);
-            NodeList<Parameter> params = decl.getParameters();
-            for (Parameter parameter : params) {
-                String paramName = parameter.getNameAsString();
-                Variable variable = new Variable(paramName);
-                parseVariableType(variable, parameter);
-                variable.modifiers = parseVariableModifiers(parameter);
-                constructor.parameters.add(variable);
-                if(!variable.isPrimitiveType())
-                    createParameterTypeRelationship(obj, constructor, variable);
+            NodeList<com.github.javaparser.ast.body.Parameter> params = decl.getParameters();
+            for (com.github.javaparser.ast.body.Parameter param : params) {
+                String paramName = param.getNameAsString();
+                Parameter parameter = new Parameter(paramName);
+                parseParameterType(parameter, param);
+                parameter.modifiers = parseParameterModifiers(param);
+                constructor.parameters.add(parameter);
+                if(!parameter.isPrimitiveType())
+                    createParameterTypeRelationship(obj, constructor, parameter);
             }
             constructor.setLine(decl.getBegin().get().line);
             objConstructors.add(constructor);

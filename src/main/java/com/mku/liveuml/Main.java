@@ -32,12 +32,12 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeS
 import com.google.gson.Gson;
 import com.google.gson.internal.StringMap;
 import com.mku.liveuml.gen.Generator;
-import com.mku.liveuml.graph.UMLObjectFactory;
+import com.mku.liveuml.graph.UMLClassFactory;
 import com.mku.liveuml.meta.Field;
 import com.mku.liveuml.meta.Method;
-import com.mku.liveuml.graph.Relationship;
-import com.mku.liveuml.graph.UMLObject;
-import com.mku.liveuml.meta.Variable;
+import com.mku.liveuml.graph.UMLRelationship;
+import com.mku.liveuml.graph.UMLClass;
+import com.mku.liveuml.meta.Parameter;
 import com.mku.liveuml.view.GraphPanel;
 import org.jgrapht.Graph;
 import org.jgrapht.nio.Attribute;
@@ -114,7 +114,7 @@ public class Main {
                 prefs.put("LAST_SOURCE_FOLDER", root.getPath());
 
                 setupFolder(root);
-                List<UMLObject> classes = Generator.getClasses(root);
+                List<UMLClass> classes = Generator.getClasses(root);
                 panel.clear();
                 panel.createAndDisplay(classes);
                 panel.revalidate();
@@ -134,15 +134,15 @@ public class Main {
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File file = fc.getSelectedFile();
                 prefs.put("LAST_GRAPH_FILE", file.getPath());
-                GraphMLImporter<UMLObject, Relationship> importer = new GraphMLImporter<>();
+                GraphMLImporter<UMLClass, UMLRelationship> importer = new GraphMLImporter<>();
                 importer.setSchemaValidation(false);
 
-                Graph<UMLObject, Relationship> graph = panel.createGraph();
+                Graph<UMLClass, UMLRelationship> graph = panel.createGraph();
 
-                importer.setVertexFactory(UMLObjectFactory::create);
-                HashMap<UMLObject, Point2D.Double> verticesPositions = new HashMap<>();
+                importer.setVertexFactory(UMLClassFactory::create);
+                HashMap<UMLClass, Point2D.Double> verticesPositions = new HashMap<>();
 
-                HashMap<String, UMLObject> vertices = new HashMap<>();
+                HashMap<String, UMLClass> vertices = new HashMap<>();
                 importer.addVertexAttributeConsumer((pair, attribute) -> Main.setVertexAttrs(pair.getFirst(),
                         pair.getSecond(), attribute, verticesPositions, vertices));
                 // TODO: remove this since we update the relationships from the vertices attrs
@@ -173,7 +173,7 @@ public class Main {
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File file = fc.getSelectedFile();
                 prefs.put("LAST_GRAPH_FILE", file.getPath());
-                GraphMLExporter<UMLObject, Relationship> exporter = new GraphMLExporter<>();
+                GraphMLExporter<UMLClass, UMLRelationship> exporter = new GraphMLExporter<>();
 
 
                 exporter.setVertexIdProvider(obj -> obj.getClass().getSimpleName() + ":" + obj);
@@ -234,7 +234,7 @@ public class Main {
         f.setVisible(true);
     }
 
-    private static void registerEdgeAttrs(GraphMLExporter<UMLObject, Relationship> exporter) {
+    private static void registerEdgeAttrs(GraphMLExporter<UMLClass, UMLRelationship> exporter) {
         exporter.registerAttribute("type", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
         exporter.registerAttribute("from", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
         exporter.registerAttribute("to", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
@@ -246,17 +246,17 @@ public class Main {
         exporter.registerAttribute("callTo", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
     }
 
-    private static Map<String, Attribute> getEdgeAttrs(Relationship relationship) {
+    private static Map<String, Attribute> getEdgeAttrs(UMLRelationship UMLRelationship) {
         HashMap<String, Attribute> map = new HashMap<>();
-        map.put("type", new DefaultAttribute<>(relationship.type.name(), AttributeType.STRING));
-        map.put("from", new DefaultAttribute<>(relationship.from.toString(), AttributeType.STRING));
-        map.put("to", new DefaultAttribute<>(relationship.to.toString(), AttributeType.STRING));
-        map.put("fieldAssociation", new DefaultAttribute<>(new Gson().toJson(getFieldsOwnerMap(relationship.fieldAssociation)), AttributeType.STRING));
-        map.put("classAccessors", new DefaultAttribute<>(new Gson().toJson(getMethodOwnerMap(relationship.classAccessors)), AttributeType.STRING));
-        map.put("accessedBy", new DefaultAttribute<>(new Gson().toJson(getFieldMethodOwnerMap(relationship.accessedBy)), AttributeType.STRING));
-        map.put("accessing", new DefaultAttribute<>(new Gson().toJson(getMethodFieldOwnerMap(relationship.accessing)), AttributeType.STRING));
-        map.put("calledBy", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(relationship.calledBy)), AttributeType.STRING));
-        map.put("callTo", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(relationship.callTo)), AttributeType.STRING));
+        map.put("type", new DefaultAttribute<>(UMLRelationship.type.name(), AttributeType.STRING));
+        map.put("from", new DefaultAttribute<>(UMLRelationship.from.toString(), AttributeType.STRING));
+        map.put("to", new DefaultAttribute<>(UMLRelationship.to.toString(), AttributeType.STRING));
+        map.put("fieldAssociation", new DefaultAttribute<>(new Gson().toJson(getFieldsOwnerMap(UMLRelationship.fieldAssociation)), AttributeType.STRING));
+        map.put("classAccessors", new DefaultAttribute<>(new Gson().toJson(getMethodOwnerMap(UMLRelationship.classAccessors)), AttributeType.STRING));
+        map.put("accessedBy", new DefaultAttribute<>(new Gson().toJson(getFieldMethodOwnerMap(UMLRelationship.accessedBy)), AttributeType.STRING));
+        map.put("accessing", new DefaultAttribute<>(new Gson().toJson(getMethodFieldOwnerMap(UMLRelationship.accessing)), AttributeType.STRING));
+        map.put("calledBy", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(UMLRelationship.calledBy)), AttributeType.STRING));
+        map.put("callTo", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(UMLRelationship.callTo)), AttributeType.STRING));
         return map;
     }
 
@@ -318,12 +318,12 @@ public class Main {
         return methodOwnerMap;
     }
 
-    private static void setEdgeAttrs(Relationship relationship, String key, Attribute attribute, HashMap<String, UMLObject> vertices) {
+    private static void setEdgeAttrs(UMLRelationship relationship, String key, Attribute attribute, HashMap<String, UMLClass> vertices) {
         if(relationship == null)
             return;
         switch (key) {
             case "type":
-                relationship.type = Relationship.Type.valueOf(attribute.getValue());
+                relationship.type = UMLRelationship.Type.valueOf(attribute.getValue());
                 break;
             case "from":
                 if (vertices.containsKey(attribute.getValue()))
@@ -360,7 +360,7 @@ public class Main {
         }
     }
 
-    private static HashMap<Field, Method> getFieldMethodMap(HashMap<String, StringMap> accessedBy, HashMap<String, UMLObject> vertices) {
+    private static HashMap<Field, Method> getFieldMethodMap(HashMap<String, StringMap> accessedBy, HashMap<String, UMLClass> vertices) {
         HashMap<Field, Method> fieldMethodHashMap = new HashMap<>();
         for(String fieldName : accessedBy.keySet()) {
             StringMap ownerMap = accessedBy.get(fieldName);
@@ -370,7 +370,7 @@ public class Main {
             if (!vertices.containsKey(fieldOwner)) {
                 continue;
             }
-            UMLObject fieldOwnerObj = vertices.get(fieldOwner);
+            UMLClass fieldOwnerObj = vertices.get(fieldOwner);
             Field field = null;
             for(Field f : fieldOwnerObj.fields) {
                 if(f.name.equals(fieldName)) {
@@ -382,7 +382,7 @@ public class Main {
                 continue;
             }
 
-            UMLObject methodOwnerObj = null;
+            UMLClass methodOwnerObj = null;
             if (vertices.containsKey(methodOwner)) {
                 methodOwnerObj = vertices.get(methodOwner);
             }
@@ -401,7 +401,7 @@ public class Main {
     }
 
 
-    private static HashMap<Method, Field> getMethodFieldMap(HashMap<String, StringMap> map, HashMap<String, UMLObject> vertices) {
+    private static HashMap<Method, Field> getMethodFieldMap(HashMap<String, StringMap> map, HashMap<String, UMLClass> vertices) {
         HashMap<Method, Field> methodFieldHashMap = new HashMap<>();
         for(String methodName : map.keySet()) {
             StringMap ownerMap = map.get(methodName);
@@ -411,7 +411,7 @@ public class Main {
             if (!vertices.containsKey(methodOwner)) {
                 continue;
             }
-            UMLObject methodOwnerObj = vertices.get(methodOwner);
+            UMLClass methodOwnerObj = vertices.get(methodOwner);
             Method method = null;
             for(Method m : methodOwnerObj.methods) {
                 if(m.getSignature().equals(methodName)) {
@@ -423,7 +423,7 @@ public class Main {
                 continue;
             }
 
-            UMLObject fieldOwnerObj = null;
+            UMLClass fieldOwnerObj = null;
             if (vertices.containsKey(fieldOwner)) {
                 fieldOwnerObj = vertices.get(fieldOwner);
             }
@@ -442,7 +442,7 @@ public class Main {
     }
 
 
-    private static HashMap<Method, Method> getMethodMethodMap(HashMap<String, StringMap> map, HashMap<String, UMLObject> vertices) {
+    private static HashMap<Method, Method> getMethodMethodMap(HashMap<String, StringMap> map, HashMap<String, UMLClass> vertices) {
         HashMap<Method, Method> methodMethodHashMap = new HashMap<>();
         for(String methodName : map.keySet()) {
             StringMap ownerMap = map.get(methodName);
@@ -452,7 +452,7 @@ public class Main {
             if (!vertices.containsKey(methodOwner)) {
                 continue;
             }
-            UMLObject methodOwnerObj = vertices.get(methodOwner);
+            UMLClass methodOwnerObj = vertices.get(methodOwner);
             Method method = null;
             for(Method m : methodOwnerObj.methods) {
                 if(m.getSignature().equals(methodName)) {
@@ -464,7 +464,7 @@ public class Main {
                 continue;
             }
 
-            UMLObject methodOwnerObj2 = null;
+            UMLClass methodOwnerObj2 = null;
             if (vertices.containsKey(methodOwner2)) {
                 methodOwnerObj2 = vertices.get(methodOwner2);
             }
@@ -482,14 +482,14 @@ public class Main {
         return methodMethodHashMap;
     }
 
-    private static List<Field> getFields(HashMap<String,String> map, HashMap<String, UMLObject> vertices) {
+    private static List<Field> getFields(HashMap<String,String> map, HashMap<String, UMLClass> vertices) {
         List<Field> fields = new ArrayList<>();
         for (String name : map.keySet()) {
             String ownerName = map.get(name);
             if (!vertices.containsKey(ownerName)) {
                 continue;
             }
-            UMLObject obj = vertices.get(ownerName);
+            UMLClass obj = vertices.get(ownerName);
             Field field = null;
             for(Field f : obj.fields) {
                 if(f.name.equals(name)) {
@@ -503,7 +503,7 @@ public class Main {
         return fields;
     }
 
-    private static List<Field> parseFields(List<StringMap> map, UMLObject obj, HashMap<String, UMLObject> vertices) {
+    private static List<Field> parseFields(List<StringMap> map, UMLClass obj, HashMap<String, UMLClass> vertices) {
         List<Field> fields = new ArrayList<>();
         for(StringMap fmap : map) {
             String ownerName = (String) fmap.getOrDefault("owner", null);
@@ -547,13 +547,13 @@ public class Main {
         return fields;
     }
 
-    private static List<Method> getMethods(HashMap<String,String> map, HashMap<String, UMLObject> vertices) {
+    private static List<Method> getMethods(HashMap<String,String> map, HashMap<String, UMLClass> vertices) {
         List<Method> methods = new ArrayList<>();
         for (String name : map.keySet()) {
             String ownerName = map.getOrDefault(name, null);
             if (!vertices.containsKey(ownerName))
                 continue;
-            UMLObject obj = vertices.get(ownerName);
+            UMLClass obj = vertices.get(ownerName);
             Method method = null;
             for (Method m : obj.methods) {
                 if (m.getSignature().equals(name)) {
@@ -567,7 +567,7 @@ public class Main {
         return methods;
     }
 
-    private static List<Method> parseMethods(List<StringMap> map, UMLObject obj, HashMap<String, UMLObject> vertices) {
+    private static List<Method> parseMethods(List<StringMap> map, UMLClass obj, HashMap<String, UMLClass> vertices) {
         List<Method> methods = new ArrayList<>();
         for(StringMap mmap : map) {
             String ownerName = (String) mmap.getOrDefault("owner", null);
@@ -606,8 +606,8 @@ public class Main {
                 List<StringMap<String>> parameters = (List<StringMap<String>>) mmap.getOrDefault("parameters", null);
                 if (parameters != null) {
                     for (StringMap<String> param : parameters) {
-                        Variable variable = parseVariable(param);
-                        method.parameters.add(variable);
+                        Parameter parameter = parseParameter(param);
+                        method.parameters.add(parameter);
                     }
                 }
             }
@@ -616,22 +616,22 @@ public class Main {
         return methods;
     }
 
-    private static Variable parseVariable(StringMap map) {
-        Variable variable = new Variable((String) map.get("name"));
-        variable.setPrimitiveType((String) map.getOrDefault("primitiveType", null));
-        variable.setTypeName((String) map.getOrDefault("typeName", null));
-        variable.setTypePackageName((String) map.getOrDefault("typePackageName", null));
+    private static Parameter parseParameter(StringMap map) {
+        Parameter parameter = new Parameter((String) map.get("name"));
+        parameter.setPrimitiveType((String) map.getOrDefault("primitiveType", null));
+        parameter.setTypeName((String) map.getOrDefault("typeName", null));
+        parameter.setTypePackageName((String) map.getOrDefault("typePackageName", null));
         List<String> modifiers = (List<String>) map.getOrDefault("modifiers", null);
         if (modifiers != null) {
             for (String modifier : modifiers) {
-                variable.modifiers.add(Variable.Modifier.valueOf(modifier));
+                parameter.modifiers.add(Parameter.Modifier.valueOf(modifier));
             }
         }
-        variable.setArray((boolean) map.getOrDefault("isArray", false));
-        return variable;
+        parameter.setArray((boolean) map.getOrDefault("isArray", false));
+        return parameter;
     }
 
-    private static void registerVertexAttrs(GraphMLExporter<UMLObject, Relationship> exporter) {
+    private static void registerVertexAttrs(GraphMLExporter<UMLClass, UMLRelationship> exporter) {
         exporter.registerAttribute("x", GraphMLExporter.AttributeCategory.NODE, AttributeType.DOUBLE);
         exporter.registerAttribute("y", GraphMLExporter.AttributeCategory.NODE, AttributeType.DOUBLE);
         exporter.registerAttribute("line", GraphMLExporter.AttributeCategory.NODE, AttributeType.INT);
@@ -642,7 +642,7 @@ public class Main {
         exporter.registerAttribute("compact", GraphMLExporter.AttributeCategory.NODE, AttributeType.BOOLEAN);
     }
 
-    private static void setVertexAttrs(UMLObject obj, String key, Attribute attribute, Map<UMLObject, Point2D.Double> vertexPositions, HashMap<String, UMLObject> vertices) {
+    private static void setVertexAttrs(UMLClass obj, String key, Attribute attribute, Map<UMLClass, Point2D.Double> vertexPositions, HashMap<String, UMLClass> vertices) {
         if(!vertices.containsKey(obj.toString())){
             vertices.put(obj.toString(), obj);
         }
@@ -679,7 +679,7 @@ public class Main {
         }
     }
 
-    private static Map<String, Attribute> getVertexAttrs(UMLObject obj, Map<UMLObject, org.jungrapht.visualization.layout.model.Point> vertexPositions) {
+    private static Map<String, Attribute> getVertexAttrs(UMLClass obj, Map<UMLClass, org.jungrapht.visualization.layout.model.Point> vertexPositions) {
         HashMap<String, Attribute> map = new HashMap<>();
         org.jungrapht.visualization.layout.model.Point point = vertexPositions.getOrDefault(obj, null);
         if (point != null) {
