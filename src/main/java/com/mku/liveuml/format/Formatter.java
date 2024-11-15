@@ -32,8 +32,8 @@ import com.mku.liveuml.meta.Method;
 import java.util.HashSet;
 
 public class Formatter {
-    private static int MAX_CHARS = 50;
-    private static String selectionBackgroundColor = "background-color: yellow;";
+    private static final int MAX_CHARS = 50;
+    private static final String selectionBackgroundColor = "background-color: yellow;";
 
     public static String display(UMLClass object, boolean compact,
                                  HashSet<UMLClass> selectedVertices, HashSet<UMLRelationship> selectedEdges,
