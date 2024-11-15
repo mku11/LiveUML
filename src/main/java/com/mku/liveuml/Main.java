@@ -113,8 +113,8 @@ public class Main {
 
                 setupFolder(root);
                 List<UMLClass> classes = new Generator().getClasses(root);
-                panel.clear();
-                panel.createAndDisplay(classes);
+                panel.addClasses(classes);
+                panel.display(null);
                 panel.revalidate();
             }
         });
@@ -135,8 +135,6 @@ public class Main {
                 GraphMLImporter<UMLClass, UMLRelationship> importer = new GraphMLImporter<>();
                 importer.setSchemaValidation(false);
 
-                Graph<UMLClass, UMLRelationship> graph = panel.createGraph();
-
                 importer.setVertexFactory(UMLClassFactory::create);
                 HashMap<UMLClass, Point2D.Double> verticesPositions = new HashMap<>();
 
@@ -148,9 +146,10 @@ public class Main {
                         pair.getSecond(), attribute, vertices));
 
                 try (InputStreamReader inputStreamReader = new FileReader(file)) {
-                    importer.importGraph(graph, inputStreamReader);
-                    panel.updateVertices(graph, vertices);
-                    panel.display(graph, verticesPositions);
+                    panel.createGraph();
+                    importer.importGraph(panel.graph, inputStreamReader);
+                    panel.updateVertices(vertices);
+                    panel.display(verticesPositions);
                     panel.revalidate();
                 } catch (Exception ex) {
                     ex.printStackTrace();

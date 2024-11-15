@@ -71,25 +71,20 @@ public class GraphPanel extends JPanel {
     public GraphPanel() {
         setLayout(new BorderLayout());
         layoutAlgorithm = new FRLayoutAlgorithm<>();
+        createGraph();
     }
 
     public void toggleCompact(UMLClass obj) {
         obj.setCompact(!obj.isCompact());
     }
 
-    public void createAndDisplay(List<UMLClass> classes) {
-        graph = getGraph(classes);
-        display(graph, null);
-    }
-
-    public Graph<UMLClass, UMLRelationship> createGraph() {
+    public void createGraph() {
         graph = GraphTypeBuilder.<UMLClass, UMLRelationship>forGraphType(DefaultGraphType.directedMultigraph())
                 .edgeSupplier(SupplierUtil.createSupplier(UMLRelationship.class))
                 .buildGraph();
-        return graph;
     }
 
-    public void display(Graph<UMLClass, UMLRelationship> graph, Map<UMLClass, Point2D.Double> positions) {
+    public void display(Map<UMLClass, Point2D.Double> positions) {
         Dimension preferredSize = estimateGraphSize(graph);
         this.graph = graph;
         final VisualizationModel<UMLClass, UMLRelationship> visualizationModel =
@@ -520,18 +515,14 @@ public class GraphPanel extends JPanel {
         return null;
     }
 
-    private Graph<UMLClass, UMLRelationship> getGraph(List<UMLClass> umlClasses) {
-        Graph<UMLClass, UMLRelationship> graph = createGraph();
-
+    public void addClasses(List<UMLClass> umlClasses) {
         for (UMLClass obj : umlClasses) {
             graph.addVertex(obj);
         }
-
         updateRelationships(umlClasses, graph);
-        return graph;
     }
 
-    public void updateVertices(Graph<UMLClass, UMLRelationship> graph, HashMap<String, UMLClass> vertices) {
+    public void updateVertices(HashMap<String, UMLClass> vertices) {
         for (UMLRelationship rel: graph.edgeSet()) {
             UMLClass from = vertices.getOrDefault(rel.from.toString(), null);
             UMLClass to = vertices.getOrDefault(rel.to.toString(), null);
