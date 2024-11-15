@@ -21,16 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package com.mku.liveuml.meta;
-
-public class Constructor extends Method {
-
-    public Constructor(String name) {
-        super(name);
-    }
-
-    @Override
-    public String toString() {
-        return name;
-    }
+package com.mku.liveuml.entities;
+public enum Modifier {
+    Final, Static, Transient, Volatile, Abstract, Synchronized, Native, StrictFP
 }

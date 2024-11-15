@@ -21,49 +21,16 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package com.mku.liveuml.meta;
-import java.util.*;
+package com.mku.liveuml.entities;
 
-public class Field {
-    public String name;
-    public List<Modifier> modifiers = new LinkedList<>();
-    public List<AccessModifier> accessModifiers  = new LinkedList<>();
-    public boolean isArray;
-    public String baseTypeName;
-    public String typeName;
-    public String typePackageName;
-    public String primitiveType;
-    public String owner;
-    public int line;
+public class Constructor extends Method {
 
-    public Field(String name) {
-        this.name = name;
-    }
-    public String getTypeFullName() {
-        String fullName = typePackageName + "." + typeName;
-        if(isArray) {
-            int index = fullName.indexOf("[");
-            if (index >= 0)
-                fullName = fullName.substring(0, index);
-        }
-        return fullName;
-    }
-
-    public void setLine(int line) {
-        this.line = line;
-    }
-
-    public boolean isPrimitiveType() {
-        return primitiveType != null;
-    }
-
-    public String getTypeName() {
-        return isPrimitiveType() ? primitiveType : typeName;
+    public Constructor(String name) {
+        super(name);
     }
 
     @Override
     public String toString() {
         return name;
     }
-
 }

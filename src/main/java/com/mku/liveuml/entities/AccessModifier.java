@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package com.mku.liveuml.meta;
-public enum Modifier {
-    Final, Static, Transient, Volatile, Abstract, Synchronized, Native, StrictFP
+package com.mku.liveuml.entities;
+public enum AccessModifier {
+    Default, Public, Private, Protected
 }
