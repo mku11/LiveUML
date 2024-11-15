@@ -266,7 +266,7 @@ public class GraphPanel extends JPanel {
             for (Method m : s.getMethods()) {
                 if(!(m instanceof Constructor))
                     continue;
-                if (m.accessModifiers.contains(AccessModifier.Private))
+                if (m.getAccessModifiers().contains(AccessModifier.Private))
                     continue;
                 String methodName = com.mku.liveuml.format.Formatter.getMethodSignature(m, true);
                 JMenuItem mItem = new JMenuItem(methodName);
@@ -291,7 +291,7 @@ public class GraphPanel extends JPanel {
             for (Method m : s.getMethods()) {
                 if(m instanceof Constructor)
                     continue;
-                if (m.accessModifiers.contains(AccessModifier.Private))
+                if (m.getAccessModifiers().contains(AccessModifier.Private))
                     continue;
                 String methodName = com.mku.liveuml.format.Formatter.getMethodSignature(m, true);
                 JMenuItem mItem = new JMenuItem(methodName);
@@ -398,7 +398,7 @@ public class GraphPanel extends JPanel {
     }
 
     private void goToMethodReference(UMLClass s, Method m) {
-        openFileLine(s.getFilePath(), m.line);
+        openFileLine(s.getFilePath(), m.getLine());
     }
 
     private void goToFieldReference(UMLClass s, Field f) {

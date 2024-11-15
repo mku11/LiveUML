@@ -103,9 +103,9 @@ public class Formatter {
         String signature = "";
         if(usePrefix)
             signature += getMethodQualifier(method) + " ";
-        signature += method.name + "(";
+        signature += method.getName() + "(";
         String params = "";
-        for (Parameter parameter : method.parameters) {
+        for (Parameter parameter : method.getParameters()) {
             if (params.length() > 0)
                 params += ", ";
             params += parameter.getName() + " : " + parameter.getTypeName();
@@ -120,11 +120,11 @@ public class Formatter {
     }
 
     private static String getMethodQualifier(Method method) {
-        if (method.accessModifiers.contains(AccessModifier.Protected))
+        if (method.getAccessModifiers().contains(AccessModifier.Protected))
             return "#";
-        else if (method.accessModifiers.contains(AccessModifier.Private))
+        else if (method.getAccessModifiers().contains(AccessModifier.Private))
             return "-";
-        else if (method.accessModifiers.contains(AccessModifier.Public))
+        else if (method.getAccessModifiers().contains(AccessModifier.Public))
             return "+";
         return "";
     }

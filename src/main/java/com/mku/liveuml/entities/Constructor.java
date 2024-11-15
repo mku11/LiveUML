@@ -31,6 +31,6 @@ public class Constructor extends Method {
 
     @Override
     public String toString() {
-        return name;
+        return getName();
     }
 }

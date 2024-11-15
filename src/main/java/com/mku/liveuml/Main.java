@@ -266,7 +266,7 @@ public class Main {
             fieldMethodOwnerMap.put(f.getName(), ownerMap);
             ownerMap.put("fieldOwner", f.getOwner());
             ownerMap.put("methodName", m == null ? null:m.getSignature());
-            ownerMap.put("methodOwner", m == null?null:m.owner);
+            ownerMap.put("methodOwner", m == null?null:m.getOwner());
         }
         return fieldMethodOwnerMap;
     }
@@ -277,8 +277,8 @@ public class Main {
             Field f = fieldMethodMap.get(m);
             HashMap<String, String> ownerMap = new HashMap<>();
             fieldMethodOwnerMap.put(m.getSignature(), ownerMap);
-            ownerMap.put("methodName", m.name);
-            ownerMap.put("methodOwner", m.owner);
+            ownerMap.put("methodName", m.getName());
+            ownerMap.put("methodOwner", m.getOwner());
             ownerMap.put("fieldName", f == null ? null:f.getName());
             ownerMap.put("fieldOwner", f == null?null:f.getOwner());
         }
@@ -291,10 +291,10 @@ public class Main {
             Method mv = fieldMethodMap.get(m);
             HashMap<String, String> ownerMap = new HashMap<>();
             methodMethodOwnerMap.put(m.getSignature(), ownerMap);
-            ownerMap.put("methodName", m.name);
-            ownerMap.put("methodOwner", m.owner);
+            ownerMap.put("methodName", m.getName());
+            ownerMap.put("methodOwner", m.getOwner());
             ownerMap.put("methodName2", mv == null ? null:mv.getSignature());
-            ownerMap.put("methodOwner2", mv == null?null:mv.owner);
+            ownerMap.put("methodOwner2", mv == null?null:mv.getOwner());
         }
         return methodMethodOwnerMap;
     }
@@ -310,7 +310,7 @@ public class Main {
     private static HashMap<String,String> getMethodOwnerMap(HashSet<Method> methods) {
         HashMap<String,String> methodOwnerMap = new HashMap<>();
         for(Method m: methods) {
-            methodOwnerMap.put(m.getSignature(), m.owner);
+            methodOwnerMap.put(m.getSignature(), m.getOwner());
         }
         return methodOwnerMap;
     }
@@ -579,38 +579,46 @@ public class Main {
             String name = (String) mmap.getOrDefault("name", null);
             Method method = null;
             for(Method m : obj.getMethods()) {
-                if(m.name.equals(name)) {
+                if(m.getName().equals(name)) {
                     method = m;
                     break;
                 }
             }
             if(method == null) {
                 method = new Method(name);
-                method.name = name;
-                method.owner = obj.toString();
-                method.line = ((Double) mmap.getOrDefault("line", 0)).intValue();
-                method.returnPrimitiveType = (String) mmap.getOrDefault("returnPrimitiveType", null);
-                method.returnTypeName = (String) mmap.getOrDefault("returnTypeName", null);
-                method.returnTypePackageName = (String) mmap.getOrDefault("returnTypePackageName", null);
-                List<String> modifiers = (List<String>) mmap.getOrDefault("modifiers", null);
-                if (modifiers != null) {
-                    for (String modifier : modifiers) {
-                        method.modifiers.add(Modifier.valueOf(modifier));
+                method.setName(name);
+                method.setOwner(obj.toString());
+                method.setLine(((Double) mmap.getOrDefault("line", 0)).intValue());
+                method.setReturnPrimitiveType((String) mmap.getOrDefault("returnPrimitiveType", null));
+                method.setReturnTypeName((String) mmap.getOrDefault("returnTypeName", null));
+                method.setReturnTypePackageName((String) mmap.getOrDefault("returnTypePackageName", null));
+                List<String> mods = (List<String>) mmap.getOrDefault("modifiers", null);
+                List<Modifier> modifiers = new ArrayList<>();
+                if (mods != null) {
+                    for (String mod : mods) {
+                        modifiers.add(Modifier.valueOf(mod));
                     }
                 }
-                List<String> accessModifiers = (List<String>) mmap.getOrDefault("accessModifiers", null);
-                if (accessModifiers != null) {
-                    for (String accessModifier : accessModifiers) {
-                        method.accessModifiers.add(AccessModifier.valueOf(accessModifier));
+                method.setModifiers(modifiers);
+
+                List<String> accessMods = (List<String>) mmap.getOrDefault("accessModifiers", null);
+                List<AccessModifier> accessModifiers = new ArrayList<>();
+                if (accessMods != null) {
+                    for (String accessMod : accessMods) {
+                        accessModifiers.add(AccessModifier.valueOf(accessMod));
                     }
                 }
-                List<StringMap<String>> parameters = (List<StringMap<String>>) mmap.getOrDefault("parameters", null);
-                if (parameters != null) {
-                    for (StringMap<String> param : parameters) {
+                method.setAccessModifiers(accessModifiers);
+
+                List<StringMap<String>> params = (List<StringMap<String>>) mmap.getOrDefault("parameters", null);
+                List<Parameter> parameters = new ArrayList<>();
+                if (params != null) {
+                    for (StringMap<String> param : params) {
                         Parameter parameter = parseParameter(param);
-                        method.parameters.add(parameter);
+                        parameters.add(parameter);
                     }
                 }
+                method.setParameters(parameters);
             }
             methods.add(method);
         }

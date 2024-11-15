@@ -23,23 +23,91 @@ SOFTWARE.
 */
 package com.mku.liveuml.entities;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 public class Method {
-    public String name;
-    public String returnTypeName;
-    public String returnTypePackageName;
-    public String returnPrimitiveType;
-    public String owner;
-    public int line;
-    public List<Modifier> modifiers = new LinkedList<>();
-    public List<AccessModifier> accessModifiers = new LinkedList<>();
+    private String name;
+    private String returnTypeName;
+    private String returnTypePackageName;
+    private String returnPrimitiveType;
+    private String owner;
+    private int line;
+    private List<Modifier> modifiers = new LinkedList<>();
+    private List<AccessModifier> accessModifiers = new LinkedList<>();
 
-    public List<Parameter> parameters = new LinkedList<>();
+    private List<Parameter> parameters = new LinkedList<>();
 
     public Method(String name) {
         this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setReturnTypeName(String returnTypeName) {
+        this.returnTypeName = returnTypeName;
+    }
+
+    public String getReturnTypePackageName() {
+        return returnTypePackageName;
+    }
+
+    public void setReturnTypePackageName(String returnTypePackageName) {
+        this.returnTypePackageName = returnTypePackageName;
+    }
+
+    public String getReturnPrimitiveType() {
+        return returnPrimitiveType;
+    }
+
+    public void setReturnPrimitiveType(String returnPrimitiveType) {
+        this.returnPrimitiveType = returnPrimitiveType;
+    }
+
+    public String getOwner() {
+        return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
+    public int getLine() {
+        return line;
+    }
+
+    public List<Modifier> getModifiers() {
+        return Collections.unmodifiableList(modifiers);
+    }
+
+    public void setModifiers(List<Modifier> modifiers) {
+        this.modifiers.clear();
+        this.modifiers.addAll(modifiers);
+    }
+
+    public List<AccessModifier> getAccessModifiers() {
+        return Collections.unmodifiableList(this.accessModifiers);
+    }
+
+    public void setAccessModifiers(List<AccessModifier> accessModifiers) {
+        this.accessModifiers.clear();
+        this.accessModifiers.addAll(accessModifiers);
+    }
+
+    public List<Parameter> getParameters() {
+        return Collections.unmodifiableList(parameters);
+    }
+
+    public void setParameters(List<Parameter> parameters) {
+        this.parameters.clear();
+        this.parameters.addAll(parameters);
     }
 
     public boolean isReturnTypeVoid() {

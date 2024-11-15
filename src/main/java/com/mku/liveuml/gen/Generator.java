@@ -102,17 +102,17 @@ public class Generator {
     private boolean hasPublicSetter(Field field, UMLClass fieldOwner, UMLClass fieldType) {
         for (Method method : fieldOwner.getMethods()) {
             // check public constructor param
-            if (method.name.equals(fieldOwner.getName()) && !method.accessModifiers.contains(AccessModifier.Private)) {
-                for (Parameter param : method.parameters) {
+            if (method.getName().equals(fieldOwner.getName()) && !method.getAccessModifiers().contains(AccessModifier.Private)) {
+                for (Parameter param : method.getParameters()) {
                     if (param.getTypeName() != null && param.getTypeName().equals(fieldType.getName())) {
                         return true;
                     }
                 }
             }
             // check public setter
-            if (method.name.toLowerCase().startsWith(("set" + field.getName()).toLowerCase())
-                    && !method.accessModifiers.contains(AccessModifier.Private)) {
-                for (Parameter param : method.parameters) {
+            if (method.getName().toLowerCase().startsWith(("set" + field.getName()).toLowerCase())
+                    && !method.getAccessModifiers().contains(AccessModifier.Private)) {
+                for (Parameter param : method.getParameters()) {
                     if (param.getTypeName() != null && param.getTypeName().equals(fieldType.getName())) {
                         return true;
                     }
@@ -255,7 +255,7 @@ public class Generator {
     private Constructor getConstructor(UMLClass obj, ObjectCreationExpr n) {
         for(Method method : obj.getMethods()) {
             if(method instanceof Constructor) {
-                if(method.parameters.size() == n.getArguments().size())
+                if(method.getParameters().size() == n.getArguments().size())
                     return (Constructor) method;
             }
         }
@@ -319,7 +319,7 @@ public class Generator {
         try {
             String methodName = n.getNameAsString();
             for (Method m : callee.getMethods()) {
-                if (m.name.equals(methodName) && m.parameters.size() == n.getArguments().size()) {
+                if (m.getName().equals(methodName) && m.getParameters().size() == n.getArguments().size()) {
                     return m;
                 }
             }
@@ -721,30 +721,32 @@ public class Generator {
         List<MethodDeclaration> methods = n.getMethods();
         for (MethodDeclaration decl : methods) {
             Method method = new Method(decl.getName().asString());
-            method.owner = obj.toString();
+            method.setOwner( obj.toString());
             NodeList<com.github.javaparser.ast.body.Parameter> params = decl.getParameters();
-            method.modifiers = parseMethodModifiers(decl);
-            method.accessModifiers = parseMethodAccessModifiers(decl);
+            method.setModifiers(parseMethodModifiers(decl));
+            method.setAccessModifiers(parseMethodAccessModifiers(decl));
             Type returnType = decl.getType();
             ResolvedType resolvedReturnType = returnType.resolve();
             if (resolvedReturnType.isReferenceType()) {
                 ResolvedReferenceTypeDeclaration returnTypeDecl = resolvedReturnType.asReferenceType().getTypeDeclaration().get();
-                method.returnTypeName = returnTypeDecl.getName();
-                method.returnTypePackageName = returnTypeDecl.getPackageName();
+                method.setReturnTypeName(returnTypeDecl.getName());
+                method.setReturnTypePackageName(returnTypeDecl.getPackageName());
             } else if (resolvedReturnType.isPrimitive()) {
-                method.returnPrimitiveType = returnType.asPrimitiveType().asString().toLowerCase();
+                method.setReturnPrimitiveType(returnType.asPrimitiveType().asString().toLowerCase());
             } else if (!resolvedReturnType.isArray() && !resolvedReturnType.isVoid() && !resolvedReturnType.isTypeVariable()) {
                 System.err.println("Could not get resolvedReturnType: " + resolvedReturnType);
             }
+            List<Parameter> parameters = new ArrayList<>();
             for (com.github.javaparser.ast.body.Parameter param : params) {
                 String paramName = param.getNameAsString();
                 Parameter parameter = new Parameter(paramName);
                 parseParameterType(parameter, param);
                 parameter.modifiers = parseParameterModifiers(param);
-                method.parameters.add(parameter);
+                parameters.add(parameter);
                 if(!parameter.isPrimitiveType())
                     createParameterTypeRelationship(obj, method, parameter);
             }
+            method.setParameters(parameters);
             method.setLine(decl.getBegin().get().line);
             objMethods.add(method);
         }
@@ -887,19 +889,21 @@ public class Generator {
         List<ConstructorDeclaration> constructors = n.getConstructors();
         for (ConstructorDeclaration decl : constructors) {
             Constructor constructor = new Constructor(decl.getNameAsString());
-            constructor.owner = obj.toString();
-            constructor.modifiers = parseMethodModifiers(decl);
-            constructor.accessModifiers = parseMethodAccessModifiers(decl);
+            constructor.setOwner(obj.toString());
+            constructor.setModifiers(parseMethodModifiers(decl));
+            constructor.setAccessModifiers(parseMethodAccessModifiers(decl));
             NodeList<com.github.javaparser.ast.body.Parameter> params = decl.getParameters();
+            List<Parameter> parameters = new ArrayList<>();
             for (com.github.javaparser.ast.body.Parameter param : params) {
                 String paramName = param.getNameAsString();
                 Parameter parameter = new Parameter(paramName);
                 parseParameterType(parameter, param);
                 parameter.modifiers = parseParameterModifiers(param);
-                constructor.parameters.add(parameter);
+                parameters.add(parameter);
                 if(!parameter.isPrimitiveType())
                     createParameterTypeRelationship(obj, constructor, parameter);
             }
+            constructor.setParameters(parameters);
             constructor.setLine(decl.getBegin().get().line);
             objConstructors.add(constructor);
         }
