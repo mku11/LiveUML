@@ -49,6 +49,7 @@ public class UMLRelationship {
 
     public HashSet<Field> fieldAssociation = new HashSet<>();
 
+    // needed for import
     public UMLRelationship() {
 
     }
