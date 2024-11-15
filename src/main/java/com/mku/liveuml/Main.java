@@ -60,7 +60,7 @@ public class Main {
 
     public static void main(String[] args) {
         JFrame f = new JFrame();
-        f.setTitle("Live UML");
+        f.setTitle("LiveUML");
         f.setIconImage(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/icons/logo.png")));
         f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
