@@ -47,7 +47,7 @@ public class UMLClassFactory {
         }
         if (obj == null)
             throw new RuntimeException("Unknown uml type");
-        obj.packageName = packageName;
+        obj.setPackageName(packageName);
         return obj;
     }
 }

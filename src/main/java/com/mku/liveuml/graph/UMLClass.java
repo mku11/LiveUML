@@ -31,25 +31,78 @@ import java.util.LinkedList;
 import java.util.List;
 
 public abstract class UMLClass {
-    public String filePath;
-    public String name;
-    public String packageName;
-    public boolean compact;
+    private String filePath;
+    private String name;
+    private String packageName;
+    private boolean compact;
 
-    public List<Method> methods = new LinkedList<>();
-    public List<Field> fields = new LinkedList<>();
-    public int line;
+    private List<Method> methods = new LinkedList<>();
+    private List<Field> fields = new LinkedList<>();
+    private int line;
 
-    public enum AccessModifier {
-        Default, Public, Private, Protected
-    }
-
-    public enum Modifier {
-        Final, Abstract
+    public void addMethods(List<Method> methods) {
+        this.methods.addAll(methods);
     }
 
     public enum Type {
         Class, Interface, Enumeration
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getPackageName() {
+        return packageName;
+    }
+
+    public void setPackageName(String packageName) {
+        this.packageName = packageName;
+    }
+
+    public boolean isCompact() {
+        return compact;
+    }
+
+    public void setCompact(boolean compact) {
+        this.compact = compact;
+    }
+
+    public List<Method> getMethods() {
+        return methods;
+    }
+
+    public void setMethods(List<Method> methods) {
+        this.methods = methods;
+    }
+
+    public List<Field> getFields() {
+        return fields;
+    }
+
+    public void setFields(List<Field> fields) {
+        this.fields.clear();
+        this.fields.addAll(fields);
+    }
+
+    public int getLine() {
+        return line;
+    }
+
+    public HashMap<String, UMLRelationship> getRelationships() {
+        return relationships;
+    }
+
+    public void setRelationships(HashMap<String, UMLRelationship> relationships) {
+        this.relationships = relationships;
     }
 
     public HashMap<String, UMLRelationship> relationships = new HashMap<>();

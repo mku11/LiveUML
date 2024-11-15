@@ -25,7 +25,6 @@ package com.mku.liveuml.gen;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.*;
@@ -67,7 +66,7 @@ public class Generator {
 
     private void resolveTypes(List<UMLClass> list) {
         for (UMLClass fieldOwner : list) {
-            for (Field field : fieldOwner.fields) {
+            for (Field field : fieldOwner.getFields()) {
                 if (!field.isPrimitiveType()) {
                     String fullName = field.getTypeFullName();
                     if (objects.containsKey(fullName)) {
@@ -82,7 +81,7 @@ public class Generator {
 
     private void createFieldAggregationRelationship(Field field, UMLClass fieldOwner, UMLClass fieldType) {
         UMLRelationship.Type relType = UMLRelationship.Type.Aggregation;
-        if (field.accessModifiers.contains(Field.AccessModifier.Private) && !hasPublicSetter(field, fieldOwner, fieldType))
+        if (field.accessModifiers.contains(AccessModifier.Private) && !hasPublicSetter(field, fieldOwner, fieldType))
             relType = UMLRelationship.Type.Composition;
         UMLRelationship rel = new UMLRelationship(fieldOwner, fieldType, relType);
         String key = rel.toString();
@@ -101,20 +100,20 @@ public class Generator {
 
     // TODO: check the method body it it's setting the specific field
     private boolean hasPublicSetter(Field field, UMLClass fieldOwner, UMLClass fieldType) {
-        for (Method method : fieldOwner.methods) {
+        for (Method method : fieldOwner.getMethods()) {
             // check public constructor param
-            if (method.name.equals(fieldOwner.name) && !method.accessModifiers.contains(Method.AccessModifier.Private)) {
+            if (method.name.equals(fieldOwner.getName()) && !method.accessModifiers.contains(AccessModifier.Private)) {
                 for (Parameter param : method.parameters) {
-                    if (param.getTypeName() != null && param.getTypeName().equals(fieldType.name)) {
+                    if (param.getTypeName() != null && param.getTypeName().equals(fieldType.getName())) {
                         return true;
                     }
                 }
             }
             // check public setter
             if (method.name.toLowerCase().startsWith(("set" + field.name).toLowerCase())
-                    && !method.accessModifiers.contains(Method.AccessModifier.Private)) {
+                    && !method.accessModifiers.contains(AccessModifier.Private)) {
                 for (Parameter param : method.parameters) {
-                    if (param.getTypeName() != null && param.getTypeName().equals(fieldType.name)) {
+                    if (param.getTypeName() != null && param.getTypeName().equals(fieldType.getName())) {
                         return true;
                     }
                 }
@@ -200,7 +199,7 @@ public class Generator {
         }
         if(methodDeclaration == null)
             return null;
-        for (Method m : caller.methods) {
+        for (Method m : caller.getMethods()) {
             if (m.getSignature().equals(methodDeclaration.getSignature().toString())) {
                 return m;
             }
@@ -245,7 +244,7 @@ public class Generator {
 
     private int getConstructorCount(UMLClass obj) {
         int constructors = 0;
-        for(Method method : obj.methods) {
+        for(Method method : obj.getMethods()) {
             if(method instanceof Constructor) {
                 constructors++;
             }
@@ -254,7 +253,7 @@ public class Generator {
     }
 
     private Constructor getConstructor(UMLClass obj, ObjectCreationExpr n) {
-        for(Method method : obj.methods) {
+        for(Method method : obj.getMethods()) {
             if(method instanceof Constructor) {
                 if(method.parameters.size() == n.getArguments().size())
                     return (Constructor) method;
@@ -319,7 +318,7 @@ public class Generator {
     private Method getMethodCalleeMethod(UMLClass callee, MethodCallExpr n) {
         try {
             String methodName = n.getNameAsString();
-            for (Method m : callee.methods) {
+            for (Method m : callee.getMethods()) {
                 if (m.name.equals(methodName) && m.parameters.size() == n.getArguments().size()) {
                     return m;
                 }
@@ -367,7 +366,7 @@ public class Generator {
         if(methodDeclaration == null)
             return null;
 
-        for (Method m : caller.methods) {
+        for (Method m : caller.getMethods()) {
             if (m.getSignature().equals(methodDeclaration.getSignature().toString())) {
                 return m;
             }
@@ -431,7 +430,7 @@ public class Generator {
             return null;
 
         try {
-            for (Method m : callee.methods) {
+            for (Method m : callee.getMethods()) {
                 if (m.getSignature().equals(methodDeclaration.getSignature().toString())) {
                     return m;
                 }
@@ -466,7 +465,7 @@ public class Generator {
     }
 
     private Field getFieldAccessed(UMLClass accessed, FieldAccessExpr n) {
-        for (Field f: accessed.fields) {
+        for (Field f: accessed.getFields()) {
             if (f.name.equals(n.getNameAsString())) {
                 return f;
             }
@@ -534,15 +533,15 @@ public class Generator {
         while (node.hasParentNode()) {
             node = node.getParentNode().get();
             if (node instanceof CompilationUnit) {
-                obj.packageName = ((CompilationUnit) node).getPackageDeclaration().get().getName().asString();
+                obj.setPackageName(((CompilationUnit) node).getPackageDeclaration().get().getName().asString());
                 break;
             }
         }
         obj.setLine(n.getBegin().get().line);
-        obj.fields = parseFields(n, obj);
-        obj.methods.addAll(parseConstructors(obj, n));
-        obj.methods.addAll(parseMethods(obj, n));
-        objects.put(obj.packageName + "." + obj.name, obj);
+        obj.setFields(parseFields(n, obj));
+        obj.addMethods(parseConstructors(obj, n));
+        obj.addMethods(parseMethods(obj, n));
+        objects.put(obj.getPackageName() + "." + obj.getName(), obj);
         return obj;
     }
 
@@ -564,9 +563,9 @@ public class Generator {
             }
         }
 
-        obj.fields = parseFields(n, obj);
-        obj.methods.addAll(parseConstructors(obj, n));
-        obj.methods.addAll(parseMethods(obj, n));
+        obj.setFields(parseFields(n, obj));
+        obj.addMethods(parseConstructors(obj, n));
+        obj.addMethods(parseMethods(obj, n));
         return obj;
     }
 
@@ -592,7 +591,7 @@ public class Generator {
         }
         obj.setFilePath(filePath);
         obj.setLine(line);
-        obj.packageName = packageName;
+        obj.setPackageName(packageName);
         return obj;
     }
 
@@ -615,7 +614,7 @@ public class Generator {
                 } else {
                     superClassObj = new Class(superClassName);
                     superClassObj.setFilePath(filePath);
-                    superClassObj.packageName = superClassPackageName;
+                    superClassObj.setPackageName(superClassPackageName);
                     objects.put(superClassFullName, superClassObj);
                 }
             }
@@ -646,7 +645,7 @@ public class Generator {
                     } else {
                         interfaceObj = new Interface(interfaceName);
                         interfaceObj.setFilePath(filePath);
-                        interfaceObj.packageName = interfacePackageName;
+                        interfaceObj.setPackageName(interfacePackageName);
                         objects.put(interfaceFullName, interfaceObj);
                     }
                     implementedInterfaces.add(interfaceObj);
@@ -673,8 +672,8 @@ public class Generator {
         List<Field> fields = new LinkedList<>();
         List<FieldDeclaration> flds = n.getFields();
         for (FieldDeclaration f : flds) {
-            List<Field.Modifier> modifiers = parseFieldModifiers(f);
-            List<Field.AccessModifier> accessModifiers = parseFieldAccessModifiers(f);
+            List<Modifier> modifiers = parseFieldModifiers(f);
+            List<AccessModifier> accessModifiers = parseFieldAccessModifiers(f);
             for (VariableDeclarator variableDeclarator : f.getVariables()) {
 
                 Field field = new Field(variableDeclarator.getNameAsString());
@@ -804,81 +803,81 @@ public class Generator {
         }
     }
 
-    private List<Method.Modifier> parseMethodModifiers(CallableDeclaration methodDecl) {
-        NodeList<Modifier> modifiers = methodDecl.getModifiers();
-        List<Method.Modifier> methodModifiers = new LinkedList<>();
-        for (Modifier modifier : modifiers) {
-            if (modifier.getKeyword() == Modifier.Keyword.STATIC)
-                methodModifiers.add(Method.Modifier.Static);
-            else if (modifier.getKeyword() == Modifier.Keyword.FINAL)
-                methodModifiers.add(Method.Modifier.Final);
-            else if (modifier.getKeyword() == Modifier.Keyword.ABSTRACT)
-                methodModifiers.add(Method.Modifier.Abstract);
-            else if (modifier.getKeyword() == Modifier.Keyword.SYNCHRONIZED)
-                methodModifiers.add(Method.Modifier.Synchronized);
-            else if (modifier.getKeyword() == Modifier.Keyword.NATIVE)
-                methodModifiers.add(Method.Modifier.Native);
-            else if (modifier.getKeyword() == Modifier.Keyword.STRICTFP)
-                methodModifiers.add(Method.Modifier.StrictFP);
+    private List<Modifier> parseMethodModifiers(CallableDeclaration methodDecl) {
+        NodeList<com.github.javaparser.ast.Modifier> modifiers = methodDecl.getModifiers();
+        List<Modifier> methodModifiers = new LinkedList<>();
+        for (com.github.javaparser.ast.Modifier modifier : modifiers) {
+            if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.STATIC)
+                methodModifiers.add(Modifier.Static);
+            else if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.FINAL)
+                methodModifiers.add(Modifier.Final);
+            else if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.ABSTRACT)
+                methodModifiers.add(Modifier.Abstract);
+            else if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.SYNCHRONIZED)
+                methodModifiers.add(Modifier.Synchronized);
+            else if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.NATIVE)
+                methodModifiers.add(Modifier.Native);
+            else if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.STRICTFP)
+                methodModifiers.add(Modifier.StrictFP);
         }
         return methodModifiers;
     }
 
-    private List<Method.AccessModifier> parseMethodAccessModifiers(CallableDeclaration methodDecl) {
-        NodeList<Modifier> modifiers = methodDecl.getModifiers();
-        List<Method.AccessModifier> methodAccessModifiers = new LinkedList<>();
-        for (Modifier modifier : modifiers) {
-            if (modifier.getKeyword() == Modifier.Keyword.PUBLIC)
-                methodAccessModifiers.add(Method.AccessModifier.Public);
-            else if (modifier.getKeyword() == Modifier.Keyword.PROTECTED)
-                methodAccessModifiers.add(Method.AccessModifier.Protected);
-            else if (modifier.getKeyword() == Modifier.Keyword.PRIVATE)
-                methodAccessModifiers.add(Method.AccessModifier.Private);
-            else if (modifier.getKeyword() == Modifier.Keyword.DEFAULT)
-                methodAccessModifiers.add(Method.AccessModifier.Default);
+    private List<AccessModifier> parseMethodAccessModifiers(CallableDeclaration methodDecl) {
+        NodeList<com.github.javaparser.ast.Modifier> modifiers = methodDecl.getModifiers();
+        List<AccessModifier> methodAccessModifiers = new LinkedList<>();
+        for (com.github.javaparser.ast.Modifier modifier : modifiers) {
+            if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.PUBLIC)
+                methodAccessModifiers.add(AccessModifier.Public);
+            else if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.PROTECTED)
+                methodAccessModifiers.add(AccessModifier.Protected);
+            else if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.PRIVATE)
+                methodAccessModifiers.add(AccessModifier.Private);
+            else if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.DEFAULT)
+                methodAccessModifiers.add(AccessModifier.Default);
         }
         return methodAccessModifiers;
     }
 
-    private List<Parameter.Modifier> parseParameterModifiers(com.github.javaparser.ast.body.Parameter parameter) {
-        NodeList<Modifier> modifiers = parameter.getModifiers();
-        List<Parameter.Modifier> accessModifiers = new LinkedList<>();
-        for (Modifier modifier : modifiers) {
-            if (modifier.getKeyword() == Modifier.Keyword.FINAL)
-                accessModifiers.add(Parameter.Modifier.Final);
+    private List<Modifier> parseParameterModifiers(com.github.javaparser.ast.body.Parameter parameter) {
+        NodeList<com.github.javaparser.ast.Modifier> modifiers = parameter.getModifiers();
+        List<Modifier> accessModifiers = new LinkedList<>();
+        for (com.github.javaparser.ast.Modifier modifier : modifiers) {
+            if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.FINAL)
+                accessModifiers.add(Modifier.Final);
         }
         return accessModifiers;
     }
 
 
-    private List<Field.Modifier> parseFieldModifiers(FieldDeclaration fieldDecl) {
-        NodeList<Modifier> modifiers = fieldDecl.getModifiers();
-        List<Field.Modifier> methodModifiers = new LinkedList<>();
-        for (Modifier modifier : modifiers) {
-            if (modifier.getKeyword() == Modifier.Keyword.STATIC)
-                methodModifiers.add(Field.Modifier.Static);
-            else if (modifier.getKeyword() == Modifier.Keyword.FINAL)
-                methodModifiers.add(Field.Modifier.Final);
-            else if (modifier.getKeyword() == Modifier.Keyword.TRANSIENT)
-                methodModifiers.add(Field.Modifier.Transient);
-            else if (modifier.getKeyword() == Modifier.Keyword.VOLATILE)
-                methodModifiers.add(Field.Modifier.Volatile);
+    private List<Modifier> parseFieldModifiers(FieldDeclaration fieldDecl) {
+        NodeList<com.github.javaparser.ast.Modifier> modifiers = fieldDecl.getModifiers();
+        List<Modifier> methodModifiers = new LinkedList<>();
+        for (com.github.javaparser.ast.Modifier modifier : modifiers) {
+            if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.STATIC)
+                methodModifiers.add(Modifier.Static);
+            else if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.FINAL)
+                methodModifiers.add(Modifier.Final);
+            else if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.TRANSIENT)
+                methodModifiers.add(Modifier.Transient);
+            else if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.VOLATILE)
+                methodModifiers.add(Modifier.Volatile);
         }
         return methodModifiers;
     }
 
-    private List<Field.AccessModifier> parseFieldAccessModifiers(FieldDeclaration fieldDecl) {
-        NodeList<Modifier> modifiers = fieldDecl.getModifiers();
-        List<Field.AccessModifier> methodAccessModifiers = new LinkedList<>();
-        for (Modifier modifier : modifiers) {
-            if (modifier.getKeyword() == Modifier.Keyword.PUBLIC)
-                methodAccessModifiers.add(Field.AccessModifier.Public);
-            else if (modifier.getKeyword() == Modifier.Keyword.PROTECTED)
-                methodAccessModifiers.add(Field.AccessModifier.Protected);
-            else if (modifier.getKeyword() == Modifier.Keyword.PRIVATE)
-                methodAccessModifiers.add(Field.AccessModifier.Private);
-            else if (modifier.getKeyword() == Modifier.Keyword.DEFAULT)
-                methodAccessModifiers.add(Field.AccessModifier.Default);
+    private List<AccessModifier> parseFieldAccessModifiers(FieldDeclaration fieldDecl) {
+        NodeList<com.github.javaparser.ast.Modifier> modifiers = fieldDecl.getModifiers();
+        List<AccessModifier> methodAccessModifiers = new LinkedList<>();
+        for (com.github.javaparser.ast.Modifier modifier : modifiers) {
+            if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.PUBLIC)
+                methodAccessModifiers.add(AccessModifier.Public);
+            else if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.PROTECTED)
+                methodAccessModifiers.add(AccessModifier.Protected);
+            else if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.PRIVATE)
+                methodAccessModifiers.add(AccessModifier.Private);
+            else if (modifier.getKeyword() == com.github.javaparser.ast.Modifier.Keyword.DEFAULT)
+                methodAccessModifiers.add(AccessModifier.Default);
         }
         return methodAccessModifiers;
     }

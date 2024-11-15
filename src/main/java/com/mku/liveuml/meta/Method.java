@@ -27,15 +27,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Method {
-
-    public enum AccessModifier {
-        Default, Public, Private, Protected
-    }
-
-    public enum Modifier {
-        Final, Static, Abstract, Synchronized, Native, StrictFP
-    }
-
     public String name;
     public String returnTypeName;
     public String returnTypePackageName;

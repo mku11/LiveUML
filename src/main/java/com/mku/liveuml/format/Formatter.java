@@ -25,6 +25,7 @@ package com.mku.liveuml.format;
 
 import com.mku.liveuml.graph.UMLRelationship;
 import com.mku.liveuml.graph.UMLClass;
+import com.mku.liveuml.meta.AccessModifier;
 import com.mku.liveuml.meta.Parameter;
 import com.mku.liveuml.meta.Field;
 import com.mku.liveuml.meta.Method;
@@ -40,12 +41,12 @@ public class Formatter {
                                  HashSet<Method> selectedMethods, HashSet<Field> selectedFields) {
         String classBackgroundColor = getSelectionColor(object, selectedVertices, selectedEdges, selectedMethods, selectedFields);
         String body = "<html><body style='font-family: monospace; font-size: 10px; font-weight: bold;'>";
-        body += "<div><div><center style='margin: 4px; font-size: 14px;" + classBackgroundColor + "'>" + object.name + "</center><div>";
+        body += "<div><div><center style='margin: 4px; font-size: 14px;" + classBackgroundColor + "'>" + object.getName() + "</center><div>";
         if(!compact) {
-            if (object.fields.size() > 0) {
+            if (object.getFields().size() > 0) {
                 body += "<hr class=\"solid\">";
                 body += "<div style='padding: 8px;'>";
-                for (Field field : object.fields) {
+                for (Field field : object.getFields()) {
                     String fieldBackgroundColor = "";
                     if(selectedFields.contains(field))
                         fieldBackgroundColor =selectionBackgroundColor;
@@ -53,10 +54,10 @@ public class Formatter {
                 }
                 body += "</div>";
             }
-            if (object.methods.size() > 0) {
+            if (object.getMethods().size() > 0) {
                 body += "<hr class=\"solid\">";
                 body += "<div style='padding: 8px;'>";
-                for (Method method : object.methods) {
+                for (Method method : object.getMethods()) {
                     String signature = getMethodSignature(method, true);
                     String methodBackgroundColor = "";
                     if(selectedMethods.contains(method))
@@ -81,12 +82,12 @@ public class Formatter {
                 return selectionBackgroundColor;
             }
         }
-        for (Field field: object.fields) {
+        for (Field field: object.getFields()) {
             if (selectedFields.contains(field)) {
                 return selectionBackgroundColor;
             }
         }
-        for (Method method : object.methods) {
+        for (Method method : object.getMethods()) {
             if (selectedMethods.contains(method)) {
                 return selectionBackgroundColor;
             }
@@ -119,21 +120,21 @@ public class Formatter {
     }
 
     private static String getMethodQualifier(Method method) {
-        if (method.accessModifiers.contains(Method.AccessModifier.Protected))
+        if (method.accessModifiers.contains(AccessModifier.Protected))
             return "#";
-        else if (method.accessModifiers.contains(Method.AccessModifier.Private))
+        else if (method.accessModifiers.contains(AccessModifier.Private))
             return "-";
-        else if (method.accessModifiers.contains(Method.AccessModifier.Public))
+        else if (method.accessModifiers.contains(AccessModifier.Public))
             return "+";
         return "";
     }
 
     private static String getFieldQualifier(Field field) {
-        if (field.accessModifiers.contains(Field.AccessModifier.Protected))
+        if (field.accessModifiers.contains(AccessModifier.Protected))
             return "#";
-        else if (field.accessModifiers.contains(Field.AccessModifier.Private))
+        else if (field.accessModifiers.contains(AccessModifier.Private))
             return "-";
-        else if (field.accessModifiers.contains(Field.AccessModifier.Public))
+        else if (field.accessModifiers.contains(AccessModifier.Public))
             return "+";
         return "";
     }

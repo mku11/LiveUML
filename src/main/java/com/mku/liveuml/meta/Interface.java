@@ -26,7 +26,6 @@ package com.mku.liveuml.meta;
 import com.mku.liveuml.graph.UMLClass;
 
 public class Interface extends UMLClass {
-
     public Interface(String name) {
         super(name);
     }

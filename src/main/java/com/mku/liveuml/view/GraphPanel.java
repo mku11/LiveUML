@@ -25,6 +25,7 @@ package com.mku.liveuml.view;
 
 import com.mku.liveuml.Main;
 import com.mku.liveuml.format.Formatter;
+import com.mku.liveuml.meta.AccessModifier;
 import com.mku.liveuml.meta.Constructor;
 import com.mku.liveuml.meta.Field;
 import com.mku.liveuml.meta.Method;
@@ -73,7 +74,7 @@ public class GraphPanel extends JPanel {
     }
 
     public void toggleCompact(UMLClass obj) {
-        obj.compact = !obj.compact;
+        obj.setCompact(!obj.isCompact());
     }
 
     public void createAndDisplay(List<UMLClass> classes) {
@@ -124,7 +125,7 @@ public class GraphPanel extends JPanel {
                 new VertexLabelAsShapeRenderer<>(visualizationModel.getLayoutModel(), vv.getRenderContext());
 
         vv.getRenderContext().setVertexLabelFunction(object -> {
-            return com.mku.liveuml.format.Formatter.display(object, !object.compact,
+            return com.mku.liveuml.format.Formatter.display(object, !object.isCompact(),
                     selectedVertices, selectedEdges, selectedMethods, selectedFields);
         });
         vv.getRenderContext().setVertexShapeFunction(vlasr);
@@ -144,7 +145,7 @@ public class GraphPanel extends JPanel {
         vv.getRenderer().setVertexRenderer(BiModalRenderer.HEAVYWEIGHT, new GradientVertexRenderer<>(Color.white, Color.white, true));
         vv.getRenderer().setVertexLabelRenderer(BiModalRenderer.HEAVYWEIGHT, vlasr);
         vv.setBackground(Color.white);
-        vv.setVertexToolTipFunction(n -> n.name);
+        vv.setVertexToolTipFunction(n -> n.getName());
 
         // FIXME: workaround: setting custom arrows does not work since the setupArrows()
         // always overrides, so we inject our shape here:
@@ -220,7 +221,7 @@ public class GraphPanel extends JPanel {
 
     private void showContextMenu(UMLClass s, MouseEvent me) {
         JPopupMenu menu = new JPopupMenu();
-        JMenuItem item = new JMenuItem(s.compact?"Collapse":"Expand");
+        JMenuItem item = new JMenuItem(s.isCompact()?"Collapse":"Expand");
         item.addActionListener(e -> EventQueue.invokeLater(() -> {
             toggleCompact(s);
             vv.repaint();
@@ -231,7 +232,7 @@ public class GraphPanel extends JPanel {
         JMenu refMenu = new JMenu("Find references");
         menu.add(refMenu);
 
-        JMenuItem cItem = new JMenuItem("Class " + s.name);
+        JMenuItem cItem = new JMenuItem("Class " + s.getName());
         cItem.addActionListener(e -> {
             findClassReference(s);
             vv.repaint();
@@ -239,9 +240,9 @@ public class GraphPanel extends JPanel {
         refMenu.add(cItem);
 
         List<JMenuItem> items = new ArrayList<>();
-        if(s.fields.size() > 0) {
-            for (Field f : s.fields) {
-                if (f.accessModifiers.contains(Field.AccessModifier.Private))
+        if(s.getFields().size() > 0) {
+            for (Field f : s.getFields()) {
+                if (f.accessModifiers.contains(AccessModifier.Private))
                     continue;
                 JMenuItem fItem = new JMenuItem(com.mku.liveuml.format.Formatter.getFieldFormatted(f));
                 fItem.addActionListener(e -> {
@@ -261,11 +262,11 @@ public class GraphPanel extends JPanel {
         }
 
         items.clear();
-        if(s.methods.size() >0) {
-            for (Method m : s.methods) {
+        if(s.getMethods().size() >0) {
+            for (Method m : s.getMethods()) {
                 if(!(m instanceof Constructor))
                     continue;
-                if (m.accessModifiers.contains(Method.AccessModifier.Private))
+                if (m.accessModifiers.contains(AccessModifier.Private))
                     continue;
                 String methodName = com.mku.liveuml.format.Formatter.getMethodSignature(m, true);
                 JMenuItem mItem = new JMenuItem(methodName);
@@ -286,11 +287,11 @@ public class GraphPanel extends JPanel {
         }
 
         items.clear();
-        if(s.methods.size() >0) {
-            for (Method m : s.methods) {
+        if(s.getMethods().size() >0) {
+            for (Method m : s.getMethods()) {
                 if(m instanceof Constructor)
                     continue;
-                if (m.accessModifiers.contains(Method.AccessModifier.Private))
+                if (m.accessModifiers.contains(AccessModifier.Private))
                     continue;
                 String methodName = com.mku.liveuml.format.Formatter.getMethodSignature(m, true);
                 JMenuItem mItem = new JMenuItem(methodName);
@@ -314,7 +315,7 @@ public class GraphPanel extends JPanel {
         JMenu goToMenu = new JMenu("View in Text Editor");
         menu.add(goToMenu);
 
-        cItem = new JMenuItem("Class " + s.name);
+        cItem = new JMenuItem("Class " + s.getName());
         cItem.addActionListener(e -> {
             goToClassReference(s);
             vv.repaint();
@@ -322,8 +323,8 @@ public class GraphPanel extends JPanel {
         goToMenu.add(cItem);
 
         items.clear();
-        if(s.fields.size() > 0) {
-            for (Field f : s.fields) {
+        if(s.getFields().size() > 0) {
+            for (Field f : s.getFields()) {
                 JMenuItem fItem = new JMenuItem(com.mku.liveuml.format.Formatter.getFieldFormatted(f));
                 fItem.addActionListener(e -> {
                     goToFieldReference(s, f);
@@ -342,8 +343,8 @@ public class GraphPanel extends JPanel {
         }
 
         items.clear();
-        if(s.methods.size() >0) {
-            for (Method m : s.methods) {
+        if(s.getMethods().size() >0) {
+            for (Method m : s.getMethods()) {
                 if(!(m instanceof Constructor))
                     continue;
                 String methodName = com.mku.liveuml.format.Formatter.getMethodSignature(m, true);
@@ -365,8 +366,8 @@ public class GraphPanel extends JPanel {
         }
 
         items.clear();
-        if(s.methods.size() >0) {
-            for (Method m : s.methods) {
+        if(s.getMethods().size() >0) {
+            for (Method m : s.getMethods()) {
                 if(m instanceof Constructor)
                     continue;
                 String methodName = Formatter.getMethodSignature(m, true);
@@ -393,15 +394,15 @@ public class GraphPanel extends JPanel {
     }
 
     private void goToClassReference(UMLClass s) {
-        openFileLine(s.filePath, s.line);
+        openFileLine(s.getFilePath(), s.getLine());
     }
 
     private void goToMethodReference(UMLClass s, Method m) {
-        openFileLine(s.filePath, m.line);
+        openFileLine(s.getFilePath(), m.line);
     }
 
     private void goToFieldReference(UMLClass s, Field f) {
-        openFileLine(s.filePath, f.line);
+        openFileLine(s.getFilePath(), f.line);
     }
 
     private void openFileLine(String filePath, int line) {

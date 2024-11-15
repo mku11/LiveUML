@@ -33,11 +33,9 @@ import com.google.gson.Gson;
 import com.google.gson.internal.StringMap;
 import com.mku.liveuml.gen.Generator;
 import com.mku.liveuml.graph.UMLClassFactory;
-import com.mku.liveuml.meta.Field;
-import com.mku.liveuml.meta.Method;
+import com.mku.liveuml.meta.*;
 import com.mku.liveuml.graph.UMLRelationship;
 import com.mku.liveuml.graph.UMLClass;
-import com.mku.liveuml.meta.Parameter;
 import com.mku.liveuml.view.GraphPanel;
 import org.jgrapht.Graph;
 import org.jgrapht.nio.Attribute;
@@ -371,7 +369,7 @@ public class Main {
             }
             UMLClass fieldOwnerObj = vertices.get(fieldOwner);
             Field field = null;
-            for(Field f : fieldOwnerObj.fields) {
+            for(Field f : fieldOwnerObj.getFields()) {
                 if(f.name.equals(fieldName)) {
                     field = f;
                     break;
@@ -387,7 +385,7 @@ public class Main {
             }
             Method method = null;
             if(methodName != null && methodOwnerObj != null) {
-                for(Method m : methodOwnerObj.methods) {
+                for(Method m : methodOwnerObj.getMethods()) {
                     if(m.getSignature().equals(methodName)) {
                         method = m;
                         break;
@@ -412,7 +410,7 @@ public class Main {
             }
             UMLClass methodOwnerObj = vertices.get(methodOwner);
             Method method = null;
-            for(Method m : methodOwnerObj.methods) {
+            for(Method m : methodOwnerObj.getMethods()) {
                 if(m.getSignature().equals(methodName)) {
                     method = m;
                     break;
@@ -428,7 +426,7 @@ public class Main {
             }
             Field field = null;
             if(fieldName != null && fieldOwnerObj != null) {
-                for(Field f : fieldOwnerObj.fields) {
+                for(Field f : fieldOwnerObj.getFields()) {
                     if(f.name.equals(fieldName)) {
                         field = f;
                         break;
@@ -453,7 +451,7 @@ public class Main {
             }
             UMLClass methodOwnerObj = vertices.get(methodOwner);
             Method method = null;
-            for(Method m : methodOwnerObj.methods) {
+            for(Method m : methodOwnerObj.getMethods()) {
                 if(m.getSignature().equals(methodName)) {
                     method = m;
                     break;
@@ -469,7 +467,7 @@ public class Main {
             }
             Method method2 = null;
             if(methodName2 != null && methodOwnerObj2 != null) {
-                for(Method m2 : methodOwnerObj2.methods) {
+                for(Method m2 : methodOwnerObj2.getMethods()) {
                     if(m2.getSignature().equals(methodName2)) {
                         method2 = m2;
                         break;
@@ -490,7 +488,7 @@ public class Main {
             }
             UMLClass obj = vertices.get(ownerName);
             Field field = null;
-            for(Field f : obj.fields) {
+            for(Field f : obj.getFields()) {
                 if(f.name.equals(name)) {
                     field = f;
                     break;
@@ -512,7 +510,7 @@ public class Main {
                 obj = vertices.get(ownerName);
             String name = (String) fmap.getOrDefault("name", null);
             Field field = null;
-            for(Field f : obj.fields) {
+            for(Field f : obj.getFields()) {
                 if(f.name.equals(name)) {
                     field = f;
                     break;
@@ -530,13 +528,13 @@ public class Main {
                 List<String> modifiers = (List<String>) fmap.getOrDefault("modifiers", null);
                 if (modifiers != null) {
                     for (String modifier : modifiers) {
-                        field.modifiers.add(Field.Modifier.valueOf(modifier));
+                        field.modifiers.add(Modifier.valueOf(modifier));
                     }
                 }
                 List<String> accessModifiers = (List<String>) fmap.getOrDefault("accessModifiers", null);
                 if (accessModifiers != null) {
                     for (String accessModifier : accessModifiers) {
-                        field.accessModifiers.add(Field.AccessModifier.valueOf(accessModifier));
+                        field.accessModifiers.add(AccessModifier.valueOf(accessModifier));
                     }
                 }
                 field.isArray = (boolean) fmap.getOrDefault("isArray", false);
@@ -554,7 +552,7 @@ public class Main {
                 continue;
             UMLClass obj = vertices.get(ownerName);
             Method method = null;
-            for (Method m : obj.methods) {
+            for (Method m : obj.getMethods()) {
                 if (m.getSignature().equals(name)) {
                     method = m;
                     break;
@@ -576,7 +574,7 @@ public class Main {
                 obj = vertices.get(ownerName);
             String name = (String) mmap.getOrDefault("name", null);
             Method method = null;
-            for(Method m : obj.methods) {
+            for(Method m : obj.getMethods()) {
                 if(m.name.equals(name)) {
                     method = m;
                     break;
@@ -593,13 +591,13 @@ public class Main {
                 List<String> modifiers = (List<String>) mmap.getOrDefault("modifiers", null);
                 if (modifiers != null) {
                     for (String modifier : modifiers) {
-                        method.modifiers.add(Method.Modifier.valueOf(modifier));
+                        method.modifiers.add(Modifier.valueOf(modifier));
                     }
                 }
                 List<String> accessModifiers = (List<String>) mmap.getOrDefault("accessModifiers", null);
                 if (accessModifiers != null) {
                     for (String accessModifier : accessModifiers) {
-                        method.accessModifiers.add(Method.AccessModifier.valueOf(accessModifier));
+                        method.accessModifiers.add(AccessModifier.valueOf(accessModifier));
                     }
                 }
                 List<StringMap<String>> parameters = (List<StringMap<String>>) mmap.getOrDefault("parameters", null);
@@ -623,7 +621,7 @@ public class Main {
         List<String> modifiers = (List<String>) map.getOrDefault("modifiers", null);
         if (modifiers != null) {
             for (String modifier : modifiers) {
-                parameter.modifiers.add(Parameter.Modifier.valueOf(modifier));
+                parameter.modifiers.add(Modifier.valueOf(modifier));
             }
         }
         parameter.setArray((boolean) map.getOrDefault("isArray", false));
@@ -658,22 +656,22 @@ public class Main {
                 vertexPositions.put(obj, point);
                 break;
             case "line":
-                obj.line = Integer.parseInt(attribute.getValue());
+                obj.setLine(Integer.parseInt(attribute.getValue()));
                 break;
             case "filePath":
-                obj.filePath = attribute.getValue();
+                obj.setFilePath(attribute.getValue());
                 break;
             case "packageName":
-                obj.packageName = attribute.getValue();
+                obj.setPackageName(attribute.getValue());
                 break;
             case "fields":
-                obj.fields = parseFields((List<StringMap>) new Gson().fromJson(attribute.getValue(), List.class), obj, vertices);
+                obj.setFields(parseFields((List<StringMap>) new Gson().fromJson(attribute.getValue(), List.class), obj, vertices));
                 break;
             case "methods":
-                obj.methods = parseMethods((List<StringMap>) new Gson().fromJson(attribute.getValue(), List.class), obj, vertices);
+                obj.setMethods(parseMethods((List<StringMap>) new Gson().fromJson(attribute.getValue(), List.class), obj, vertices));
                 break;
             case "compact":
-                obj.compact = Boolean.parseBoolean(attribute.getValue());
+                obj.setCompact(Boolean.parseBoolean(attribute.getValue()));
                 break;
         }
     }
@@ -685,13 +683,13 @@ public class Main {
             map.put("x", new DefaultAttribute<>(point.x, AttributeType.DOUBLE));
             map.put("y", new DefaultAttribute<>(point.y, AttributeType.DOUBLE));
         }
-        map.put("line", new DefaultAttribute<>(obj.line, AttributeType.INT));
-        map.put("filePath", new DefaultAttribute<>(obj.filePath, AttributeType.STRING));
-        map.put("packageName", new DefaultAttribute<>(obj.packageName, AttributeType.STRING));
+        map.put("line", new DefaultAttribute<>(obj.getLine(), AttributeType.INT));
+        map.put("filePath", new DefaultAttribute<>(obj.getFilePath(), AttributeType.STRING));
+        map.put("packageName", new DefaultAttribute<>(obj.getPackageName(), AttributeType.STRING));
 
-        map.put("fields", new DefaultAttribute<>(new Gson().toJson(obj.fields), AttributeType.STRING));
-        map.put("methods", new DefaultAttribute<>(new Gson().toJson(obj.methods), AttributeType.STRING));
-        map.put("compact", new DefaultAttribute<>(obj.compact, AttributeType.BOOLEAN));
+        map.put("fields", new DefaultAttribute<>(new Gson().toJson(obj.getFields()), AttributeType.STRING));
+        map.put("methods", new DefaultAttribute<>(new Gson().toJson(obj.getMethods()), AttributeType.STRING));
+        map.put("compact", new DefaultAttribute<>(obj.isCompact(), AttributeType.BOOLEAN));
         return map;
     }
 

@@ -25,24 +25,15 @@ package com.mku.liveuml.meta;
 import java.util.*;
 
 public class Field {
-    public boolean isArray;
-    public enum AccessModifier {
-        Default, Public, Private, Protected
-    }
-
-    public enum Modifier {
-        Final, Static, Transient, Volatile
-    }
     public String name;
     public List<Modifier> modifiers = new LinkedList<>();
     public List<AccessModifier> accessModifiers  = new LinkedList<>();
-
+    public boolean isArray;
     public String baseTypeName;
     public String typeName;
     public String typePackageName;
     public String primitiveType;
     public String owner;
-
     public int line;
 
     public Field(String name) {

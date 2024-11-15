@@ -38,10 +38,6 @@ public class Parameter {
         this.name = name;
     }
 
-    public enum Modifier {
-        Final
-    }
-
     public String getName() {
         return name;
     }
