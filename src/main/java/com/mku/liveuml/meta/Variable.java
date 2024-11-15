@@ -23,10 +23,16 @@ SOFTWARE.
 */
 package com.mku.liveuml.meta;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Variable {
 
+    private String name;
+    private String primitiveType;
+    private String typeName;
+    private String typePackageName;
+    private boolean isArray;
 
     public Variable(String name) {
         this.name = name;
@@ -36,12 +42,50 @@ public class Variable {
         Final
     }
 
-    public String name;
+    public String getName() {
+        return name;
+    }
 
-    public String primitiveType;
-    public String typeName;
-    public String typePackageName;
-    public boolean isArray;
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getPrimitiveType() {
+        return primitiveType;
+    }
+
+    public void setPrimitiveType(String primitiveType) {
+        this.primitiveType = primitiveType;
+    }
+
+    public void setTypeName(String typeName) {
+        this.typeName = typeName;
+    }
+
+    public String getTypePackageName() {
+        return typePackageName;
+    }
+
+    public void setTypePackageName(String typePackageName) {
+        this.typePackageName = typePackageName;
+    }
+
+    public boolean isArray() {
+        return isArray;
+    }
+
+    public void setArray(boolean array) {
+        isArray = array;
+    }
+
+    public List<Modifier> getModifiers() {
+        return new ArrayList<>(modifiers);
+    }
+
+    public void setModifiers(List<Modifier> modifiers) {
+        this.modifiers.clear();
+        this.modifiers.addAll(modifiers);
+    }
 
     public String getTypeName() {
         return isPrimitiveType() ? primitiveType : typeName;

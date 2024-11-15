@@ -105,7 +105,7 @@ public class Generator {
             // check public constructor param
             if (method.name.equals(fieldOwner.name) && !method.accessModifiers.contains(Method.AccessModifier.Private)) {
                 for (Variable param : method.parameters) {
-                    if (param.typeName != null && param.typeName.equals(fieldType.name)) {
+                    if (param.getTypeName() != null && param.getTypeName().equals(fieldType.name)) {
                         return true;
                     }
                 }
@@ -114,7 +114,7 @@ public class Generator {
             if (method.name.toLowerCase().startsWith(("set" + field.name).toLowerCase())
                     && !method.accessModifiers.contains(Method.AccessModifier.Private)) {
                 for (Variable param : method.parameters) {
-                    if (param.typeName != null && param.typeName.equals(fieldType.name)) {
+                    if (param.getTypeName() != null && param.getTypeName().equals(fieldType.name)) {
                         return true;
                     }
                 }
@@ -757,7 +757,7 @@ public class Generator {
 
     private static void createParameterTypeRelationship(UMLObject obj, Method method, Variable variable) {
         Relationship.Type type = Relationship.Type.Dependency;
-        UMLObject refClass = objects.getOrDefault(variable.typePackageName + "." + variable.getTypeName(), null);
+        UMLObject refClass = objects.getOrDefault(variable.getTypePackageName() + "." + variable.getTypeName(), null);
         if(refClass == null || refClass == obj)
             return;
         Relationship rel = new Relationship(obj, refClass, type);
@@ -780,24 +780,24 @@ public class Generator {
             ResolvedType type = parameter.resolve().getType();
             if (type.isReferenceType()) {
                 ResolvedReferenceTypeDeclaration parameterTypeDecl = type.asReferenceType().getTypeDeclaration().get();
-                variable.typeName = parameterTypeDecl.getName();
-                variable.typePackageName = parameterTypeDecl.getPackageName();
+                variable.setTypeName(parameterTypeDecl.getName());
+                variable.setTypePackageName(parameterTypeDecl.getPackageName());
             } else if (type.isPrimitive()) {
-                variable.primitiveType = type.asPrimitive().name().toLowerCase();
+                variable.setPrimitiveType(type.asPrimitive().name().toLowerCase());
             } else if (type.isArray()) {
-                variable.isArray = true;
+                variable.setArray(true);
                 ResolvedType baseType = ((ResolvedArrayType) type).getComponentType();
                 while(baseType instanceof ResolvedArrayType) {
                     baseType = ((ResolvedArrayType) baseType).getComponentType();
                 }
                 if(baseType.isPrimitive()) {
-                    variable.primitiveType = type.describe();
+                    variable.setPrimitiveType(type.describe());
                 } else if (baseType.isReferenceType()) {
                     ResolvedReferenceTypeDeclaration parameterTypeDecl = baseType.asReferenceType().getTypeDeclaration().get();
-                    variable.typePackageName = parameterTypeDecl.getPackageName();
-                    variable.typeName = type.describe();
-                    if(type.describe().startsWith(variable.typePackageName))
-                        variable.typeName = variable.typeName.substring(variable.typePackageName.length()+1);
+                    variable.setTypePackageName(parameterTypeDecl.getPackageName());
+                    variable.setTypeName(type.describe());
+                    if(type.describe().startsWith(variable.getTypePackageName()))
+                        variable.setTypeName(variable.getTypeName().substring(variable.getTypePackageName().length()+1));
                 }
             } else if (!type.isArray() && !type.isVoid() && !type.isTypeVariable()) {
                 System.err.println("Could not get param type: " + type);
@@ -862,6 +862,10 @@ public class Generator {
                 methodModifiers.add(Field.Modifier.Static);
             else if (modifier.getKeyword() == Modifier.Keyword.FINAL)
                 methodModifiers.add(Field.Modifier.Final);
+            else if (modifier.getKeyword() == Modifier.Keyword.TRANSIENT)
+                methodModifiers.add(Field.Modifier.Transient);
+            else if (modifier.getKeyword() == Modifier.Keyword.VOLATILE)
+                methodModifiers.add(Field.Modifier.Volatile);
         }
         return methodModifiers;
     }

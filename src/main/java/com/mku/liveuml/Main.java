@@ -618,16 +618,16 @@ public class Main {
 
     private static Variable parseVariable(StringMap map) {
         Variable variable = new Variable((String) map.get("name"));
-        variable.primitiveType = (String) map.getOrDefault("primitiveType", null);
-        variable.typeName = (String) map.getOrDefault("typeName", null);
-        variable.typePackageName = (String) map.getOrDefault("typePackageName", null);
+        variable.setPrimitiveType((String) map.getOrDefault("primitiveType", null));
+        variable.setTypeName((String) map.getOrDefault("typeName", null));
+        variable.setTypePackageName((String) map.getOrDefault("typePackageName", null));
         List<String> modifiers = (List<String>) map.getOrDefault("modifiers", null);
         if (modifiers != null) {
             for (String modifier : modifiers) {
                 variable.modifiers.add(Variable.Modifier.valueOf(modifier));
             }
         }
-        variable.isArray = (boolean) map.getOrDefault("isArray", false);
+        variable.setArray((boolean) map.getOrDefault("isArray", false));
         return variable;
     }
 

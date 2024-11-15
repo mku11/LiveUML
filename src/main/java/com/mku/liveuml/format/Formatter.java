@@ -107,7 +107,7 @@ public class Formatter {
         for (Variable variable : method.parameters) {
             if (params.length() > 0)
                 params += ", ";
-            params += variable.name + " : " + variable.getTypeName();
+            params += variable.getName() + " : " + variable.getTypeName();
         }
         signature += params;
         signature += ")";
