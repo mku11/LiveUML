@@ -23,8 +23,8 @@ SOFTWARE.
 */
 package com.mku.liveuml.graph;
 
-import com.mku.liveuml.meta.Field;
-import com.mku.liveuml.meta.Method;
+import com.mku.liveuml.entities.Field;
+import com.mku.liveuml.entities.Method;
 
 import java.util.HashMap;
 import java.util.HashSet;

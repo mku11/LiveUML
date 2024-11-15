@@ -25,10 +25,10 @@ package com.mku.liveuml.view;
 
 import com.mku.liveuml.Main;
 import com.mku.liveuml.format.Formatter;
-import com.mku.liveuml.meta.AccessModifier;
-import com.mku.liveuml.meta.Constructor;
-import com.mku.liveuml.meta.Field;
-import com.mku.liveuml.meta.Method;
+import com.mku.liveuml.entities.AccessModifier;
+import com.mku.liveuml.entities.Constructor;
+import com.mku.liveuml.entities.Field;
+import com.mku.liveuml.entities.Method;
 import com.mku.liveuml.graph.UMLRelationship;
 import com.mku.liveuml.graph.UMLClass;
 import org.jgrapht.Graph;

@@ -25,10 +25,10 @@ package com.mku.liveuml.format;
 
 import com.mku.liveuml.graph.UMLRelationship;
 import com.mku.liveuml.graph.UMLClass;
-import com.mku.liveuml.meta.AccessModifier;
-import com.mku.liveuml.meta.Parameter;
-import com.mku.liveuml.meta.Field;
-import com.mku.liveuml.meta.Method;
+import com.mku.liveuml.entities.AccessModifier;
+import com.mku.liveuml.entities.Parameter;
+import com.mku.liveuml.entities.Field;
+import com.mku.liveuml.entities.Method;
 
 import java.util.HashSet;
 

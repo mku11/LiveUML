@@ -23,9 +23,9 @@ SOFTWARE.
 */
 package com.mku.liveuml.graph;
 
-import com.mku.liveuml.meta.Class;
-import com.mku.liveuml.meta.Enumeration;
-import com.mku.liveuml.meta.Interface;
+import com.mku.liveuml.entities.Class;
+import com.mku.liveuml.entities.Enumeration;
+import com.mku.liveuml.entities.Interface;
 
 public class UMLClassFactory {
     public static UMLClass create(String name) {

@@ -41,9 +41,9 @@ import com.github.javaparser.resolution.types.ResolvedType;
 import com.google.common.base.Strings;
 import com.mku.liveuml.graph.UMLRelationship;
 import com.mku.liveuml.graph.UMLClass;
-import com.mku.liveuml.meta.Parameter;
-import com.mku.liveuml.meta.*;
-import com.mku.liveuml.meta.Class;
+import com.mku.liveuml.entities.Parameter;
+import com.mku.liveuml.entities.*;
+import com.mku.liveuml.entities.Class;
 
 import java.io.File;
 import java.io.IOException;

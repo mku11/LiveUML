@@ -33,7 +33,7 @@ import com.google.gson.Gson;
 import com.google.gson.internal.StringMap;
 import com.mku.liveuml.gen.Generator;
 import com.mku.liveuml.graph.UMLClassFactory;
-import com.mku.liveuml.meta.*;
+import com.mku.liveuml.entities.*;
 import com.mku.liveuml.graph.UMLRelationship;
 import com.mku.liveuml.graph.UMLClass;
 import com.mku.liveuml.view.GraphPanel;
