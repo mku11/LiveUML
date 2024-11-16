@@ -37,14 +37,20 @@ import java.util.prefs.Preferences;
 
 public class Main {
 
+    private static String version = "0.9.0";
+
     public static void main(String[] args) {
         JFrame f = new JFrame();
         f.setTitle("LiveUML");
-        f.setIconImage(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/icons/logo.png")));
+        f.setIconImage(getIconImage());
         f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         createMenu(f);
         f.setLocationRelativeTo(null);
         f.setVisible(true);
+    }
+
+    private static Image getIconImage() {
+        return Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/icons/logo.png"));
     }
 
     private static void createMenu(JFrame f) {
@@ -52,28 +58,39 @@ public class Main {
         JMenu menu = new JMenu("File");
         menubar.add(menu);
         f.setJMenuBar(menubar);
-        JMenuItem newGraphItem = new JMenuItem("New");
+        JMenuItem newGraphItem = new JMenuItem("New Diagram");
         menu.add(newGraphItem);
-        JMenuItem openGraphItem = new JMenuItem("Open");
+        JMenuItem openGraphItem = new JMenuItem("Open Diagram");
         menu.add(openGraphItem);
-        JMenuItem saveGraphItem = new JMenuItem("Save");
+        JMenuItem saveGraphItem = new JMenuItem("Save Diagram");
         menu.add(saveGraphItem);
-        JMenuItem exportGraphItem = new JMenuItem("Export");
+        JMenuItem exportGraphItem = new JMenuItem("Export Image");
         menu.add(exportGraphItem);
 
         menu = new JMenu("Source");
         menubar.add(menu);
         f.setJMenuBar(menubar);
-        JMenuItem importSourceFilesItem = new JMenuItem("Import Source Files");
+        JMenuItem importSourceFilesItem = new JMenuItem("Import Source");
         menu.add(importSourceFilesItem);
-        JMenuItem clearSourceFilesItem = new JMenuItem("Clear Source Files");
-        menu.add(clearSourceFilesItem);
+        JMenuItem listSourceFilesItem = new JMenuItem("List Sources");
+        menu.add(listSourceFilesItem);
+        JMenuItem refreshSourceFilesItem = new JMenuItem("Refresh Sources");
+        menu.add(refreshSourceFilesItem);
 
         menu = new JMenu("Settings");
         menubar.add(menu);
         f.setJMenuBar(menubar);
         JMenuItem chooseEditorItem = new JMenuItem("Choose Text Editor");
         menu.add(chooseEditorItem);
+
+        menu = new JMenu("Help");
+        menubar.add(menu);
+        f.setJMenuBar(menubar);
+        JMenuItem helpItem = new JMenuItem("Help");
+        menu.add(helpItem);
+        JMenuItem aboutItem = new JMenuItem("About");
+        menu.add(aboutItem);
+
 
         GraphPanel panel = new GraphPanel();
         JPanel p = new JPanel();
@@ -164,6 +181,23 @@ public class Main {
                     new ImageExporter().saveImage(file, panel);
                 }).start();
             }
+        });
+
+        helpItem.addActionListener((e) -> {
+            JOptionPane.showMessageDialog(null,
+                            "Ctrl+Click: Selects UML Class or Relationship \n"
+                            + "Ctrl+Mouse Move: Move UML Class or Relationship \n"
+                    + "Right Click: Display options for a UML Class \n"
+                                    + "Double Click: Expand/Collapse UML Class \n"
+                    + "Mouse Scroll: Zoom in/out \n",
+                    "Help", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(getIconImage()));
+        });
+
+        aboutItem.addActionListener((e) -> {
+            JOptionPane.showMessageDialog(null, "LiveUML v" + version + " \n"
+                            + "License: MIT \n"
+            + "Project site: https://github.com/mku11/LiveUML \n",
+                    "About", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(getIconImage()));
         });
     }
 }
