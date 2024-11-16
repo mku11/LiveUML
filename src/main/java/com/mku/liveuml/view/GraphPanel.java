@@ -23,30 +23,22 @@ SOFTWARE.
 */
 package com.mku.liveuml.view;
 
-import com.github.javaparser.ParserConfiguration;
-import com.github.javaparser.StaticJavaParser;
-import com.github.javaparser.symbolsolver.JavaSymbolSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
-import com.mku.liveuml.Main;
-import com.mku.liveuml.format.Formatter;
 import com.mku.liveuml.entities.AccessModifier;
 import com.mku.liveuml.entities.Constructor;
 import com.mku.liveuml.entities.Field;
 import com.mku.liveuml.entities.Method;
-import com.mku.liveuml.gen.Generator;
-import com.mku.liveuml.graph.UMLRelationship;
+import com.mku.liveuml.format.Formatter;
+import com.mku.liveuml.gen.UMLGenerator;
 import com.mku.liveuml.graph.UMLClass;
+import com.mku.liveuml.graph.UMLRelationship;
+import com.mku.liveuml.utils.FileUtils;
 import org.jgrapht.Graph;
-import org.jgrapht.graph.DefaultGraphType;
-import org.jgrapht.graph.builder.GraphTypeBuilder;
-import org.jgrapht.util.SupplierUtil;
 import org.jungrapht.visualization.VisualizationModel;
 import org.jungrapht.visualization.VisualizationScrollPane;
 import org.jungrapht.visualization.VisualizationViewer;
 import org.jungrapht.visualization.control.GraphMouseListener;
-import org.jungrapht.visualization.layout.algorithms.*;
+import org.jungrapht.visualization.layout.algorithms.FRLayoutAlgorithm;
+import org.jungrapht.visualization.layout.algorithms.LayoutAlgorithm;
 import org.jungrapht.visualization.renderers.BiModalRenderer;
 import org.jungrapht.visualization.renderers.GradientVertexRenderer;
 import org.jungrapht.visualization.renderers.VertexLabelAsShapeRenderer;
@@ -57,54 +49,39 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
 import java.util.List;
-import java.util.prefs.Preferences;
+import java.util.*;
 
 @SuppressWarnings("unchecked")
 public class GraphPanel extends JPanel {
-    private Graph<UMLClass, UMLRelationship> graph;
+    private final UMLGenerator generator;
     private VisualizationViewer<UMLClass, UMLRelationship> vv;
     private final LayoutAlgorithm<UMLClass> layoutAlgorithm;
     private VisualizationScrollPane visualizationScrollPane;
     private final HashSet<UMLClass> selectedVertices = new HashSet<>();
     private final HashSet<UMLRelationship> selectedEdges = new HashSet<>();
-
-    private BufferedImage img;
-
-    public Graph<UMLClass, UMLRelationship> getGraph() {
-        return graph;
-    }
-
     private final HashSet<Method> selectedMethods = new HashSet<>();
     private final HashSet<Field> selectedFields = new HashSet<>();
+    private BufferedImage img;
 
     /**
      * create an instance of a simple graph with basic controls
      */
-    public GraphPanel() {
+    public GraphPanel(UMLGenerator generator) {
         setLayout(new BorderLayout());
         layoutAlgorithm = new FRLayoutAlgorithm<>();
-        createGraph();
+        this.generator = generator;
     }
 
     public void toggleCompact(UMLClass obj) {
         obj.setCompact(!obj.isCompact());
     }
 
-    public void createGraph() {
-        graph = GraphTypeBuilder.<UMLClass, UMLRelationship>forGraphType(DefaultGraphType.directedMultigraph())
-                .edgeSupplier(SupplierUtil.createSupplier(UMLRelationship.class))
-                .buildGraph();
-    }
-
     @SuppressWarnings("unchecked")
     public void display(Map<UMLClass, Point2D.Double> positions) {
-        Dimension preferredSize = estimateGraphSize(graph);
+        Dimension preferredSize = estimateGraphSize(generator.getGraph());
         final VisualizationModel<UMLClass, UMLRelationship> visualizationModel =
-                VisualizationModel.builder(graph)
+                VisualizationModel.builder(generator.getGraph())
                         .layoutAlgorithm(layoutAlgorithm)
                         .layoutSize(preferredSize)
                         .build();
@@ -243,7 +220,9 @@ public class GraphPanel extends JPanel {
 
         JMenuItem cItem = new JMenuItem("Class " + s.getName());
         cItem.addActionListener(e -> {
-            findClassReference(s);
+            clearSelections();
+            List<HashSet<?>> refs = generator.findClassReference(s);
+            selectRefs(refs);
             vv.repaint();
         });
         refMenu.add(cItem);
@@ -255,7 +234,9 @@ public class GraphPanel extends JPanel {
                     continue;
                 JMenuItem fItem = new JMenuItem(com.mku.liveuml.format.Formatter.getFieldFormatted(f));
                 fItem.addActionListener(e -> {
-                    findFieldReference(s, f);
+                    clearSelections();
+                    List<HashSet<?>> refs = generator.findFieldReference(s, f);
+                    selectRefs(refs);
                     vv.repaint();
                 });
                 items.add(fItem);
@@ -280,7 +261,9 @@ public class GraphPanel extends JPanel {
                 String methodName = com.mku.liveuml.format.Formatter.getMethodSignature(m, true);
                 JMenuItem mItem = new JMenuItem(methodName);
                 mItem.addActionListener(e -> {
-                    findMethodReference(s, m);
+                    clearSelections();
+                    List<HashSet<?>> refs = generator.findMethodReference(s, m);
+                    selectRefs(refs);
                     vv.repaint();
                 });
                 items.add(mItem);
@@ -305,7 +288,9 @@ public class GraphPanel extends JPanel {
                 String methodName = com.mku.liveuml.format.Formatter.getMethodSignature(m, true);
                 JMenuItem mItem = new JMenuItem(methodName);
                 mItem.addActionListener(e -> {
-                    findMethodReference(s, m);
+                    clearSelections();
+                    List<HashSet<?>> refs = generator.findMethodReference(s, m);
+                    selectRefs(refs);
                     vv.repaint();
                 });
                 items.add(mItem);
@@ -400,56 +385,31 @@ public class GraphPanel extends JPanel {
         EventQueue.invokeLater(() -> menu.show(me.getComponent(), me.getX(), me.getY()));
     }
 
+    private void selectRefs(List<HashSet<?>> refs) {
+        for(HashSet<?> href : refs){
+            for(Object obj : href) {
+                if (obj instanceof UMLClass)
+                    selectedVertices.add((UMLClass) obj);
+                if (obj instanceof UMLRelationship)
+                    selectedEdges.add((UMLRelationship) obj);
+                if (obj instanceof Field)
+                    selectedFields.add((Field) obj);
+                if (obj instanceof Method)
+                    selectedMethods.add((Method) obj);
+            }
+        }
+    }
+
     private void goToClassReference(UMLClass s) {
-        openFileLine(s.getFilePath(), s.getLine());
+        FileUtils.openFileLine(s.getFilePath(), s.getLine());
     }
 
     private void goToMethodReference(UMLClass s, Method m) {
-        openFileLine(s.getFilePath(), m.getLine());
+        FileUtils.openFileLine(s.getFilePath(), m.getLine());
     }
 
     private void goToFieldReference(UMLClass s, Field f) {
-        openFileLine(s.getFilePath(), f.getLine());
-    }
-
-    private void openFileLine(String filePath, int line) {
-        Preferences prefs = Preferences.userRoot().node(Main.class.getName());
-        String execPath = prefs.get("LAST_TEXT_EDITOR_FILE", null);
-        if(execPath == null) {
-            JOptionPane.showMessageDialog(null, "No text editor selected");
-            return;
-        }
-        try {
-            if(execPath.endsWith("idea.exe") || execPath.endsWith("idea64.exe") ||
-                    execPath.endsWith("idea") || execPath.endsWith("idea64") ||
-                    execPath.endsWith("eclipsec.exe") || execPath.endsWith("eclipse.exe")
-                    || execPath.endsWith("eclipse") )
-                Runtime.getRuntime().exec(new String[]{execPath, filePath+":"+line});
-            else if(execPath.endsWith("notepad++.exe"))
-                Runtime.getRuntime().exec(new String[]{execPath, filePath, "-n"+line});
-            else
-                Runtime.getRuntime().exec(new String[]{execPath, filePath});
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Could not open editor: " + e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void findMethodReference(UMLClass s, Method m) {
-        clearSelections();
-        for(UMLRelationship rel : s.relationships.values()) {
-            if(rel.type == UMLRelationship.Type.Dependency) {
-                if(rel.calledBy.containsKey(m)) {
-                    Method callerMethod = rel.calledBy.get(m);
-                    selectedMethods.add(callerMethod);
-                    selectedMethods.add(m);
-                    selectedVertices.add(rel.from);
-                    selectedVertices.add(rel.to);
-                    selectedEdges.add(rel);
-                }
-            }
-        }
-        vv.repaint();
+        FileUtils.openFileLine(s.getFilePath(), f.getLine());
     }
 
     private void clearSelections() {
@@ -459,58 +419,6 @@ public class GraphPanel extends JPanel {
         selectedMethods.clear();
         selectedEdges.clear();
         selectedVertices.clear();
-    }
-
-    private void findFieldReference(UMLClass s, Field f) {
-        clearSelections();
-        for(UMLRelationship rel : s.relationships.values()) {
-            if(rel.type == UMLRelationship.Type.Dependency) {
-                if(rel.accessedBy.containsKey(f)) {
-                    Method accessorMethod = rel.accessedBy.get(f);
-                    selectedMethods.add(accessorMethod);
-                    selectedVertices.add(rel.from);
-                    selectedVertices.add(rel.to);
-                    selectedEdges.add(rel);
-                }
-            }
-        }
-        vv.repaint();
-    }
-
-    private void findClassReference(UMLClass s) {
-        clearSelections();
-        for(UMLRelationship rel : s.relationships.values()) {
-            if(rel.type == UMLRelationship.Type.Dependency) {
-                if(s == rel.to) {
-                    selectedMethods.addAll(rel.classAccessors);
-                    for(Method method : rel.callTo.keySet()) {
-                        selectedMethods.add(method);
-                        selectedMethods.add(rel.callTo.get(method));
-                    }
-                    selectedVertices.add(rel.from);
-                    selectedVertices.add(rel.to);
-                    selectedEdges.add(rel);
-                }
-            } else if(rel.type == UMLRelationship.Type.Aggregation
-                    || rel.type == UMLRelationship.Type.Composition
-                    || rel.type == UMLRelationship.Type.Association
-            ) {
-                if(s == rel.to) {
-                    selectedFields.addAll(rel.fieldAssociation);
-                    selectedVertices.add(rel.from);
-                    selectedVertices.add(rel.to);
-                    selectedEdges.add(rel);
-                }
-            } else if(rel.type == UMLRelationship.Type.Realization
-            || rel.type == UMLRelationship.Type.Inheritance) {
-                if(s == rel.to) {
-                    selectedVertices.add(rel.from);
-                    selectedVertices.add(rel.to);
-                    selectedEdges.add(rel);
-                }
-            }
-        }
-        vv.repaint();
     }
 
     private Shape getArrowShape(UMLRelationship rel) {
@@ -523,66 +431,8 @@ public class GraphPanel extends JPanel {
         return null;
     }
 
-    public void addClasses(List<UMLClass> umlClasses) {
-        for (UMLClass obj : umlClasses) {
-            graph.addVertex(obj);
-        }
-        updateRelationships(umlClasses, graph);
-    }
-
-    public void updateVertices(HashMap<String, UMLClass> vertices) {
-        for (UMLRelationship rel: graph.edgeSet()) {
-            UMLClass from = vertices.getOrDefault(rel.from.toString(), null);
-            UMLClass to = vertices.getOrDefault(rel.to.toString(), null);
-            from.relationships.put(rel.toString(), rel);
-            to.relationships.put(rel.toString(), rel);
-        }
-    }
-
-    public void updateRelationships(List<UMLClass> umlClasses, Graph<UMLClass, UMLRelationship> graph) {
-        for (UMLClass obj : umlClasses) {
-            boolean hasValidRelationships = false;
-            for (Map.Entry<String, UMLRelationship> rel : obj.relationships.entrySet()) {
-                if (rel.getValue().from == rel.getValue().to)
-                    continue;
-                if (!graph.containsVertex(rel.getValue().from) || !graph.containsVertex(rel.getValue().to)) {
-                    continue;
-                }
-                try {
-                    graph.addEdge(rel.getValue().from, rel.getValue().to, rel.getValue());
-                    hasValidRelationships = true;
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-            if (!hasValidRelationships)
-                graph.removeVertex(obj);
-        }
-    }
-
     public Map<UMLClass, org.jungrapht.visualization.layout.model.Point> getVertexPositions() {
         return vv.getVisualizationModel().getLayoutModel().getLocations();
-    }
-
-    public void importSourcesDir(File root) {
-        setupFolder(root);
-        List<UMLClass> classes = new Generator().getClasses(root);
-        addClasses(classes);
-        display(null);
-        revalidate();
-    }
-
-
-    private static void setupFolder(File sourceFolder) {
-        ReflectionTypeSolver reflectionTypeSolver = new ReflectionTypeSolver();
-        JavaParserTypeSolver javaParserTypeSolver = new JavaParserTypeSolver(sourceFolder);
-        CombinedTypeSolver combinedSolver = new CombinedTypeSolver();
-        combinedSolver.add(reflectionTypeSolver);
-        combinedSolver.add(javaParserTypeSolver);
-
-        ParserConfiguration parserConfiguration = new ParserConfiguration()
-                .setSymbolResolver(new JavaSymbolSolver(combinedSolver));
-        StaticJavaParser.setConfiguration(parserConfiguration);
     }
 
     static class Diamond extends Path2D.Double {

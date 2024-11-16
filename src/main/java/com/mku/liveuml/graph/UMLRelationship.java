@@ -31,6 +31,7 @@ import java.util.HashSet;
 
 public class UMLRelationship {
 
+    // TODO: model the relationship types with a hierarchy instead if/when importer provides an edge factory setter
     public enum Type {
         Association, Inheritance, Realization, Dependency, Aggregation, Composition
     }
@@ -49,10 +50,11 @@ public class UMLRelationship {
 
     public HashSet<Field> fieldAssociation = new HashSet<>();
 
-    // needed for import
+    // do not remove needed by importer
     public UMLRelationship() {
 
     }
+
     public UMLRelationship(UMLClass from, UMLClass to, Type type) {
         this.from = from;
         this.to = to;

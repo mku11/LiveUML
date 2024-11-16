@@ -52,7 +52,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Generator {
+public class UMLParser {
     public HashMap<String, UMLClass> objects = new HashMap<>();
 
     public List<UMLClass> getClasses(File projectDir) {

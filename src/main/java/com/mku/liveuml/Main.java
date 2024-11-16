@@ -23,6 +23,8 @@ SOFTWARE.
 */
 package com.mku.liveuml;
 
+import com.mku.liveuml.gen.UMLGenerator;
+import com.mku.liveuml.graph.UMLClass;
 import com.mku.liveuml.utils.Exporter;
 import com.mku.liveuml.utils.ImageExporter;
 import com.mku.liveuml.utils.Importer;
@@ -32,21 +34,26 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.awt.geom.Point2D;
 import java.io.File;
+import java.util.HashMap;
 import java.util.prefs.Preferences;
 
 public class Main {
-
-    private static String version = "0.9.0";
+    private static final String version = "0.9.0";
+    private static UMLGenerator generator;
+    private static GraphPanel panel;
 
     public static void main(String[] args) {
-        JFrame f = new JFrame();
-        f.setTitle("LiveUML");
-        f.setIconImage(getIconImage());
-        f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        createMenu(f);
-        f.setLocationRelativeTo(null);
-        f.setVisible(true);
+        generator = new UMLGenerator();
+
+        JFrame frame = new JFrame();
+        frame.setTitle("LiveUML");
+        frame.setIconImage(getIconImage());
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        createMenu(frame);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
     }
 
     private static Image getIconImage() {
@@ -91,8 +98,7 @@ public class Main {
         JMenuItem aboutItem = new JMenuItem("About");
         menu.add(aboutItem);
 
-
-        GraphPanel panel = new GraphPanel();
+        panel = new GraphPanel(generator);
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
         p.add(panel);
@@ -111,7 +117,9 @@ public class Main {
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File root = fc.getSelectedFile();
                 prefs.put("LAST_SOURCE_FOLDER", root.getPath());
-                panel.importSourcesDir(root);
+                generator.importSourcesDir(root);
+                panel.display(null);
+                panel.revalidate();
             }
         });
 
@@ -128,7 +136,10 @@ public class Main {
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File file = fc.getSelectedFile();
                 prefs.put("LAST_GRAPH_FILE", file.getPath());
-                new Importer().importGraph(file, panel);
+                HashMap<UMLClass, Point2D.Double> verticesPositions = new HashMap<>();
+                new Importer().importGraph(file, generator, verticesPositions);
+                panel.display(verticesPositions);
+                panel.revalidate();
             }
         });
 
@@ -145,7 +156,7 @@ public class Main {
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File file = fc.getSelectedFile();
                 prefs.put("LAST_GRAPH_FILE", file.getPath());
-                new Exporter().exportGraph(file, panel);
+                new Exporter().exportGraph(file, generator, panel.getVertexPositions());
             }
         });
 

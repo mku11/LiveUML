@@ -3,6 +3,7 @@ package com.mku.liveuml.utils;
 import com.google.gson.Gson;
 import com.google.gson.internal.StringMap;
 import com.mku.liveuml.entities.*;
+import com.mku.liveuml.gen.UMLGenerator;
 import com.mku.liveuml.graph.UMLClass;
 import com.mku.liveuml.graph.UMLClassFactory;
 import com.mku.liveuml.graph.UMLRelationship;
@@ -18,13 +19,11 @@ import java.util.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class Importer {
-    public void importGraph(File file, GraphPanel panel) {
+    public void importGraph(File file, UMLGenerator generator, HashMap<UMLClass, Point2D.Double> verticesPositions) {
         GraphMLImporter<UMLClass, UMLRelationship> importer = new GraphMLImporter<>();
         importer.setSchemaValidation(false);
 
         importer.setVertexFactory(UMLClassFactory::create);
-        HashMap<UMLClass, Point2D.Double> verticesPositions = new HashMap<>();
-
         HashMap<String, UMLClass> vertices = new HashMap<>();
         importer.addVertexAttributeConsumer((pair, attribute) -> setVertexAttrs(pair.getFirst(),
                 pair.getSecond(), attribute, verticesPositions, vertices));
@@ -33,11 +32,9 @@ public class Importer {
                 pair.getSecond(), attribute, vertices));
 
         try (InputStreamReader inputStreamReader = new FileReader(file)) {
-            panel.createGraph();
-            importer.importGraph(panel.getGraph(), inputStreamReader);
-            panel.updateVertices(vertices);
-            panel.display(verticesPositions);
-            panel.revalidate();
+            generator.createGraph();
+            importer.importGraph(generator.getGraph(), inputStreamReader);
+            generator.updateVertices(vertices);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

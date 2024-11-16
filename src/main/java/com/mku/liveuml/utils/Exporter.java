@@ -3,13 +3,14 @@ package com.mku.liveuml.utils;
 import com.google.gson.Gson;
 import com.mku.liveuml.entities.Field;
 import com.mku.liveuml.entities.Method;
+import com.mku.liveuml.gen.UMLGenerator;
 import com.mku.liveuml.graph.UMLClass;
 import com.mku.liveuml.graph.UMLRelationship;
-import com.mku.liveuml.view.GraphPanel;
 import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.AttributeType;
 import org.jgrapht.nio.DefaultAttribute;
 import org.jgrapht.nio.graphml.GraphMLExporter;
+import org.jungrapht.visualization.layout.model.Point;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -19,19 +20,19 @@ import java.util.HashSet;
 import java.util.Map;
 
 public class Exporter {
-    public void exportGraph(File file, GraphPanel panel) {
+    public void exportGraph(File file, UMLGenerator generator, Map<UMLClass, Point> vertexPositions) {
         GraphMLExporter<UMLClass, UMLRelationship> exporter = new GraphMLExporter<>();
 
         exporter.setVertexIdProvider(obj -> obj.getClass().getSimpleName() + ":" + obj);
         registerVertexAttrs(exporter);
-        exporter.setVertexAttributeProvider(obj -> getVertexAttrs(obj, panel.getVertexPositions()));
+        exporter.setVertexAttributeProvider(obj -> getVertexAttrs(obj, vertexPositions));
 
         exporter.setEdgeIdProvider(UMLRelationship::toString);
         registerEdgeAttrs(exporter);
         exporter.setEdgeAttributeProvider(this::getEdgeAttrs);
 
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file))) {
-            exporter.exportGraph(panel.getGraph(), writer);
+            exporter.exportGraph(generator.getGraph(), writer);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
