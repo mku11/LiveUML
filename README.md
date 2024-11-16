@@ -1,7 +1,7 @@
 ![alt text](https://github.com/mku11/LiveUML/blob/src/main/resources/icons/logo.png)  
 
 # LiveUML
-Generate UML Diagrams from java source code
+Generate UML Diagrams from java source code.  
 
 ![alt text](https://github.com/mku11/LiveUML/blob/screenshots/Screenshot.png)  
 
@@ -15,10 +15,10 @@ Generate UML Diagrams from java source code
 - Export as Image  
   
 # Specs
-- Custom meta data model for Java classes, fields, and methods
-- Force Layout Algorithm for getter class layout  
+- Custom meta data model for Java classes, fields, and methods  
+- Force Layout Algorithm for better class layout  
 - GraphML format for saving diagrams  
-- PNG format for export  
+- PNG format for image export  
   
 # Dependencies:
 - [JavaParser](https://github.com/javaparser/javaparser)  
