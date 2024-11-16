@@ -1,7 +1,7 @@
 ![alt text](https://github.com/mku11/LiveUML/blob/main/src/main/resources/icons/logo.png)  
 
 # LiveUML
-Generate UML Diagrams from java source code.  
+Generate UML Class Diagrams from java source code.  
 
 ![alt text](https://github.com/mku11/LiveUML/blob/main/screenshots/Screenshot.png)  
 
