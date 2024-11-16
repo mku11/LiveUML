@@ -31,6 +31,7 @@ import com.mku.liveuml.format.Formatter;
 import com.mku.liveuml.gen.UMLGenerator;
 import com.mku.liveuml.graph.UMLClass;
 import com.mku.liveuml.graph.UMLRelationship;
+import com.mku.liveuml.graph.UMLRelationshipType;
 import com.mku.liveuml.utils.FileUtils;
 import org.jgrapht.Graph;
 import org.jungrapht.visualization.VisualizationModel;
@@ -86,9 +87,9 @@ public class GraphPanel extends JPanel {
                         .layoutSize(preferredSize)
                         .build();
 
-        if(positions != null)
+        if (positions != null)
             visualizationModel.getLayoutModel().setInitializer(obj -> {
-                if(positions.containsKey(obj)) {
+                if (positions.containsKey(obj)) {
                     Point2D.Double point = positions.get(obj);
                     return org.jungrapht.visualization.layout.model.Point.of(point.x, point.y);
                 }
@@ -116,11 +117,11 @@ public class GraphPanel extends JPanel {
                 selectedVertices, selectedEdges, selectedMethods, selectedFields));
         vv.getRenderContext().setVertexShapeFunction(vlasr);
         vv.getRenderContext().setEdgeStrokeFunction(rel -> {
-            if (rel.type == UMLRelationship.Type.Dependency || rel.type == UMLRelationship.Type.Realization) {
+            if (rel.type == UMLRelationshipType.Dependency || rel.type == UMLRelationshipType.Realization) {
                 // dashed line
-                return new BasicStroke(selectedEdges.contains(rel)?6:3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{9}, 0);
+                return new BasicStroke(selectedEdges.contains(rel) ? 6 : 3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{9}, 0);
             }
-            return new BasicStroke(selectedEdges.contains(rel)?4:2);
+            return new BasicStroke(selectedEdges.contains(rel) ? 4 : 2);
         });
         vv.getRenderContext().setEdgeDrawPaintFunction(relationship -> {
             if (selectedEdges.contains(relationship))
@@ -142,7 +143,7 @@ public class GraphPanel extends JPanel {
             return new BasicStroke(2f);
         });
         vv.getRenderContext().setArrowFillPaintFunction((rel) -> {
-            if (rel.type == UMLRelationship.Type.Composition) {
+            if (rel.type == UMLRelationshipType.Composition) {
                 if (selectedEdges.contains(rel))
                     return Color.BLUE;
                 return Color.BLACK;
@@ -151,7 +152,7 @@ public class GraphPanel extends JPanel {
         });
 
         vv.getRenderContext().setArrowDrawPaintFunction((rel) -> {
-            if (rel.type == UMLRelationship.Type.Composition) {
+            if (rel.type == UMLRelationshipType.Composition) {
                 if (selectedEdges.contains(rel))
                     return Color.BLUE;
             }
@@ -165,9 +166,9 @@ public class GraphPanel extends JPanel {
     private Dimension estimateGraphSize(Graph<UMLClass, UMLRelationship> graph) {
         int vertices = graph.vertexSet().size();
         int width = (int) Math.sqrt(vertices) * 500;
-        if(width == 0)
+        if (width == 0)
             width = 1200;
-        return new Dimension(width, width * 2/3);
+        return new Dimension(width, width * 2 / 3);
     }
 
     private void addVisualizationPane(VisualizationViewer<UMLClass, UMLRelationship> vv) {
@@ -207,7 +208,7 @@ public class GraphPanel extends JPanel {
 
     private void showContextMenu(UMLClass s, MouseEvent me) {
         JPopupMenu menu = new JPopupMenu();
-        JMenuItem item = new JMenuItem(s.isCompact()?"Collapse":"Expand");
+        JMenuItem item = new JMenuItem(s.isCompact() ? "Collapse" : "Expand");
         item.addActionListener(e -> EventQueue.invokeLater(() -> {
             toggleCompact(s);
             vv.repaint();
@@ -228,7 +229,7 @@ public class GraphPanel extends JPanel {
         refMenu.add(cItem);
 
         List<JMenuItem> items = new ArrayList<>();
-        if(s.getFields().size() > 0) {
+        if (s.getFields().size() > 0) {
             for (Field f : s.getFields()) {
                 if (f.getAccessModifiers().contains(AccessModifier.Private))
                     continue;
@@ -242,7 +243,7 @@ public class GraphPanel extends JPanel {
                 items.add(fItem);
             }
         }
-        if(items.size() > 0) {
+        if (items.size() > 0) {
             refMenu.addSeparator();
             JLabel tItem = new JLabel("Fields");
             tItem.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -252,9 +253,9 @@ public class GraphPanel extends JPanel {
         }
 
         items.clear();
-        if(s.getMethods().size() >0) {
+        if (s.getMethods().size() > 0) {
             for (Method m : s.getMethods()) {
-                if(!(m instanceof Constructor))
+                if (!(m instanceof Constructor))
                     continue;
                 if (m.getAccessModifiers().contains(AccessModifier.Private))
                     continue;
@@ -269,7 +270,7 @@ public class GraphPanel extends JPanel {
                 items.add(mItem);
             }
         }
-        if(items.size() > 0) {
+        if (items.size() > 0) {
             refMenu.addSeparator();
             JLabel tItem = new JLabel("Constructors");
             tItem.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -279,9 +280,9 @@ public class GraphPanel extends JPanel {
         }
 
         items.clear();
-        if(s.getMethods().size() >0) {
+        if (s.getMethods().size() > 0) {
             for (Method m : s.getMethods()) {
-                if(m instanceof Constructor)
+                if (m instanceof Constructor)
                     continue;
                 if (m.getAccessModifiers().contains(AccessModifier.Private))
                     continue;
@@ -296,7 +297,7 @@ public class GraphPanel extends JPanel {
                 items.add(mItem);
             }
         }
-        if(items.size() > 0) {
+        if (items.size() > 0) {
             refMenu.addSeparator();
             JLabel tItem = new JLabel("Methods");
             tItem.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -317,7 +318,7 @@ public class GraphPanel extends JPanel {
         goToMenu.add(cItem);
 
         items.clear();
-        if(s.getFields().size() > 0) {
+        if (s.getFields().size() > 0) {
             for (Field f : s.getFields()) {
                 JMenuItem fItem = new JMenuItem(com.mku.liveuml.format.Formatter.getFieldFormatted(f));
                 fItem.addActionListener(e -> {
@@ -327,7 +328,7 @@ public class GraphPanel extends JPanel {
                 items.add(fItem);
             }
         }
-        if(items.size() > 0) {
+        if (items.size() > 0) {
             goToMenu.addSeparator();
             JLabel tItem = new JLabel("Fields");
             tItem.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -337,9 +338,9 @@ public class GraphPanel extends JPanel {
         }
 
         items.clear();
-        if(s.getMethods().size() >0) {
+        if (s.getMethods().size() > 0) {
             for (Method m : s.getMethods()) {
-                if(!(m instanceof Constructor))
+                if (!(m instanceof Constructor))
                     continue;
                 String methodName = com.mku.liveuml.format.Formatter.getMethodSignature(m, true);
                 JMenuItem mItem = new JMenuItem(methodName);
@@ -350,7 +351,7 @@ public class GraphPanel extends JPanel {
                 items.add(mItem);
             }
         }
-        if(items.size() > 0) {
+        if (items.size() > 0) {
             goToMenu.addSeparator();
             JLabel tItem = new JLabel("Constructors");
             tItem.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -360,9 +361,9 @@ public class GraphPanel extends JPanel {
         }
 
         items.clear();
-        if(s.getMethods().size() >0) {
+        if (s.getMethods().size() > 0) {
             for (Method m : s.getMethods()) {
-                if(m instanceof Constructor)
+                if (m instanceof Constructor)
                     continue;
                 String methodName = Formatter.getMethodSignature(m, true);
                 JMenuItem mItem = new JMenuItem(methodName);
@@ -373,7 +374,7 @@ public class GraphPanel extends JPanel {
                 items.add(mItem);
             }
         }
-        if(items.size() > 0) {
+        if (items.size() > 0) {
             goToMenu.addSeparator();
             JLabel tItem = new JLabel("Methods");
             tItem.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -386,8 +387,8 @@ public class GraphPanel extends JPanel {
     }
 
     private void selectRefs(List<HashSet<?>> refs) {
-        for(HashSet<?> href : refs){
-            for(Object obj : href) {
+        for (HashSet<?> href : refs) {
+            for (Object obj : href) {
                 if (obj instanceof UMLClass)
                     selectedVertices.add((UMLClass) obj);
                 if (obj instanceof UMLRelationship)
@@ -422,11 +423,11 @@ public class GraphPanel extends JPanel {
     }
 
     private Shape getArrowShape(UMLRelationship rel) {
-        if (rel.type == UMLRelationship.Type.Aggregation || rel.type == UMLRelationship.Type.Composition)
+        if (rel.type == UMLRelationshipType.Aggregation || rel.type == UMLRelationshipType.Composition)
             return new Diamond(40, 20);
-        else if (rel.type == UMLRelationship.Type.Inheritance || rel.type == UMLRelationship.Type.Realization)
+        else if (rel.type == UMLRelationshipType.Inheritance || rel.type == UMLRelationshipType.Realization)
             return new ClosedArrow(40, 20);
-        else if (rel.type == UMLRelationship.Type.Association || rel.type == UMLRelationship.Type.Dependency)
+        else if (rel.type == UMLRelationshipType.Association || rel.type == UMLRelationshipType.Dependency)
             return new OpenArrow(40, 20);
         return null;
     }
@@ -480,7 +481,7 @@ public class GraphPanel extends JPanel {
     @Override
     protected void paintComponent(java.awt.Graphics g) {
         super.paintComponent(g);
-        if(img !=null)
+        if (img != null)
             g.drawImage(img, 0, 0, this);
     }
 

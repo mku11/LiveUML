@@ -23,7 +23,7 @@ import java.util.Map;
 
 public class UMLGenerator {
     private Graph<UMLClass, UMLRelationship> graph;
-    private UMLFinder finder;
+    private final UMLFinder finder;
 
     public UMLGenerator() {
         this.finder = new UMLFinder();

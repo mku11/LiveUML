@@ -35,19 +35,12 @@ public abstract class UMLClass {
     private String name;
     private String packageName;
     private boolean compact;
-
     private List<Method> methods = new LinkedList<>();
     private List<Field> fields = new LinkedList<>();
     private int line;
-
     public void addMethods(List<Method> methods) {
         this.methods.addAll(methods);
     }
-
-    public enum Type {
-        Class, Interface, Enumeration
-    }
-
     public String getFilePath() {
         return filePath;
     }
@@ -122,7 +115,7 @@ public abstract class UMLClass {
     @Override
     public String toString() {
         String str = "";
-        if(packageName!=null)
+        if (packageName != null)
             str += packageName + ".";
         str += name;
         return str;

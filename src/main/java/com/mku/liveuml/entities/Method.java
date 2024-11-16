@@ -104,7 +104,7 @@ public class Method {
     public List<Parameter> getParameters() {
         return Collections.unmodifiableList(parameters);
     }
-
+    
     public void setParameters(List<Parameter> parameters) {
         this.parameters.clear();
         this.parameters.addAll(parameters);
@@ -122,9 +122,10 @@ public class Method {
         return returnPrimitiveType != null;
     }
 
-    public String getReturnTypeName () {
-        return isReturnTypePrimitive()?returnPrimitiveType:returnTypeName;
+    public String getReturnTypeName() {
+        return isReturnTypePrimitive() ? returnPrimitiveType : returnTypeName;
     }
+
     @Override
     public String toString() {
         return name;

@@ -31,12 +31,7 @@ import java.util.HashSet;
 
 public class UMLRelationship {
 
-    // TODO: model the relationship types with a hierarchy instead if/when importer provides an edge factory setter
-    public enum Type {
-        Association, Inheritance, Realization, Dependency, Aggregation, Composition
-    }
-
-    public Type type;
+    public UMLRelationshipType type;
     public UMLClass from;
     public UMLClass to;
 
@@ -55,26 +50,26 @@ public class UMLRelationship {
 
     }
 
-    public UMLRelationship(UMLClass from, UMLClass to, Type type) {
+    public UMLRelationship(UMLClass from, UMLClass to, UMLRelationshipType type) {
         this.from = from;
         this.to = to;
         this.type = type;
     }
 
     public void addMethodCall(Method callerMethod, Method calleeMethod) {
-        if(callerMethod != null)
+        if (callerMethod != null)
             callTo.put(callerMethod, calleeMethod);
         calledBy.put(calleeMethod, callerMethod);
     }
 
     public void addFieldAccess(Method accessorMethod, Field accessedField) {
-        if(accessorMethod != null)
+        if (accessorMethod != null)
             accessing.put(accessorMethod, accessedField);
         accessedBy.put(accessedField, accessorMethod);
     }
 
     public void addClassAccess(Method accessorMethod) {
-        if(accessorMethod != null)
+        if (accessorMethod != null)
             classAccessors.add(accessorMethod);
     }
 

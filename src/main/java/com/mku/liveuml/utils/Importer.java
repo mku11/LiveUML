@@ -1,3 +1,26 @@
+/*
+MIT License
+
+Copyright (c) 2024 Max Kas
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 package com.mku.liveuml.utils;
 
 import com.google.gson.Gson;
@@ -7,7 +30,7 @@ import com.mku.liveuml.gen.UMLGenerator;
 import com.mku.liveuml.graph.UMLClass;
 import com.mku.liveuml.graph.UMLClassFactory;
 import com.mku.liveuml.graph.UMLRelationship;
-import com.mku.liveuml.view.GraphPanel;
+import com.mku.liveuml.graph.UMLRelationshipType;
 import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.graphml.GraphMLImporter;
 
@@ -41,7 +64,7 @@ public class Importer {
     }
 
     private void setVertexAttrs(UMLClass obj, String key, Attribute attribute, Map<UMLClass, Point2D.Double> vertexPositions, HashMap<String, UMLClass> vertices) {
-        if(!vertices.containsKey(obj.toString())){
+        if (!vertices.containsKey(obj.toString())) {
             vertices.put(obj.toString(), obj);
         }
         Point2D.Double point;
@@ -78,11 +101,11 @@ public class Importer {
     }
 
     private void setEdgeAttrs(UMLRelationship relationship, String key, Attribute attribute, HashMap<String, UMLClass> vertices) {
-        if(relationship == null)
+        if (relationship == null)
             return;
         switch (key) {
             case "type":
-                relationship.type = UMLRelationship.Type.valueOf(attribute.getValue());
+                relationship.type = UMLRelationshipType.valueOf(attribute.getValue());
                 break;
             case "from":
                 if (vertices.containsKey(attribute.getValue()))
@@ -93,27 +116,27 @@ public class Importer {
                     relationship.to = vertices.get(attribute.getValue());
                 break;
             case "fieldAssociation":
-                HashMap<String,String> fieldOwnerMap = (HashMap<String,String>) new Gson().fromJson(attribute.getValue(), HashMap.class);
+                HashMap<String, String> fieldOwnerMap = (HashMap<String, String>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.fieldAssociation = new HashSet<>(getFields(fieldOwnerMap, vertices));
                 break;
             case "classAccessors":
-                HashMap<String,String> classOwnerMap = (HashMap<String,String>) new Gson().fromJson(attribute.getValue(), HashMap.class);
+                HashMap<String, String> classOwnerMap = (HashMap<String, String>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.classAccessors = new HashSet<>(getMethods(classOwnerMap, vertices));
                 break;
             case "accessedBy":
-                HashMap<String, StringMap> accessedBy = (HashMap<String,StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
+                HashMap<String, StringMap> accessedBy = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.accessedBy = getFieldMethodMap(accessedBy, vertices);
                 break;
             case "accessing":
-                HashMap<String,StringMap> accessing = (HashMap<String,StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
+                HashMap<String, StringMap> accessing = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.accessing = getMethodFieldMap(accessing, vertices);
                 break;
             case "calledBy":
-                HashMap<String,StringMap> calledBy = (HashMap<String,StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
+                HashMap<String, StringMap> calledBy = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.calledBy = getMethodMethodMap(calledBy, vertices);
                 break;
             case "callTo":
-                HashMap<String,StringMap> callTo = (HashMap<String,StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
+                HashMap<String, StringMap> callTo = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.callTo = getMethodMethodMap(callTo, vertices);
                 break;
         }
@@ -122,7 +145,7 @@ public class Importer {
 
     private static HashMap<Field, Method> getFieldMethodMap(HashMap<String, StringMap> accessedBy, HashMap<String, UMLClass> vertices) {
         HashMap<Field, Method> fieldMethodHashMap = new HashMap<>();
-        for(String fieldName : accessedBy.keySet()) {
+        for (String fieldName : accessedBy.keySet()) {
             StringMap ownerMap = accessedBy.get(fieldName);
             String fieldOwner = (String) ownerMap.get("fieldOwner");
             String methodName = (String) ownerMap.getOrDefault("methodName", null);
@@ -132,13 +155,13 @@ public class Importer {
             }
             UMLClass fieldOwnerObj = vertices.get(fieldOwner);
             Field field = null;
-            for(Field f : fieldOwnerObj.getFields()) {
-                if(f.getName().equals(fieldName)) {
+            for (Field f : fieldOwnerObj.getFields()) {
+                if (f.getName().equals(fieldName)) {
                     field = f;
                     break;
                 }
             }
-            if(field == null) {
+            if (field == null) {
                 continue;
             }
 
@@ -147,9 +170,9 @@ public class Importer {
                 methodOwnerObj = vertices.get(methodOwner);
             }
             Method method = null;
-            if(methodName != null && methodOwnerObj != null) {
-                for(Method m : methodOwnerObj.getMethods()) {
-                    if(m.getSignature().equals(methodName)) {
+            if (methodName != null && methodOwnerObj != null) {
+                for (Method m : methodOwnerObj.getMethods()) {
+                    if (m.getSignature().equals(methodName)) {
                         method = m;
                         break;
                     }
@@ -163,7 +186,7 @@ public class Importer {
 
     private static HashMap<Method, Field> getMethodFieldMap(HashMap<String, StringMap> map, HashMap<String, UMLClass> vertices) {
         HashMap<Method, Field> methodFieldHashMap = new HashMap<>();
-        for(String methodName : map.keySet()) {
+        for (String methodName : map.keySet()) {
             StringMap ownerMap = map.get(methodName);
             String methodOwner = (String) ownerMap.get("methodOwner");
             String fieldName = (String) ownerMap.getOrDefault("fieldName", null);
@@ -173,13 +196,13 @@ public class Importer {
             }
             UMLClass methodOwnerObj = vertices.get(methodOwner);
             Method method = null;
-            for(Method m : methodOwnerObj.getMethods()) {
-                if(m.getSignature().equals(methodName)) {
+            for (Method m : methodOwnerObj.getMethods()) {
+                if (m.getSignature().equals(methodName)) {
                     method = m;
                     break;
                 }
             }
-            if(method == null) {
+            if (method == null) {
                 continue;
             }
 
@@ -188,9 +211,9 @@ public class Importer {
                 fieldOwnerObj = vertices.get(fieldOwner);
             }
             Field field = null;
-            if(fieldName != null && fieldOwnerObj != null) {
-                for(Field f : fieldOwnerObj.getFields()) {
-                    if(f.getName().equals(fieldName)) {
+            if (fieldName != null && fieldOwnerObj != null) {
+                for (Field f : fieldOwnerObj.getFields()) {
+                    if (f.getName().equals(fieldName)) {
                         field = f;
                         break;
                     }
@@ -204,7 +227,7 @@ public class Importer {
 
     private static HashMap<Method, Method> getMethodMethodMap(HashMap<String, StringMap> map, HashMap<String, UMLClass> vertices) {
         HashMap<Method, Method> methodMethodHashMap = new HashMap<>();
-        for(String methodName : map.keySet()) {
+        for (String methodName : map.keySet()) {
             StringMap ownerMap = map.get(methodName);
             String methodOwner = (String) ownerMap.get("methodOwner");
             String methodName2 = (String) ownerMap.getOrDefault("methodName2", null);
@@ -214,13 +237,13 @@ public class Importer {
             }
             UMLClass methodOwnerObj = vertices.get(methodOwner);
             Method method = null;
-            for(Method m : methodOwnerObj.getMethods()) {
-                if(m.getSignature().equals(methodName)) {
+            for (Method m : methodOwnerObj.getMethods()) {
+                if (m.getSignature().equals(methodName)) {
                     method = m;
                     break;
                 }
             }
-            if(method == null) {
+            if (method == null) {
                 continue;
             }
 
@@ -229,9 +252,9 @@ public class Importer {
                 methodOwnerObj2 = vertices.get(methodOwner2);
             }
             Method method2 = null;
-            if(methodName2 != null && methodOwnerObj2 != null) {
-                for(Method m2 : methodOwnerObj2.getMethods()) {
-                    if(m2.getSignature().equals(methodName2)) {
+            if (methodName2 != null && methodOwnerObj2 != null) {
+                for (Method m2 : methodOwnerObj2.getMethods()) {
+                    if (m2.getSignature().equals(methodName2)) {
                         method2 = m2;
                         break;
                     }
@@ -242,7 +265,7 @@ public class Importer {
         return methodMethodHashMap;
     }
 
-    private static List<Field> getFields(HashMap<String,String> map, HashMap<String, UMLClass> vertices) {
+    private static List<Field> getFields(HashMap<String, String> map, HashMap<String, UMLClass> vertices) {
         List<Field> fields = new ArrayList<>();
         for (String name : map.keySet()) {
             String ownerName = map.get(name);
@@ -251,13 +274,13 @@ public class Importer {
             }
             UMLClass obj = vertices.get(ownerName);
             Field field = null;
-            for(Field f : obj.getFields()) {
-                if(f.getName().equals(name)) {
+            for (Field f : obj.getFields()) {
+                if (f.getName().equals(name)) {
                     field = f;
                     break;
                 }
             }
-            if(field != null)
+            if (field != null)
                 fields.add(field);
         }
         return fields;
@@ -265,21 +288,21 @@ public class Importer {
 
     private static List<Field> parseFields(List<StringMap> map, UMLClass obj, HashMap<String, UMLClass> vertices) {
         List<Field> fields = new ArrayList<>();
-        for(StringMap fmap : map) {
+        for (StringMap fmap : map) {
             String ownerName = (String) fmap.getOrDefault("owner", null);
-            if(obj == null && !vertices.containsKey(ownerName))
+            if (obj == null && !vertices.containsKey(ownerName))
                 continue;
-            if(obj == null)
+            if (obj == null)
                 obj = vertices.get(ownerName);
             String name = (String) fmap.getOrDefault("name", null);
             Field field = null;
-            for(Field f : obj.getFields()) {
-                if(f.getName().equals(name)) {
+            for (Field f : obj.getFields()) {
+                if (f.getName().equals(name)) {
                     field = f;
                     break;
                 }
             }
-            if(field == null) {
+            if (field == null) {
                 field = new Field(name);
                 field.setName(name);
                 field.setOwner(obj.toString());
@@ -311,7 +334,7 @@ public class Importer {
         return fields;
     }
 
-    private static List<Method> getMethods(HashMap<String,String> map, HashMap<String, UMLClass> vertices) {
+    private static List<Method> getMethods(HashMap<String, String> map, HashMap<String, UMLClass> vertices) {
         List<Method> methods = new ArrayList<>();
         for (String name : map.keySet()) {
             String ownerName = map.getOrDefault(name, null);
@@ -325,7 +348,7 @@ public class Importer {
                     break;
                 }
             }
-            if(method != null)
+            if (method != null)
                 methods.add(method);
         }
         return methods;
@@ -333,21 +356,21 @@ public class Importer {
 
     private static List<Method> parseMethods(List<StringMap> map, UMLClass obj, HashMap<String, UMLClass> vertices) {
         List<Method> methods = new ArrayList<>();
-        for(StringMap mmap : map) {
+        for (StringMap mmap : map) {
             String ownerName = (String) mmap.getOrDefault("owner", null);
-            if(obj == null && !vertices.containsKey(ownerName))
+            if (obj == null && !vertices.containsKey(ownerName))
                 continue;
-            if(obj == null)
+            if (obj == null)
                 obj = vertices.get(ownerName);
             String name = (String) mmap.getOrDefault("name", null);
             Method method = null;
-            for(Method m : obj.getMethods()) {
-                if(m.getName().equals(name)) {
+            for (Method m : obj.getMethods()) {
+                if (m.getName().equals(name)) {
                     method = m;
                     break;
                 }
             }
-            if(method == null) {
+            if (method == null) {
                 method = new Method(name);
                 method.setName(name);
                 method.setOwner(obj.toString());

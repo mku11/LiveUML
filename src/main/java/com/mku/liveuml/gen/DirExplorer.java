@@ -12,8 +12,8 @@ public class DirExplorer {
         boolean interested(int level, String path, File file);
     }
 
-    private FileHandler fileHandler;
-    private Filter filter;
+    private final FileHandler fileHandler;
+    private final Filter filter;
 
     public DirExplorer(Filter filter, FileHandler fileHandler) {
         this.filter = filter;

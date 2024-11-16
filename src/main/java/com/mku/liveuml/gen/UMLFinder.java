@@ -4,6 +4,7 @@ import com.mku.liveuml.entities.Field;
 import com.mku.liveuml.entities.Method;
 import com.mku.liveuml.graph.UMLClass;
 import com.mku.liveuml.graph.UMLRelationship;
+import com.mku.liveuml.graph.UMLRelationshipType;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -23,9 +24,9 @@ public class UMLFinder {
         results.add(classRefs);
         results.add(relationshipRefs);
 
-        for(UMLRelationship rel : s.relationships.values()) {
-            if(rel.type == UMLRelationship.Type.Dependency) {
-                if(rel.accessedBy.containsKey(f)) {
+        for (UMLRelationship rel : s.relationships.values()) {
+            if (rel.type == UMLRelationshipType.Dependency) {
+                if (rel.accessedBy.containsKey(f)) {
                     Method accessorMethod = rel.accessedBy.get(f);
                     methodRefs.add(accessorMethod);
                     classRefs.add(rel.from);
@@ -49,11 +50,11 @@ public class UMLFinder {
         results.add(classRefs);
         results.add(relationshipRefs);
 
-        for(UMLRelationship rel : s.relationships.values()) {
-            if(rel.type == UMLRelationship.Type.Dependency) {
-                if(s == rel.to) {
+        for (UMLRelationship rel : s.relationships.values()) {
+            if (rel.type == UMLRelationshipType.Dependency) {
+                if (s == rel.to) {
                     methodRefs.addAll(rel.classAccessors);
-                    for(Method method : rel.callTo.keySet()) {
+                    for (Method method : rel.callTo.keySet()) {
                         methodRefs.add(method);
                         methodRefs.add(rel.callTo.get(method));
                     }
@@ -61,19 +62,19 @@ public class UMLFinder {
                     classRefs.add(rel.to);
                     relationshipRefs.add(rel);
                 }
-            } else if(rel.type == UMLRelationship.Type.Aggregation
-                    || rel.type == UMLRelationship.Type.Composition
-                    || rel.type == UMLRelationship.Type.Association
+            } else if (rel.type == UMLRelationshipType.Aggregation
+                    || rel.type == UMLRelationshipType.Composition
+                    || rel.type == UMLRelationshipType.Association
             ) {
-                if(s == rel.to) {
+                if (s == rel.to) {
                     fieldRefs.addAll(rel.fieldAssociation);
                     classRefs.add(rel.from);
                     classRefs.add(rel.to);
                     relationshipRefs.add(rel);
                 }
-            } else if(rel.type == UMLRelationship.Type.Realization
-                    || rel.type == UMLRelationship.Type.Inheritance) {
-                if(s == rel.to) {
+            } else if (rel.type == UMLRelationshipType.Realization
+                    || rel.type == UMLRelationshipType.Inheritance) {
+                if (s == rel.to) {
                     classRefs.add(rel.from);
                     classRefs.add(rel.to);
                     relationshipRefs.add(rel);
@@ -95,9 +96,9 @@ public class UMLFinder {
         results.add(classRefs);
         results.add(relationshipRefs);
 
-        for(UMLRelationship rel : s.relationships.values()) {
-            if(rel.type == UMLRelationship.Type.Dependency) {
-                if(rel.calledBy.containsKey(m)) {
+        for (UMLRelationship rel : s.relationships.values()) {
+            if (rel.type == UMLRelationshipType.Dependency) {
+                if (rel.calledBy.containsKey(m)) {
                     Method callerMethod = rel.calledBy.get(m);
                     methodRefs.add(callerMethod);
                     methodRefs.add(m);

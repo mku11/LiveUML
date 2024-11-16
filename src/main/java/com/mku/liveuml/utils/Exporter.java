@@ -1,3 +1,26 @@
+/*
+MIT License
+
+Copyright (c) 2024 Max Kas
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 package com.mku.liveuml.utils;
 
 import com.google.gson.Gson;
@@ -38,7 +61,6 @@ public class Exporter {
         }
     }
 
-
     private void registerEdgeAttrs(GraphMLExporter<UMLClass, UMLRelationship> exporter) {
         exporter.registerAttribute("type", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
         exporter.registerAttribute("from", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
@@ -65,58 +87,58 @@ public class Exporter {
         return map;
     }
 
-    private HashMap<String,HashMap<String,String>> getFieldMethodOwnerMap(HashMap<Field, Method> fieldMethodMap) {
-        HashMap<String,HashMap<String,String>> fieldMethodOwnerMap = new HashMap<>();
-        for(Field f: fieldMethodMap.keySet()) {
+    private HashMap<String, HashMap<String, String>> getFieldMethodOwnerMap(HashMap<Field, Method> fieldMethodMap) {
+        HashMap<String, HashMap<String, String>> fieldMethodOwnerMap = new HashMap<>();
+        for (Field f : fieldMethodMap.keySet()) {
             Method m = fieldMethodMap.get(f);
             HashMap<String, String> ownerMap = new HashMap<>();
             fieldMethodOwnerMap.put(f.getName(), ownerMap);
             ownerMap.put("fieldOwner", f.getOwner());
-            ownerMap.put("methodName", m == null ? null:m.getSignature());
-            ownerMap.put("methodOwner", m == null?null:m.getOwner());
+            ownerMap.put("methodName", m == null ? null : m.getSignature());
+            ownerMap.put("methodOwner", m == null ? null : m.getOwner());
         }
         return fieldMethodOwnerMap;
     }
 
-    private HashMap<String,HashMap<String,String>> getMethodFieldOwnerMap(HashMap<Method, Field> fieldMethodMap) {
-        HashMap<String,HashMap<String,String>> fieldMethodOwnerMap = new HashMap<>();
-        for(Method m: fieldMethodMap.keySet()) {
+    private HashMap<String, HashMap<String, String>> getMethodFieldOwnerMap(HashMap<Method, Field> fieldMethodMap) {
+        HashMap<String, HashMap<String, String>> fieldMethodOwnerMap = new HashMap<>();
+        for (Method m : fieldMethodMap.keySet()) {
             Field f = fieldMethodMap.get(m);
             HashMap<String, String> ownerMap = new HashMap<>();
             fieldMethodOwnerMap.put(m.getSignature(), ownerMap);
             ownerMap.put("methodName", m.getName());
             ownerMap.put("methodOwner", m.getOwner());
-            ownerMap.put("fieldName", f == null ? null:f.getName());
-            ownerMap.put("fieldOwner", f == null?null:f.getOwner());
+            ownerMap.put("fieldName", f == null ? null : f.getName());
+            ownerMap.put("fieldOwner", f == null ? null : f.getOwner());
         }
         return fieldMethodOwnerMap;
     }
 
-    private HashMap<String,HashMap<String,String>> getMethodMethodOwnerMap(HashMap<Method, Method> fieldMethodMap) {
-        HashMap<String,HashMap<String,String>> methodMethodOwnerMap = new HashMap<>();
-        for(Method m: fieldMethodMap.keySet()) {
+    private HashMap<String, HashMap<String, String>> getMethodMethodOwnerMap(HashMap<Method, Method> fieldMethodMap) {
+        HashMap<String, HashMap<String, String>> methodMethodOwnerMap = new HashMap<>();
+        for (Method m : fieldMethodMap.keySet()) {
             Method mv = fieldMethodMap.get(m);
             HashMap<String, String> ownerMap = new HashMap<>();
             methodMethodOwnerMap.put(m.getSignature(), ownerMap);
             ownerMap.put("methodName", m.getName());
             ownerMap.put("methodOwner", m.getOwner());
-            ownerMap.put("methodName2", mv == null ? null:mv.getSignature());
-            ownerMap.put("methodOwner2", mv == null?null:mv.getOwner());
+            ownerMap.put("methodName2", mv == null ? null : mv.getSignature());
+            ownerMap.put("methodOwner2", mv == null ? null : mv.getOwner());
         }
         return methodMethodOwnerMap;
     }
 
-    private HashMap<String,String> getFieldsOwnerMap(HashSet<Field> fields) {
-        HashMap<String,String> fieldOwnerMap = new HashMap<>();
-        for(Field f: fields) {
+    private HashMap<String, String> getFieldsOwnerMap(HashSet<Field> fields) {
+        HashMap<String, String> fieldOwnerMap = new HashMap<>();
+        for (Field f : fields) {
             fieldOwnerMap.put(f.getName(), f.getOwner());
         }
         return fieldOwnerMap;
     }
 
-    private HashMap<String,String> getMethodOwnerMap(HashSet<Method> methods) {
-        HashMap<String,String> methodOwnerMap = new HashMap<>();
-        for(Method m: methods) {
+    private HashMap<String, String> getMethodOwnerMap(HashSet<Method> methods) {
+        HashMap<String, String> methodOwnerMap = new HashMap<>();
+        for (Method m : methods) {
             methodOwnerMap.put(m.getSignature(), m.getOwner());
         }
         return methodOwnerMap;

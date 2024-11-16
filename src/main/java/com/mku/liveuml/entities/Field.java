@@ -22,12 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 package com.mku.liveuml.entities;
+
 import java.util.*;
 
 public class Field {
     private String name;
     private List<Modifier> modifiers = new LinkedList<>();
-    private List<AccessModifier> accessModifiers  = new LinkedList<>();
+    private List<AccessModifier> accessModifiers = new LinkedList<>();
     private boolean isArray;
     private String baseTypeName;
     private String typeName;
@@ -42,7 +43,7 @@ public class Field {
 
     public String getTypeFullName() {
         String fullName = typePackageName + "." + typeName;
-        if(isArray) {
+        if (isArray) {
             int index = fullName.indexOf("[");
             if (index >= 0)
                 fullName = fullName.substring(0, index);

@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 package com.mku.liveuml.entities;
+
 public enum Modifier {
     Final, Static, Transient, Volatile, Abstract, Synchronized, Native, StrictFP
 }

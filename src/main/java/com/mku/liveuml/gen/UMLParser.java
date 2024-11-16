@@ -44,6 +44,7 @@ import com.mku.liveuml.graph.UMLClass;
 import com.mku.liveuml.entities.Parameter;
 import com.mku.liveuml.entities.*;
 import com.mku.liveuml.entities.Class;
+import com.mku.liveuml.graph.UMLRelationshipType;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,9 +81,9 @@ public class UMLParser {
     }
 
     private void createFieldAggregationRelationship(Field field, UMLClass fieldOwner, UMLClass fieldType) {
-        UMLRelationship.Type relType = UMLRelationship.Type.Aggregation;
+        UMLRelationshipType relType = UMLRelationshipType.Aggregation;
         if (field.getAccessModifiers().contains(AccessModifier.Private) && !hasPublicSetter(field, fieldOwner, fieldType))
-            relType = UMLRelationship.Type.Composition;
+            relType = UMLRelationshipType.Composition;
         UMLRelationship rel = new UMLRelationship(fieldOwner, fieldType, relType);
         String key = rel.toString();
         if (fieldOwner.relationships.containsKey(key)) {
@@ -135,7 +136,7 @@ public class UMLParser {
                         UMLClass caller = getMethodCallerObject(n);
                         UMLClass callee = getMethodCalleeObject(n);
                         if (callee != null && caller != null
-                            && callee != caller) {
+                                && callee != caller) {
                             Method callerMethod = getMethodCallerMethod(caller, n);
                             Method calleeMethod = getMethodCalleeMethod(callee, n);
                             if (calleeMethod != null) {
@@ -152,14 +153,15 @@ public class UMLParser {
                         if (caller != null && callee != null) {
                             Method callerMethod = getMethodCallerMethod(caller, n);
                             Constructor constructor = getConstructor(callee, n);
-                            if(constructor != null) {
+                            if (constructor != null) {
                                 createObjectCreationRelationship(caller, callerMethod, callee, constructor);
                             }
-                            if(constructor == null && getConstructorCount(callee) == 0) {
+                            if (constructor == null && getConstructorCount(callee) == 0) {
                                 createObjectCreationRelationship(caller, callerMethod, callee);
                             }
                         }
                     }
+
                     @Override
                     public void visit(final FieldAccessExpr n, final UMLClass arg) {
                         super.visit(n, arg);
@@ -167,7 +169,7 @@ public class UMLParser {
                         UMLClass accessor = getFieldAccessorObject(n);
                         UMLClass accessedFieldObject = getFieldAccessedObject(n);
                         if (accessor != null && accessedFieldObject != null
-                            && accessor != accessedFieldObject) {
+                                && accessor != accessedFieldObject) {
                             Method accessorMethod = getFieldAccessorMethod(accessor, n);
                             Field accessedField = getFieldAccessed(accessedFieldObject, n);
                             if (accessedField != null) {
@@ -197,7 +199,7 @@ public class UMLParser {
                 break;
             }
         }
-        if(methodDeclaration == null)
+        if (methodDeclaration == null)
             return null;
         for (Method m : caller.getMethods()) {
             if (m.getSignature().equals(methodDeclaration.getSignature().toString())) {
@@ -208,7 +210,7 @@ public class UMLParser {
     }
 
     private void createObjectCreationRelationship(UMLClass caller, Method callerMethod, UMLClass callee, Constructor constructor) {
-        UMLRelationship.Type type = UMLRelationship.Type.Dependency;
+        UMLRelationshipType type = UMLRelationshipType.Dependency;
         UMLRelationship rel = new UMLRelationship(caller, callee, type);
         String key = rel.toString();
         if (caller.relationships.containsKey(key)) {
@@ -225,7 +227,7 @@ public class UMLParser {
     }
 
     private void createObjectCreationRelationship(UMLClass caller, Method callerMethod, UMLClass callee) {
-        UMLRelationship.Type type = UMLRelationship.Type.Dependency;
+        UMLRelationshipType type = UMLRelationshipType.Dependency;
         UMLRelationship rel = new UMLRelationship(caller, callee, type);
         String key = rel.toString();
         if (caller.relationships.containsKey(key)) {
@@ -244,8 +246,8 @@ public class UMLParser {
 
     private int getConstructorCount(UMLClass obj) {
         int constructors = 0;
-        for(Method method : obj.getMethods()) {
-            if(method instanceof Constructor) {
+        for (Method method : obj.getMethods()) {
+            if (method instanceof Constructor) {
                 constructors++;
             }
         }
@@ -253,9 +255,9 @@ public class UMLParser {
     }
 
     private Constructor getConstructor(UMLClass obj, ObjectCreationExpr n) {
-        for(Method method : obj.getMethods()) {
-            if(method instanceof Constructor) {
-                if(method.getParameters().size() == n.getArguments().size())
+        for (Method method : obj.getMethods()) {
+            if (method instanceof Constructor) {
+                if (method.getParameters().size() == n.getArguments().size())
                     return (Constructor) method;
             }
         }
@@ -301,7 +303,7 @@ public class UMLParser {
         try {
             ResolvedType type = n.getScope().get().calculateResolvedType();
             String fullName = null;
-            if(type.isReferenceType()) {
+            if (type.isReferenceType()) {
                 ResolvedReferenceTypeDeclaration decl = type.asReferenceType().getTypeDeclaration().get();
                 fullName = decl.getPackageName() + "." + decl.getClassName();
             }
@@ -363,7 +365,7 @@ public class UMLParser {
                 break;
             }
         }
-        if(methodDeclaration == null)
+        if (methodDeclaration == null)
             return null;
 
         for (Method m : caller.getMethods()) {
@@ -375,7 +377,7 @@ public class UMLParser {
     }
 
     private void createMethodCallRelationship(UMLClass caller, Method callerMethod, UMLClass callee, Method calleeMethod) {
-        UMLRelationship.Type type = UMLRelationship.Type.Dependency;
+        UMLRelationshipType type = UMLRelationshipType.Dependency;
         UMLRelationship rel = new UMLRelationship(caller, callee, type);
         String key = rel.toString();
         if (caller.relationships.containsKey(key)) {
@@ -414,7 +416,7 @@ public class UMLParser {
 
 
     private Method getFieldAccessorMethod(UMLClass callee, FieldAccessExpr n) {
-        CallableDeclaration methodDeclaration = null;
+        CallableDeclaration<?> methodDeclaration = null;
         Node node = n;
         while (node.hasParentNode()) {
             node = node.getParentNode().get();
@@ -426,7 +428,7 @@ public class UMLParser {
                 break;
             }
         }
-        if(methodDeclaration == null)
+        if (methodDeclaration == null)
             return null;
 
         try {
@@ -451,7 +453,7 @@ public class UMLParser {
         try {
             ResolvedType type = n.getScope().calculateResolvedType();
             String fullName = null;
-            if(type.isReferenceType()) {
+            if (type.isReferenceType()) {
                 ResolvedReferenceTypeDeclaration decl = type.asReferenceType().getTypeDeclaration().get();
                 fullName = decl.getPackageName() + "." + decl.getClassName();
             }
@@ -465,7 +467,7 @@ public class UMLParser {
     }
 
     private Field getFieldAccessed(UMLClass accessed, FieldAccessExpr n) {
-        for (Field f: accessed.getFields()) {
+        for (Field f : accessed.getFields()) {
             if (f.getName().equals(n.getNameAsString())) {
                 return f;
             }
@@ -474,7 +476,7 @@ public class UMLParser {
     }
 
     private void createFieldAccessRelationship(UMLClass accessor, Method accessorMethod, UMLClass accessed, Field accessedField) {
-        UMLRelationship.Type type = UMLRelationship.Type.Dependency;
+        UMLRelationshipType type = UMLRelationshipType.Dependency;
         UMLRelationship rel = new UMLRelationship(accessor, accessed, type);
         String key = rel.toString();
         if (accessor.relationships.containsKey(key)) {
@@ -576,7 +578,7 @@ public class UMLParser {
     }
 
     private UMLClass getOrCreateObject(String packageName, String name, boolean isInterface, String filePath,
-                                              int line) {
+                                       int line) {
         UMLClass obj = null;
         String fullName = packageName + "." + name;
         if (objects.containsKey(fullName)) {
@@ -596,7 +598,7 @@ public class UMLParser {
     }
 
     private UMLRelationship getSuperClassRel(UMLClass derivedClass, UMLClass superClass) {
-        return new UMLRelationship(derivedClass, superClass, UMLRelationship.Type.Inheritance);
+        return new UMLRelationship(derivedClass, superClass, UMLRelationshipType.Inheritance);
     }
 
     private Class getSuperClass(ClassOrInterfaceDeclaration node, String filePath) {
@@ -625,7 +627,7 @@ public class UMLParser {
 
 
     private UMLRelationship getInterfaceRel(UMLClass derivedClass, UMLClass superClass) {
-        return new UMLRelationship(derivedClass, superClass, UMLRelationship.Type.Realization);
+        return new UMLRelationship(derivedClass, superClass, UMLRelationshipType.Realization);
     }
 
     private List<Interface> getImplementedInterfaces(ClassOrInterfaceDeclaration node, String filePath) {
@@ -668,7 +670,7 @@ public class UMLParser {
         return packageName;
     }
 
-    private List<Field> parseFields(NodeWithMembers n, UMLClass obj) {
+    private List<Field> parseFields(NodeWithMembers<?> n, UMLClass obj) {
         List<Field> fields = new LinkedList<>();
         List<FieldDeclaration> flds = n.getFields();
         for (FieldDeclaration f : flds) {
@@ -689,17 +691,17 @@ public class UMLParser {
                     } else if (variableType.isArray()) {
                         field.setArray(true);
                         ResolvedType baseType = ((ResolvedArrayType) variableType).getComponentType();
-                        while(baseType instanceof ResolvedArrayType) {
+                        while (baseType instanceof ResolvedArrayType) {
                             baseType = ((ResolvedArrayType) baseType).getComponentType();
                         }
-                        if(baseType.isPrimitive()) {
+                        if (baseType.isPrimitive()) {
                             field.setPrimitiveType(variableType.describe());
                         } else if (baseType.isReferenceType()) {
                             ResolvedReferenceTypeDeclaration parameterTypeDecl = baseType.asReferenceType().getTypeDeclaration().get();
                             field.setTypePackageName(parameterTypeDecl.getPackageName());
                             field.setTypeName(variableType.describe());
-                            if(variableType.describe().startsWith(field.getTypePackageName()))
-                                field.setTypeName(field.getTypeName().substring(field.getTypePackageName().length()+1));
+                            if (variableType.describe().startsWith(field.getTypePackageName()))
+                                field.setTypeName(field.getTypeName().substring(field.getTypePackageName().length() + 1));
                         }
                     } else if (!variableType.isArray()) {
                         System.err.println("Could not get type: " + variableType);
@@ -716,12 +718,12 @@ public class UMLParser {
         return fields;
     }
 
-    private List<Method> parseMethods(UMLClass obj, NodeWithMembers n) {
+    private List<Method> parseMethods(UMLClass obj, NodeWithMembers<?> n) {
         List<Method> objMethods = new LinkedList<>();
         List<MethodDeclaration> methods = n.getMethods();
         for (MethodDeclaration decl : methods) {
             Method method = new Method(decl.getName().asString());
-            method.setOwner( obj.toString());
+            method.setOwner(obj.toString());
             NodeList<com.github.javaparser.ast.body.Parameter> params = decl.getParameters();
             method.setModifiers(parseMethodModifiers(decl));
             method.setAccessModifiers(parseMethodAccessModifiers(decl));
@@ -743,7 +745,7 @@ public class UMLParser {
                 parseParameterType(parameter, param);
                 parameter.modifiers = parseParameterModifiers(param);
                 parameters.add(parameter);
-                if(!parameter.isPrimitiveType())
+                if (!parameter.isPrimitiveType())
                     createParameterTypeRelationship(obj, method, parameter);
             }
             method.setParameters(parameters);
@@ -754,9 +756,9 @@ public class UMLParser {
     }
 
     private void createParameterTypeRelationship(UMLClass obj, Method method, Parameter parameter) {
-        UMLRelationship.Type type = UMLRelationship.Type.Dependency;
+        UMLRelationshipType type = UMLRelationshipType.Dependency;
         UMLClass refClass = objects.getOrDefault(parameter.getTypePackageName() + "." + parameter.getTypeName(), null);
-        if(refClass == null || refClass == obj)
+        if (refClass == null || refClass == obj)
             return;
         UMLRelationship rel = new UMLRelationship(obj, refClass, type);
         String key = rel.toString();
@@ -785,17 +787,17 @@ public class UMLParser {
             } else if (type.isArray()) {
                 parameter.setArray(true);
                 ResolvedType baseType = ((ResolvedArrayType) type).getComponentType();
-                while(baseType instanceof ResolvedArrayType) {
+                while (baseType instanceof ResolvedArrayType) {
                     baseType = ((ResolvedArrayType) baseType).getComponentType();
                 }
-                if(baseType.isPrimitive()) {
+                if (baseType.isPrimitive()) {
                     parameter.setPrimitiveType(type.describe());
                 } else if (baseType.isReferenceType()) {
                     ResolvedReferenceTypeDeclaration parameterTypeDecl = baseType.asReferenceType().getTypeDeclaration().get();
                     parameter.setTypePackageName(parameterTypeDecl.getPackageName());
                     parameter.setTypeName(type.describe());
-                    if(type.describe().startsWith(parameter.getTypePackageName()))
-                        parameter.setTypeName(parameter.getTypeName().substring(parameter.getTypePackageName().length()+1));
+                    if (type.describe().startsWith(parameter.getTypePackageName()))
+                        parameter.setTypeName(parameter.getTypeName().substring(parameter.getTypePackageName().length() + 1));
                 }
             } else if (!type.isArray() && !type.isVoid() && !type.isTypeVariable()) {
                 System.err.println("Could not get param type: " + type);
@@ -805,7 +807,7 @@ public class UMLParser {
         }
     }
 
-    private List<Modifier> parseMethodModifiers(CallableDeclaration methodDecl) {
+    private List<Modifier> parseMethodModifiers(CallableDeclaration<?> methodDecl) {
         NodeList<com.github.javaparser.ast.Modifier> modifiers = methodDecl.getModifiers();
         List<Modifier> methodModifiers = new LinkedList<>();
         for (com.github.javaparser.ast.Modifier modifier : modifiers) {
@@ -825,7 +827,7 @@ public class UMLParser {
         return methodModifiers;
     }
 
-    private List<AccessModifier> parseMethodAccessModifiers(CallableDeclaration methodDecl) {
+    private List<AccessModifier> parseMethodAccessModifiers(CallableDeclaration<?> methodDecl) {
         NodeList<com.github.javaparser.ast.Modifier> modifiers = methodDecl.getModifiers();
         List<AccessModifier> methodAccessModifiers = new LinkedList<>();
         for (com.github.javaparser.ast.Modifier modifier : modifiers) {
@@ -884,7 +886,7 @@ public class UMLParser {
         return methodAccessModifiers;
     }
 
-    private List<Method> parseConstructors(UMLClass obj, NodeWithMembers n) {
+    private List<Method> parseConstructors(UMLClass obj, NodeWithMembers<?> n) {
         List<Method> objConstructors = new LinkedList<>();
         List<ConstructorDeclaration> constructors = n.getConstructors();
         for (ConstructorDeclaration decl : constructors) {
@@ -900,7 +902,7 @@ public class UMLParser {
                 parseParameterType(parameter, param);
                 parameter.modifiers = parseParameterModifiers(param);
                 parameters.add(parameter);
-                if(!parameter.isPrimitiveType())
+                if (!parameter.isPrimitiveType())
                     createParameterTypeRelationship(obj, constructor, parameter);
             }
             constructor.setParameters(parameters);

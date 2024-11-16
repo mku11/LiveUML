@@ -30,7 +30,7 @@ import com.mku.liveuml.entities.Interface;
 public class UMLClassFactory {
     public static UMLClass create(String name) {
         String[] parts = name.split(":");
-        UMLClass.Type type = UMLClass.Type.valueOf(parts[0]);
+        UMLClassType type = UMLClassType.valueOf(parts[0]);
         String packageName = parts[1].substring(0, parts[1].lastIndexOf("."));
         String className = parts[1].substring(parts[1].lastIndexOf(".") + 1);
         UMLClass obj = null;

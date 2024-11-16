@@ -21,22 +21,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package com.mku.liveuml.utils;
+package com.mku.liveuml.graph;
 
-import com.mku.liveuml.view.GraphPanel;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-
-public class ImageExporter {
-    public void saveImage(File file, GraphPanel panel) {
-        try {
-            BufferedImage image = panel.getImage();
-            ImageIO.write(image, "png", file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
+// TODO: model the relationship types with a hierarchy instead if/when importer provides an edge factory setter
+public enum UMLRelationshipType {
+    Association, Inheritance, Realization, Dependency, Aggregation, Composition
 }

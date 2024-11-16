@@ -40,49 +40,49 @@ public class Formatter {
                                  HashSet<UMLClass> selectedVertices, HashSet<UMLRelationship> selectedEdges,
                                  HashSet<Method> selectedMethods, HashSet<Field> selectedFields) {
         String classBackgroundColor = getSelectionColor(object, selectedVertices, selectedEdges, selectedMethods, selectedFields);
-        String body = "<html><body style='font-family: monospace; font-size: 10px; font-weight: bold;'>";
-        body += "<div><div><center style='margin: 4px; font-size: 14px;" + classBackgroundColor + "'>" + object.getName() + "</center><div>";
-        if(!compact) {
+        StringBuilder body = new StringBuilder("<html><body style='font-family: monospace; font-size: 10px; font-weight: bold;'>");
+        body.append("<div><div><center style='margin: 4px; font-size: 14px;").append(classBackgroundColor).append("'>").append(object.getName()).append("</center><div>");
+        if (!compact) {
             if (object.getFields().size() > 0) {
-                body += "<hr class=\"solid\">";
-                body += "<div style='padding: 8px;'>";
+                body.append("<hr class=\"solid\">");
+                body.append("<div style='padding: 8px;'>");
                 for (Field field : object.getFields()) {
                     String fieldBackgroundColor = "";
-                    if(selectedFields.contains(field))
-                        fieldBackgroundColor =selectionBackgroundColor;
-                    body += "<div style='" + fieldBackgroundColor + "'>" + getFieldFormatted(field) + "</div>" + "<br>";
+                    if (selectedFields.contains(field))
+                        fieldBackgroundColor = selectionBackgroundColor;
+                    body.append("<div style='").append(fieldBackgroundColor).append("'>").append(getFieldFormatted(field)).append("</div>").append("<br>");
                 }
-                body += "</div>";
+                body.append("</div>");
             }
             if (object.getMethods().size() > 0) {
-                body += "<hr class=\"solid\">";
-                body += "<div style='padding: 8px;'>";
+                body.append("<hr class=\"solid\">");
+                body.append("<div style='padding: 8px;'>");
                 for (Method method : object.getMethods()) {
                     String signature = getMethodSignature(method, true);
                     String methodBackgroundColor = "";
-                    if(selectedMethods.contains(method))
-                        methodBackgroundColor =selectionBackgroundColor;
+                    if (selectedMethods.contains(method))
+                        methodBackgroundColor = selectionBackgroundColor;
                     signature = "<div style='" + methodBackgroundColor + "'>" + signature + "</div>";
                     signature += "<br>";
-                    body += signature;
+                    body.append(signature);
                 }
-                body += "</div><br>";
+                body.append("</div><br>");
             }
         }
-        body += "<div></body></html>";
-        return body;
+        body.append("<div></body></html>");
+        return body.toString();
     }
 
     private static String getSelectionColor(UMLClass object, HashSet<UMLClass> selectedVertices, HashSet<UMLRelationship> selectedEdges,
                                             HashSet<Method> selectedMethods, HashSet<Field> selectedFields) {
-        if(selectedVertices.contains(object))
+        if (selectedVertices.contains(object))
             return selectionBackgroundColor;
         for (UMLRelationship rel : object.relationships.values()) {
             if (selectedEdges.contains(rel)) {
                 return selectionBackgroundColor;
             }
         }
-        for (Field field: object.getFields()) {
+        for (Field field : object.getFields()) {
             if (selectedFields.contains(field)) {
                 return selectionBackgroundColor;
             }
@@ -101,21 +101,21 @@ public class Formatter {
 
     public static String getMethodSignature(Method method, boolean usePrefix) {
         String signature = "";
-        if(usePrefix)
+        if (usePrefix)
             signature += getMethodQualifier(method) + " ";
         signature += method.getName() + "(";
-        String params = "";
+        StringBuilder params = new StringBuilder();
         for (Parameter parameter : method.getParameters()) {
             if (params.length() > 0)
-                params += ", ";
-            params += parameter.getName() + " : " + parameter.getTypeName();
+                params.append(", ");
+            params.append(parameter.getName()).append(" : ").append(parameter.getTypeName());
         }
         signature += params;
         signature += ")";
         if (!method.isReturnTypeVoid())
             signature += " : " + method.getReturnTypeName();
-        if(signature.length() > MAX_CHARS)
-            signature = signature.substring(0,MAX_CHARS) + "...";
+        if (signature.length() > MAX_CHARS)
+            signature = signature.substring(0, MAX_CHARS) + "...";
         return signature;
     }
 
