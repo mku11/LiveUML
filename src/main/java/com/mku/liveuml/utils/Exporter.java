@@ -31,7 +31,7 @@ public class Exporter {
         exporter.setEdgeAttributeProvider(this::getEdgeAttrs);
 
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file))) {
-            exporter.exportGraph(panel.graph, writer);
+            exporter.exportGraph(panel.getGraph(), writer);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

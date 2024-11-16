@@ -23,27 +23,16 @@ SOFTWARE.
 */
 package com.mku.liveuml;
 
-import com.github.javaparser.ParserConfiguration;
-import com.github.javaparser.StaticJavaParser;
-import com.github.javaparser.symbolsolver.JavaSymbolSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
-import com.mku.liveuml.gen.Generator;
-import com.mku.liveuml.graph.UMLClass;
-import com.mku.liveuml.view.GraphPanel;
 import com.mku.liveuml.utils.Exporter;
+import com.mku.liveuml.utils.ImageExporter;
 import com.mku.liveuml.utils.Importer;
+import com.mku.liveuml.view.GraphPanel;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
-import java.util.List;
 import java.util.prefs.Preferences;
 
 public class Main {
@@ -53,7 +42,12 @@ public class Main {
         f.setTitle("LiveUML");
         f.setIconImage(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/icons/logo.png")));
         f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        createMenu(f);
+        f.setLocationRelativeTo(null);
+        f.setVisible(true);
+    }
 
+    private static void createMenu(JFrame f) {
         JMenuBar menubar = new JMenuBar();
         JMenu menu = new JMenu("File");
         menubar.add(menu);
@@ -100,12 +94,7 @@ public class Main {
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File root = fc.getSelectedFile();
                 prefs.put("LAST_SOURCE_FOLDER", root.getPath());
-
-                setupFolder(root);
-                List<UMLClass> classes = new Generator().getClasses(root);
-                panel.addClasses(classes);
-                panel.display(null);
-                panel.revalidate();
+                panel.importSourcesDir(root);
             }
         });
 
@@ -172,33 +161,9 @@ public class Main {
                 File file = fc.getSelectedFile();
                 prefs.put("LAST_EXPORT_FILE", file.getPath());
                 new Thread(()-> {
-                    BufferedImage image = panel.getImage();
-                    saveImage(file, image);
+                    new ImageExporter().saveImage(file, panel);
                 }).start();
             }
         });
-
-        f.setLocationRelativeTo(null);
-        f.setVisible(true);
-    }
-
-    private static void setupFolder(File sourceFolder) {
-        ReflectionTypeSolver reflectionTypeSolver = new ReflectionTypeSolver();
-        JavaParserTypeSolver javaParserTypeSolver = new JavaParserTypeSolver(sourceFolder);
-        CombinedTypeSolver combinedSolver = new CombinedTypeSolver();
-        combinedSolver.add(reflectionTypeSolver);
-        combinedSolver.add(javaParserTypeSolver);
-
-        ParserConfiguration parserConfiguration = new ParserConfiguration()
-                .setSymbolResolver(new JavaSymbolSolver(combinedSolver));
-        StaticJavaParser.setConfiguration(parserConfiguration);
-    }
-
-    private static void saveImage(File file, BufferedImage image) {
-        try {
-            ImageIO.write(image,"png", file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

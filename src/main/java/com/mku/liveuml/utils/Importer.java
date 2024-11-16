@@ -34,7 +34,7 @@ public class Importer {
 
         try (InputStreamReader inputStreamReader = new FileReader(file)) {
             panel.createGraph();
-            importer.importGraph(panel.graph, inputStreamReader);
+            importer.importGraph(panel.getGraph(), inputStreamReader);
             panel.updateVertices(vertices);
             panel.display(verticesPositions);
             panel.revalidate();

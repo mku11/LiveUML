@@ -23,12 +23,19 @@ SOFTWARE.
 */
 package com.mku.liveuml.view;
 
+import com.github.javaparser.ParserConfiguration;
+import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.mku.liveuml.Main;
 import com.mku.liveuml.format.Formatter;
 import com.mku.liveuml.entities.AccessModifier;
 import com.mku.liveuml.entities.Constructor;
 import com.mku.liveuml.entities.Field;
 import com.mku.liveuml.entities.Method;
+import com.mku.liveuml.gen.Generator;
 import com.mku.liveuml.graph.UMLRelationship;
 import com.mku.liveuml.graph.UMLClass;
 import org.jgrapht.Graph;
@@ -50,18 +57,27 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.prefs.Preferences;
 
+@SuppressWarnings("unchecked")
 public class GraphPanel extends JPanel {
-    public Graph<UMLClass, UMLRelationship> graph;
+    private Graph<UMLClass, UMLRelationship> graph;
     private VisualizationViewer<UMLClass, UMLRelationship> vv;
     private final LayoutAlgorithm<UMLClass> layoutAlgorithm;
     private VisualizationScrollPane visualizationScrollPane;
     private final HashSet<UMLClass> selectedVertices = new HashSet<>();
     private final HashSet<UMLRelationship> selectedEdges = new HashSet<>();
+
+    private BufferedImage img;
+
+    public Graph<UMLClass, UMLRelationship> getGraph() {
+        return graph;
+    }
+
     private final HashSet<Method> selectedMethods = new HashSet<>();
     private final HashSet<Field> selectedFields = new HashSet<>();
 
@@ -84,9 +100,9 @@ public class GraphPanel extends JPanel {
                 .buildGraph();
     }
 
+    @SuppressWarnings("unchecked")
     public void display(Map<UMLClass, Point2D.Double> positions) {
         Dimension preferredSize = estimateGraphSize(graph);
-        this.graph = graph;
         final VisualizationModel<UMLClass, UMLRelationship> visualizationModel =
                 VisualizationModel.builder(graph)
                         .layoutAlgorithm(layoutAlgorithm)
@@ -119,10 +135,8 @@ public class GraphPanel extends JPanel {
         VertexLabelAsShapeRenderer<UMLClass, UMLRelationship> vlasr =
                 new VertexLabelAsShapeRenderer<>(visualizationModel.getLayoutModel(), vv.getRenderContext());
 
-        vv.getRenderContext().setVertexLabelFunction(object -> {
-            return com.mku.liveuml.format.Formatter.display(object, !object.isCompact(),
-                    selectedVertices, selectedEdges, selectedMethods, selectedFields);
-        });
+        vv.getRenderContext().setVertexLabelFunction(object -> Formatter.display(object, !object.isCompact(),
+                selectedVertices, selectedEdges, selectedMethods, selectedFields));
         vv.getRenderContext().setVertexShapeFunction(vlasr);
         vv.getRenderContext().setEdgeStrokeFunction(rel -> {
             if (rel.type == UMLRelationship.Type.Dependency || rel.type == UMLRelationship.Type.Realization) {
@@ -140,7 +154,7 @@ public class GraphPanel extends JPanel {
         vv.getRenderer().setVertexRenderer(BiModalRenderer.HEAVYWEIGHT, new GradientVertexRenderer<>(Color.white, Color.white, true));
         vv.getRenderer().setVertexLabelRenderer(BiModalRenderer.HEAVYWEIGHT, vlasr);
         vv.setBackground(Color.white);
-        vv.setVertexToolTipFunction(n -> n.getName());
+        vv.setVertexToolTipFunction(UMLClass::getName);
 
         // FIXME: workaround: setting custom arrows does not work since the setupArrows()
         // always overrides, so we inject our shape here:
@@ -383,9 +397,7 @@ public class GraphPanel extends JPanel {
                 goToMenu.add(fItem);
         }
 
-        EventQueue.invokeLater(() -> {
-            menu.show(me.getComponent(), me.getX(), me.getY());
-        });
+        EventQueue.invokeLater(() -> menu.show(me.getComponent(), me.getX(), me.getY()));
     }
 
     private void goToClassReference(UMLClass s) {
@@ -470,9 +482,7 @@ public class GraphPanel extends JPanel {
         for(UMLRelationship rel : s.relationships.values()) {
             if(rel.type == UMLRelationship.Type.Dependency) {
                 if(s == rel.to) {
-                    for(Method accessorMethod : rel.classAccessors) {
-                        selectedMethods.add(accessorMethod);
-                    }
+                    selectedMethods.addAll(rel.classAccessors);
                     for(Method method : rel.callTo.keySet()) {
                         selectedMethods.add(method);
                         selectedMethods.add(rel.callTo.get(method));
@@ -486,9 +496,7 @@ public class GraphPanel extends JPanel {
                     || rel.type == UMLRelationship.Type.Association
             ) {
                 if(s == rel.to) {
-                    for (Field field : rel.fieldAssociation) {
-                        selectedFields.add(field);
-                    }
+                    selectedFields.addAll(rel.fieldAssociation);
                     selectedVertices.add(rel.from);
                     selectedVertices.add(rel.to);
                     selectedEdges.add(rel);
@@ -552,12 +560,29 @@ public class GraphPanel extends JPanel {
         }
     }
 
-    public void clear() {
-        repaint();
-    }
-
     public Map<UMLClass, org.jungrapht.visualization.layout.model.Point> getVertexPositions() {
         return vv.getVisualizationModel().getLayoutModel().getLocations();
+    }
+
+    public void importSourcesDir(File root) {
+        setupFolder(root);
+        List<UMLClass> classes = new Generator().getClasses(root);
+        addClasses(classes);
+        display(null);
+        revalidate();
+    }
+
+
+    private static void setupFolder(File sourceFolder) {
+        ReflectionTypeSolver reflectionTypeSolver = new ReflectionTypeSolver();
+        JavaParserTypeSolver javaParserTypeSolver = new JavaParserTypeSolver(sourceFolder);
+        CombinedTypeSolver combinedSolver = new CombinedTypeSolver();
+        combinedSolver.add(reflectionTypeSolver);
+        combinedSolver.add(javaParserTypeSolver);
+
+        ParserConfiguration parserConfiguration = new ParserConfiguration()
+                .setSymbolResolver(new JavaSymbolSolver(combinedSolver));
+        StaticJavaParser.setConfiguration(parserConfiguration);
     }
 
     static class Diamond extends Path2D.Double {
@@ -589,8 +614,6 @@ public class GraphPanel extends JPanel {
         }
     }
 
-    BufferedImage img;
-
     public BufferedImage getImage() {
         Dimension size = getSize();
         setSize(getPreferredSize());
@@ -609,7 +632,7 @@ public class GraphPanel extends JPanel {
         super.paintComponent(g);
         if(img !=null)
             g.drawImage(img, 0, 0, this);
-    };
+    }
 
     private static void layoutComponent(Component c) {
         synchronized (c.getTreeLock()) {
