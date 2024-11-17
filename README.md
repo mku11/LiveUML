@@ -25,3 +25,9 @@ Generate UML Class Diagrams from java source code.
 - [JGraphT](https://github.com/jgrapht/jgrapht)  
 - [JUNGRAPHT-VISUALIZATION](https://github.com/tomnelson/jungrapht-visualization)  
 - [Gson](https://github.com/google/gson)  
+
+# License
+LiveUML is released under MIT Licence, see [LICENSE](https://github.com/mku11/LiveUML/blob/main/LICENSE) file.
+Make sure you read the LICENSE file and display proper attribution if you decide to use this software.
+Dependency libraries from Github, Maven, and NuGet are covered by their own license  
+see [NOTICE](https://github.com/mku11/LiveUML/blob/main/NOTICE)  

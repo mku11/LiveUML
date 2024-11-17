@@ -188,7 +188,7 @@ public class Main {
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File file = fc.getSelectedFile();
                 prefs.put("LAST_EXPORT_FILE", file.getPath());
-                new Thread(()-> {
+                new Thread(() -> {
                     new ImageExporter().saveImage(file, panel);
                 }).start();
             }
@@ -196,18 +196,23 @@ public class Main {
 
         helpItem.addActionListener((e) -> {
             JOptionPane.showMessageDialog(null,
-                            "Ctrl+Click: Selects UML Class or Relationship \n"
+                    "Ctrl+Click: Selects UML Class or Relationship \n"
                             + "Ctrl+Mouse Move: Move UML Class or Relationship \n"
-                    + "Right Click: Display options for a UML Class \n"
-                                    + "Double Click: Expand/Collapse UML Class \n"
-                    + "Mouse Scroll: Zoom in/out \n",
+                            + "Right Click: Display options for a UML Class \n"
+                            + "Double Click: Expand/Collapse UML Class \n"
+                            + "Mouse Scroll: Zoom in/out \n",
                     "Help", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(getIconImage()));
         });
 
         aboutItem.addActionListener((e) -> {
             JOptionPane.showMessageDialog(null, "LiveUML v" + version + " \n"
                             + "License: MIT \n"
-            + "Project site: https://github.com/mku11/LiveUML \n",
+                            + "Project site: https://github.com/mku11/LiveUML \n\n"
+                            + "Parts of this software include products with open source licenses:  \n"
+                            + "JavaParser https://github.com/javaparser/javaparser  \n"
+                            + "JGraphT https://github.com/jgrapht/jgrapht  \n"
+                            + "JUNGRAPHT-VISUALIZATION https://github.com/tomnelson/jungrapht-visualization \n"
+                            + "Gson https://github.com/google/gson ",
                     "About", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(getIconImage()));
         });
     }
