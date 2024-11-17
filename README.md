@@ -2,8 +2,7 @@
 
 # LiveUML
 [![License: MIT](https://img.shields.io/github/license/mku11/LiveUML.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.9.0-beta-blue)](https://github.com/mku11/LiveUML/releases)
-[![GitHub Releases](https://img.shields.io/github/downloads/mku11/LiveUML/latest/total?logo=github)](https://github.com/mku11/LiveUML/releases)
+[![Version](https://img.shields.io/badge/version-0.9.0-blue)](https://github.com/mku11/LiveUML/releases)
 
 Generate UML Class Diagrams from java source code.  
 
