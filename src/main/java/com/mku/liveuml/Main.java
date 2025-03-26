@@ -144,6 +144,7 @@ public class Main {
                 File file = fc.getSelectedFile();
                 prefs.put("LAST_GRAPH_FILE", file.getPath());
                 HashMap<UMLClass, Point2D.Double> verticesPositions = new HashMap<>();
+                panel.clear();
                 new Importer().importGraph(file, generator, verticesPositions);
                 panel.display(verticesPositions);
                 panel.revalidate();
