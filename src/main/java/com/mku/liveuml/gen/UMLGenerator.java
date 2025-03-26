@@ -78,6 +78,8 @@ public class UMLGenerator {
     }
 
     public void addClasses(List<UMLClass> umlClasses) {
+        if(graph == null)
+            createGraph();
         for (UMLClass obj : umlClasses) {
             graph.addVertex(obj);
         }
@@ -128,5 +130,9 @@ public class UMLGenerator {
 
     public List<HashSet<?>> findFieldReference(UMLClass s, Field f) {
         return finder.findFieldReference(s, f);
+    }
+
+    public void clear() {
+        graph = null;
     }
 }

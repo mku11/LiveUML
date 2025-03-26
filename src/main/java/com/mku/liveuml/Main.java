@@ -52,8 +52,18 @@ public class Main {
         frame.setIconImage(getIconImage());
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         createMenu(frame);
+        createPanel(frame);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+    }
+
+    private static void createPanel(JFrame f) {
+        panel = new GraphPanel(generator);
+        JPanel p = new JPanel();
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+        p.add(panel);
+        p.setBorder(new EmptyBorder(10, 10, 10, 10));
+        f.getContentPane().add(p);
     }
 
     private static Image getIconImage() {
@@ -98,13 +108,6 @@ public class Main {
         JMenuItem aboutItem = new JMenuItem("About");
         menu.add(aboutItem);
 
-        panel = new GraphPanel(generator);
-        JPanel p = new JPanel();
-        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        p.add(panel);
-        p.setBorder(new EmptyBorder(10, 10, 10, 10));
-
-        f.getContentPane().add(p);
         f.setMinimumSize(new Dimension(1200, 800));
         f.pack();
 
@@ -123,6 +126,10 @@ public class Main {
             }
         });
 
+        newGraphItem.addActionListener((e) -> {
+            panel.clear();
+            panel.revalidate();
+        });
 
         openGraphItem.addActionListener((e) -> {
             Preferences prefs = Preferences.userRoot().node(Main.class.getName());

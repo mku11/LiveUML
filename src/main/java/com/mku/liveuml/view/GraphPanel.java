@@ -34,15 +34,16 @@ import com.mku.liveuml.graph.UMLRelationship;
 import com.mku.liveuml.graph.UMLRelationshipType;
 import com.mku.liveuml.utils.FileUtils;
 import org.jgrapht.Graph;
-import org.jungrapht.visualization.VisualizationModel;
-import org.jungrapht.visualization.VisualizationScrollPane;
-import org.jungrapht.visualization.VisualizationViewer;
+import org.jungrapht.visualization.*;
 import org.jungrapht.visualization.control.GraphMouseListener;
 import org.jungrapht.visualization.layout.algorithms.FRLayoutAlgorithm;
 import org.jungrapht.visualization.layout.algorithms.LayoutAlgorithm;
+import org.jungrapht.visualization.layout.model.LayoutModel;
 import org.jungrapht.visualization.renderers.BiModalRenderer;
 import org.jungrapht.visualization.renderers.GradientVertexRenderer;
+import org.jungrapht.visualization.renderers.JLabelVertexLabelRenderer;
 import org.jungrapht.visualization.renderers.VertexLabelAsShapeRenderer;
+import org.jungrapht.visualization.transform.shape.GraphicsDecorator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -111,11 +112,46 @@ public class GraphPanel extends JPanel {
 
         // this class will provide both label drawing and vertex shapes
         VertexLabelAsShapeRenderer<UMLClass, UMLRelationship> vlasr =
-                new VertexLabelAsShapeRenderer<>(visualizationModel.getLayoutModel(), vv.getRenderContext());
+                new VertexLabelAsShapeRenderer<>(visualizationModel.getLayoutModel(), vv.getRenderContext()) {
+                    public Shape apply(UMLClass v) {
+                        Component component = this.prepareRenderer(this.renderContext, this.renderContext.getVertexLabelFunction().apply(v), this.renderContext.getSelectedVertexState().isSelected(v), v);
+                        Dimension size = component.getPreferredSize();
+                        Rectangle bounds = new Rectangle(-size.width / 2 + 2, -size.height / 2 + 2, size.width - 4, size.height - 4);
+                        return bounds;
+                    }
+
+                    public void labelVertex(RenderContext<UMLClass, UMLRelationship> renderContext, LayoutModel<UMLClass> layoutModel, UMLClass v, String label) {
+                        if (renderContext.getVertexIncludePredicate().test(v)) {
+                            GraphicsDecorator g = renderContext.getGraphicsContext();
+                            Component component = this.prepareRenderer(renderContext, label, renderContext.getSelectedVertexState().isSelected(v), v);
+                            Dimension d = component.getPreferredSize();
+                            int h_offset = -d.width / 2;
+                            int v_offset = -d.height / 2;
+                            org.jungrapht.visualization.layout.model.Point p = (org.jungrapht.visualization.layout.model.Point) layoutModel.apply(v);
+                            Point2D p2d = renderContext.getMultiLayerTransformer().transform(MultiLayerTransformer.Layer.LAYOUT, p.x, p.y);
+                            int x = (int) p2d.getX();
+                            int y = (int) p2d.getY();
+                            boolean selected = renderContext.getSelectedVertexState().isSelected(v);
+                            JLabelVertexLabelRenderer renderer = (JLabelVertexLabelRenderer) component;
+                            renderer.setBorder(BorderFactory.createStrokeBorder(new BasicStroke(4.0f)));
+                            if (selected) {
+                                component.setBackground(new Color(223, 247, 250));
+                            } else {
+//                                renderer.setBorder(BorderFactory.createStrokeBorder(new BasicStroke(4.0f)));
+                            }
+
+                            g.draw(component, renderContext.getRendererPane(), x + h_offset, y + v_offset, d.width, d.height, true);
+                            Dimension size = component.getPreferredSize();
+                            Rectangle bounds = new Rectangle(-size.width / 2 + 2, -size.height / 2 + 2, size.width - 4, size.height - 4);
+                            this.shapes.put(v, bounds);
+                        }
+                    }
+                };
 
         vv.getRenderContext().setVertexLabelFunction(object -> Formatter.display(object, !object.isCompact(),
                 selectedVertices, selectedEdges, selectedMethods, selectedFields));
         vv.getRenderContext().setVertexShapeFunction(vlasr);
+//        vv.getRenderContext().setVertexFontFunction(v->new Font(Font.MONOSPACED, Font.PLAIN, 12));
         vv.getRenderContext().setEdgeStrokeFunction(rel -> {
             if (rel.type == UMLRelationshipType.Dependency || rel.type == UMLRelationshipType.Realization) {
                 // dashed line
@@ -434,6 +470,15 @@ public class GraphPanel extends JPanel {
 
     public Map<UMLClass, org.jungrapht.visualization.layout.model.Point> getVertexPositions() {
         return vv.getVisualizationModel().getLayoutModel().getLocations();
+    }
+
+    public void clear() {
+        if (visualizationScrollPane != null)
+            remove(visualizationScrollPane);
+        visualizationScrollPane = null;
+        generator.clear();
+        this.invalidate();
+        this.repaint();
     }
 
     static class Diamond extends Path2D.Double {
