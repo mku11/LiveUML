@@ -33,43 +33,63 @@ import com.mku.liveuml.entities.Method;
 import java.util.HashSet;
 
 public class Formatter {
-    private static final int MAX_CHARS = 50;
-    private static final String selectionBackgroundColor = "background-color: yellow;";
+    private static final int MAX_CHARS = 80;
+    private static final String selectionBackgroundColor = "background-color: #c5ffdb;";
+    private static final String font = "Garamond, serif";
+    private static final int fontSize = 10;
+    private static final int headerFontSize = 12;
+    private static final int padding = 4;
+
 
     public static String display(UMLClass object, boolean compact,
                                  HashSet<UMLClass> selectedVertices, HashSet<UMLRelationship> selectedEdges,
                                  HashSet<Method> selectedMethods, HashSet<Field> selectedFields) {
         String classBackgroundColor = getSelectionColor(object, selectedVertices, selectedEdges, selectedMethods, selectedFields);
-        StringBuilder body = new StringBuilder("<html><body style='font-family: monospace; font-size: 10px; font-weight: bold;'>");
-        body.append("<div><div><center style='margin: 4px; font-size: 14px;").append(classBackgroundColor).append("'>").append(object.getName()).append("</center><div>");
+        StringBuilder body = new StringBuilder("<html><body style='font-family: " + font + "; font-size: " + fontSize + "px; font-weight: bold;'>");
+        body.append("<div>");
+        body.append("<div style='"
+                + "font-size: " + headerFontSize + "px;"
+                + classBackgroundColor + "padding: "
+                + "'>");
+        body.append("<center style='"
+                + "padding: " + padding + "px;"
+                + "'>");
+        body.append(object.getName());
+        body.append("</center>");
+        body.append("</div>");
         if (!compact) {
             if (object.getFields().size() > 0) {
-                body.append("<hr class=\"solid\">");
-                body.append("<div style='padding: 8px;'>");
+                body.append("<div style='font-size: 1px; height: 1px; background-color: gray; margin: 0px; padding: 0px; border-width: 0px;'></div>");
+                body.append("<div>");
                 for (Field field : object.getFields()) {
                     String fieldBackgroundColor = "";
                     if (selectedFields.contains(field))
                         fieldBackgroundColor = selectionBackgroundColor;
-                    body.append("<div style='").append(fieldBackgroundColor).append("'>").append(getFieldFormatted(field)).append("</div>").append("<br>");
+                    body.append("<pre style='" + fieldBackgroundColor + "padding-left: " + padding + "px;" + "'>"
+                            + getFieldFormatted(field)
+                            + "</pre>");
                 }
                 body.append("</div>");
             }
             if (object.getMethods().size() > 0) {
-                body.append("<hr class=\"solid\">");
-                body.append("<div style='padding: 8px;'>");
+                body.append("<div style='font-size: 1px; height: 1px; background-color: gray; margin: 0px; padding: 0px; border-width: 0px;'></div>");
+                body.append("<div>");
                 for (Method method : object.getMethods()) {
                     String signature = getMethodSignature(method, true);
                     String methodBackgroundColor = "";
                     if (selectedMethods.contains(method))
                         methodBackgroundColor = selectionBackgroundColor;
-                    signature = "<div style='" + methodBackgroundColor + "'>" + signature + "</div>";
-                    signature += "<br>";
+                    signature = "<pre style='" + methodBackgroundColor + "padding-left: " + padding + "px;" + "'>"
+                            + signature
+                            + "</pre>";
                     body.append(signature);
                 }
-                body.append("</div><br>");
+                body.append("</div>");
+                body.append("<br>");
             }
         }
-        body.append("<div></body></html>");
+        body.append("<div>");
+        body.append("</body></html>");
         return body.toString();
     }
 
@@ -103,7 +123,7 @@ public class Formatter {
         String signature = "";
         if (usePrefix)
             signature += getMethodQualifier(method) + " ";
-        signature += method.getName() + "(";
+        signature += method.getName() + " (";
         StringBuilder params = new StringBuilder();
         for (Parameter parameter : method.getParameters()) {
             if (params.length() > 0)
