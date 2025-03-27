@@ -46,13 +46,13 @@ public class Formatter {
                                  HashSet<Method> selectedMethods, HashSet<Field> selectedFields) {
         String classBackgroundColor = getSelectionColor(object, selectedVertices, selectedEdges, selectedMethods, selectedFields);
         StringBuilder body = new StringBuilder("<html><body style='font-family: " + font + "; font-size: " + fontSize + "px; font-weight: bold;'>");
-        body.append("<div>");
+        body.append("<div style='padding-right: 6px;'>");
         body.append("<div style='"
                 + "font-size: " + headerFontSize + "px;"
-                + classBackgroundColor + "padding: "
+                + "padding: " + padding + "px;"
+                + classBackgroundColor
                 + "'>");
         body.append("<center style='"
-                + "padding: " + padding + "px;"
                 + "'>");
         body.append(object.getName());
         body.append("</center>");
