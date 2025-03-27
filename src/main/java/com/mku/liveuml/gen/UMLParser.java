@@ -180,7 +180,7 @@ public class UMLParser {
 
                 }.visit(StaticJavaParser.parse(file), null);
                 System.out.println(); // empty line
-            } catch (IOException e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }).explore(projectDir);
@@ -507,7 +507,7 @@ public class UMLParser {
                     }
                 }.visit(StaticJavaParser.parse(file), null);
                 System.out.println();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
 
@@ -522,7 +522,7 @@ public class UMLParser {
                     }
                 }.visit(StaticJavaParser.parse(file), null);
                 System.out.println(); // empty line
-            } catch (IOException e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }).explore(projectDir);
@@ -605,20 +605,24 @@ public class UMLParser {
         Class superClassObj = null;
         if (node.getExtendedTypes().size() > 0) {
             ClassOrInterfaceType extType = node.getExtendedTypes(0);
-            ResolvedType decl = extType.resolve();
-            if (decl.isReferenceType()) {
-                ResolvedReferenceTypeDeclaration typeDecl = decl.asReferenceType().getTypeDeclaration().get();
-                String superClassPackageName = typeDecl.getPackageName();
-                String superClassName = typeDecl.getName();
-                String superClassFullName = superClassPackageName + "." + superClassName;
-                if (objects.containsKey(superClassFullName)) {
-                    superClassObj = (Class) objects.get(superClassFullName);
-                } else {
-                    superClassObj = new Class(superClassName);
-                    superClassObj.setFilePath(filePath);
-                    superClassObj.setPackageName(superClassPackageName);
-                    objects.put(superClassFullName, superClassObj);
+            try {
+                ResolvedType decl = extType.resolve();
+                if (decl.isReferenceType()) {
+                    ResolvedReferenceTypeDeclaration typeDecl = decl.asReferenceType().getTypeDeclaration().get();
+                    String superClassPackageName = typeDecl.getPackageName();
+                    String superClassName = typeDecl.getName();
+                    String superClassFullName = superClassPackageName + "." + superClassName;
+                    if (objects.containsKey(superClassFullName)) {
+                        superClassObj = (Class) objects.get(superClassFullName);
+                    } else {
+                        superClassObj = new Class(superClassName);
+                        superClassObj.setFilePath(filePath);
+                        superClassObj.setPackageName(superClassPackageName);
+                        objects.put(superClassFullName, superClassObj);
+                    }
                 }
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
             return superClassObj;
         }
@@ -634,23 +638,27 @@ public class UMLParser {
         List<Interface> implementedInterfaces = new ArrayList<>();
         if (node.getImplementedTypes().size() > 0) {
             for (int i = 0; i < node.getImplementedTypes().size(); i++) {
-                ClassOrInterfaceType interfaceType = node.getImplementedTypes(i);
-                ResolvedType decl = interfaceType.resolve();
-                if (decl.isReferenceType()) {
-                    ResolvedReferenceTypeDeclaration typeDecl = decl.asReferenceType().getTypeDeclaration().get();
-                    String interfacePackageName = typeDecl.getPackageName();
-                    String interfaceName = typeDecl.getName();
-                    String interfaceFullName = interfacePackageName + "." + interfaceName;
-                    Interface interfaceObj;
-                    if (objects.containsKey(interfaceFullName)) {
-                        interfaceObj = (Interface) objects.get(interfaceFullName);
-                    } else {
-                        interfaceObj = new Interface(interfaceName);
-                        interfaceObj.setFilePath(filePath);
-                        interfaceObj.setPackageName(interfacePackageName);
-                        objects.put(interfaceFullName, interfaceObj);
+                try {
+                    ClassOrInterfaceType interfaceType = node.getImplementedTypes(i);
+                    ResolvedType decl = interfaceType.resolve();
+                    if (decl.isReferenceType()) {
+                        ResolvedReferenceTypeDeclaration typeDecl = decl.asReferenceType().getTypeDeclaration().get();
+                        String interfacePackageName = typeDecl.getPackageName();
+                        String interfaceName = typeDecl.getName();
+                        String interfaceFullName = interfacePackageName + "." + interfaceName;
+                        Interface interfaceObj;
+                        if (objects.containsKey(interfaceFullName)) {
+                            interfaceObj = (Interface) objects.get(interfaceFullName);
+                        } else {
+                            interfaceObj = new Interface(interfaceName);
+                            interfaceObj.setFilePath(filePath);
+                            interfaceObj.setPackageName(interfacePackageName);
+                            objects.put(interfaceFullName, interfaceObj);
+                        }
+                        implementedInterfaces.add(interfaceObj);
                     }
-                    implementedInterfaces.add(interfaceObj);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
             }
             return implementedInterfaces;
@@ -727,16 +735,20 @@ public class UMLParser {
             NodeList<com.github.javaparser.ast.body.Parameter> params = decl.getParameters();
             method.setModifiers(parseMethodModifiers(decl));
             method.setAccessModifiers(parseMethodAccessModifiers(decl));
-            Type returnType = decl.getType();
-            ResolvedType resolvedReturnType = returnType.resolve();
-            if (resolvedReturnType.isReferenceType()) {
-                ResolvedReferenceTypeDeclaration returnTypeDecl = resolvedReturnType.asReferenceType().getTypeDeclaration().get();
-                method.setReturnTypeName(returnTypeDecl.getName());
-                method.setReturnTypePackageName(returnTypeDecl.getPackageName());
-            } else if (resolvedReturnType.isPrimitive()) {
-                method.setReturnPrimitiveType(returnType.asPrimitiveType().asString().toLowerCase());
-            } else if (!resolvedReturnType.isArray() && !resolvedReturnType.isVoid() && !resolvedReturnType.isTypeVariable()) {
-                System.err.println("Could not get resolvedReturnType: " + resolvedReturnType);
+            try {
+                Type returnType = decl.getType();
+                ResolvedType resolvedReturnType = returnType.resolve();
+                if (resolvedReturnType.isReferenceType()) {
+                    ResolvedReferenceTypeDeclaration returnTypeDecl = resolvedReturnType.asReferenceType().getTypeDeclaration().get();
+                    method.setReturnTypeName(returnTypeDecl.getName());
+                    method.setReturnTypePackageName(returnTypeDecl.getPackageName());
+                } else if (resolvedReturnType.isPrimitive()) {
+                    method.setReturnPrimitiveType(returnType.asPrimitiveType().asString().toLowerCase());
+                } else if (!resolvedReturnType.isArray() && !resolvedReturnType.isVoid() && !resolvedReturnType.isTypeVariable()) {
+                    System.err.println("Could not get resolvedReturnType: " + resolvedReturnType);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
             List<Parameter> parameters = new ArrayList<>();
             for (com.github.javaparser.ast.body.Parameter param : params) {
