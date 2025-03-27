@@ -185,6 +185,14 @@ public class GraphPanel extends JPanel {
             return Color.WHITE;
         });
 
+        vv.getRenderContext().setVertexFillPaintFunction((e) -> {
+            return Color.WHITE;
+        });
+
+        vv.getRenderContext().setSelectedVertexFillPaintFunction((e) -> {
+            return new Color(223, 247, 250);
+        });
+
         vv.getRenderContext().setArrowDrawPaintFunction((rel) -> {
             if (selectedEdges.contains(rel))
                 return new Color(109, 113, 242);
