@@ -128,7 +128,7 @@ public class Main {
         menubar.add(menu);
         f.setJMenuBar(menubar);
 
-        JMenuItem chooseEditorItem = new JMenuItem("Choose Text Editor");
+        JMenuItem chooseEditorItem = new JMenuItem("Choose Text Editor / IDE");
         chooseEditorItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_MASK));
         menu.add(chooseEditorItem);
 

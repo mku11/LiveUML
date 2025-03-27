@@ -153,13 +153,13 @@ public class GraphPanel extends JPanel {
         vv.getRenderContext().setEdgeStrokeFunction(rel -> {
             if (rel.type == UMLRelationshipType.Dependency || rel.type == UMLRelationshipType.Realization) {
                 // dashed line
-                return new BasicStroke(selectedEdges.contains(rel) ? 6 : 3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{9}, 0);
+                return new BasicStroke(selectedEdges.contains(rel) ? 3 : 2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{12}, 0);
             }
-            return new BasicStroke(selectedEdges.contains(rel) ? 4 : 2);
+            return new BasicStroke(selectedEdges.contains(rel) ? 3 : 2);
         });
         vv.getRenderContext().setEdgeDrawPaintFunction(relationship -> {
             if (selectedEdges.contains(relationship))
-                return Color.BLUE;
+                return new Color(109, 113, 242);
             return Color.BLACK;
         });
 
@@ -179,17 +179,15 @@ public class GraphPanel extends JPanel {
         vv.getRenderContext().setArrowFillPaintFunction((rel) -> {
             if (rel.type == UMLRelationshipType.Composition) {
                 if (selectedEdges.contains(rel))
-                    return Color.BLUE;
+                    return new Color(109, 113, 242);
                 return Color.BLACK;
             }
             return Color.WHITE;
         });
 
         vv.getRenderContext().setArrowDrawPaintFunction((rel) -> {
-            if (rel.type == UMLRelationshipType.Composition) {
-                if (selectedEdges.contains(rel))
-                    return Color.BLUE;
-            }
+            if (selectedEdges.contains(rel))
+                return new Color(109, 113, 242);
             return Color.BLACK;
         });
 
@@ -341,7 +339,7 @@ public class GraphPanel extends JPanel {
         }
 
         // go to
-        JMenu goToMenu = new JMenu("View in Text Editor");
+        JMenu goToMenu = new JMenu("View in Text Editor / IDE");
         menu.add(goToMenu);
 
         cItem = new JMenuItem("Class " + s.getName());
