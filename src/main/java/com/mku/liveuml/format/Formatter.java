@@ -52,8 +52,7 @@ public class Formatter {
                 + "padding: " + padding + "px;"
                 + classBackgroundColor
                 + "'>");
-        body.append("<center style='"
-                + "'>");
+        body.append("<center>");
         body.append(object.getName());
         body.append("</center>");
         body.append("</div>");
