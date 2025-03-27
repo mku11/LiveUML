@@ -165,6 +165,8 @@ public class Main {
         newGraphItem.addActionListener((e) -> {
             panel.clear();
             panel.revalidate();
+            filepath = null;
+            setTitle(f, null);
         });
 
         openGraphItem.addActionListener((e) -> {
@@ -185,11 +187,12 @@ public class Main {
                 new Importer().importGraph(file, generator, verticesPositions);
                 panel.display(verticesPositions);
                 panel.revalidate();
+                setTitle(f, getFilenameWithoutExtension(file.getName()));
             }
         });
 
         saveGraphItem.addActionListener((e) -> {
-            save(f);
+            save(f, filepath);
         });
 
 
@@ -218,6 +221,13 @@ public class Main {
                     new File(".").getAbsolutePath()));
             fc.setDialogTitle("Choose file to export");
             fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            if (filepath != null) {
+                String filename = new File(filepath).getName();
+                filename = getFilenameWithoutExtension(filename);
+                fc.setSelectedFile(new File(filename + ".png"));
+            } else {
+                fc.setSelectedFile(new File("diagram.png"));
+            }
             FileNameExtensionFilter filter = new FileNameExtensionFilter("PNG files", "png");
             fc.setFileFilter(filter);
             int returnVal = fc.showSaveDialog(f);
@@ -261,7 +271,7 @@ public class Main {
             int response = JOptionPane.showConfirmDialog(null, "Save before exit?", "Confirm",
                     JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (response == JOptionPane.YES_OPTION) {
-                save(f);
+                save(f, filepath);
                 f.dispatchEvent(new WindowEvent(f, WindowEvent.WINDOW_CLOSING));
             } else if (response == JOptionPane.NO_OPTION) {
                 f.dispatchEvent(new WindowEvent(f, WindowEvent.WINDOW_CLOSING));
@@ -269,19 +279,38 @@ public class Main {
         }));
     }
 
-    private static void save(JFrame f) {
+    private static String getFilenameWithoutExtension(String filename) {
+        int index = filename.lastIndexOf(".");
+        if (index >= 0)
+            return filename.substring(0, index);
+        return filename;
+    }
+
+    private static void save(JFrame f, String filepath) {
         if (filepath != null) {
             File file = new File(filepath);
             new Exporter().exportGraph(file, generator, panel.getVertexPositions());
+            setTitle(f, getFilenameWithoutExtension(file.getName()));
         } else {
             saveAs(f);
         }
+    }
+
+    private static void setTitle(JFrame f, String name) {
+        String title = "LiveUML";
+        if(name != null)
+            title += " - " + name;
+        f.setTitle(title);
     }
 
     private static void saveAs(JFrame f) {
         Preferences prefs = Preferences.userRoot().node(Main.class.getName());
         JFileChooser fc = new JFileChooser(prefs.get("LAST_GRAPH_FILE",
                 new File(".").getAbsolutePath()));
+        if (filepath != null)
+            fc.setSelectedFile(new File(filepath));
+        else
+            fc.setSelectedFile(new File("diagram.graphml"));
         fc.setDialogTitle("Choose graph file to save");
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         FileNameExtensionFilter filter = new FileNameExtensionFilter("GraphML files", "graphml");
@@ -289,8 +318,15 @@ public class Main {
         int returnVal = fc.showSaveDialog(f);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File file = fc.getSelectedFile();
+            if (file.exists()) {
+                int response = JOptionPane.showConfirmDialog(null, "File exists, overwrite?", "Confirm",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (response == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }
             prefs.put("LAST_GRAPH_FILE", file.getPath());
-            new Exporter().exportGraph(file, generator, panel.getVertexPositions());
+            save(f, file.getPath());
         }
     }
 }
