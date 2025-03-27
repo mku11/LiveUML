@@ -34,6 +34,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.HashMap;
@@ -43,6 +45,7 @@ public class Main {
     private static final String version = "0.9.0";
     private static UMLGenerator generator;
     private static GraphPanel panel;
+    private static String filepath;
 
     public static void main(String[] args) {
         generator = new UMLGenerator();
@@ -75,13 +78,25 @@ public class Main {
         JMenu menu = new JMenu("File");
         menubar.add(menu);
         f.setJMenuBar(menubar);
-        JMenuItem newGraphItem = new JMenuItem("New Diagram");
+
+        JMenuItem newGraphItem = new JMenuItem("New");
+        newGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK));
         menu.add(newGraphItem);
-        JMenuItem openGraphItem = new JMenuItem("Open Diagram");
+
+        JMenuItem openGraphItem = new JMenuItem("Open");
+        openGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
         menu.add(openGraphItem);
-        JMenuItem saveGraphItem = new JMenuItem("Save Diagram");
+
+        JMenuItem saveGraphItem = new JMenuItem("Save");
+        saveGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
         menu.add(saveGraphItem);
+
+        JMenuItem saveAsGraphItem = new JMenuItem("Save As");
+        saveAsGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK | InputEvent.SHIFT_DOWN_MASK));
+        menu.add(saveAsGraphItem);
+
         JMenuItem exportGraphItem = new JMenuItem("Export Image");
+        exportGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK));
         menu.add(exportGraphItem);
 
         menu = new JMenu("Source");
@@ -142,6 +157,7 @@ public class Main {
             int returnVal = fc.showOpenDialog(f);
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File file = fc.getSelectedFile();
+                filepath = file.getPath();
                 prefs.put("LAST_GRAPH_FILE", file.getPath());
                 HashMap<UMLClass, Point2D.Double> verticesPositions = new HashMap<>();
                 panel.clear();
@@ -151,21 +167,18 @@ public class Main {
             }
         });
 
-
         saveGraphItem.addActionListener((e) -> {
-            Preferences prefs = Preferences.userRoot().node(Main.class.getName());
-            JFileChooser fc = new JFileChooser(prefs.get("LAST_GRAPH_FILE",
-                    new File(".").getAbsolutePath()));
-            fc.setDialogTitle("Choose graph file to save");
-            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            FileNameExtensionFilter filter = new FileNameExtensionFilter("GraphML files", "graphml");
-            fc.setFileFilter(filter);
-            int returnVal = fc.showSaveDialog(f);
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
-                File file = fc.getSelectedFile();
-                prefs.put("LAST_GRAPH_FILE", file.getPath());
+            if(filepath != null) {
+                File file = new File(filepath);
                 new Exporter().exportGraph(file, generator, panel.getVertexPositions());
+            } else {
+                saveAs(f);
             }
+        });
+
+
+        saveAsGraphItem.addActionListener((e) -> {
+            saveAs(f);
         });
 
         chooseEditorItem.addActionListener((e) -> {
@@ -182,7 +195,6 @@ public class Main {
                 prefs.put("LAST_TEXT_EDITOR_FILE", file.getPath());
             }
         });
-
 
         exportGraphItem.addActionListener((e) -> {
             Preferences prefs = Preferences.userRoot().node(Main.class.getName());
@@ -223,5 +235,21 @@ public class Main {
                             + "Gson https://github.com/google/gson ",
                     "About", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(getIconImage()));
         });
+    }
+
+    private static void saveAs(JFrame f) {
+        Preferences prefs = Preferences.userRoot().node(Main.class.getName());
+        JFileChooser fc = new JFileChooser(prefs.get("LAST_GRAPH_FILE",
+                new File(".").getAbsolutePath()));
+        fc.setDialogTitle("Choose graph file to save");
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("GraphML files", "graphml");
+        fc.setFileFilter(filter);
+        int returnVal = fc.showSaveDialog(f);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = fc.getSelectedFile();
+            prefs.put("LAST_GRAPH_FILE", file.getPath());
+            new Exporter().exportGraph(file, generator, panel.getVertexPositions());
+        }
     }
 }
