@@ -136,8 +136,6 @@ public class GraphPanel extends JPanel {
                             renderer.setBorder(BorderFactory.createStrokeBorder(new BasicStroke(4.0f)));
                             if (selected) {
                                 component.setBackground(new Color(223, 247, 250));
-                            } else {
-//                                renderer.setBorder(BorderFactory.createStrokeBorder(new BasicStroke(4.0f)));
                             }
 
                             g.draw(component, renderContext.getRendererPane(), x + h_offset, y + v_offset, d.width, d.height, true);
