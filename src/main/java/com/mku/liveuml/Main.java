@@ -47,6 +47,7 @@ public class Main {
     private static UMLGenerator generator;
     private static GraphPanel panel;
     private static String filepath;
+    private static JLabel status;
 
     public static void main(String[] args) {
         generator = new UMLGenerator();
@@ -67,6 +68,10 @@ public class Main {
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
         p.add(panel);
         p.setBorder(new EmptyBorder(10, 10, 10, 10));
+        JPanel statusBar = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        status = new JLabel();
+        statusBar.add(status);
+        p.add(statusBar);
         f.getContentPane().add(p);
     }
 
@@ -156,9 +161,21 @@ public class Main {
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File root = fc.getSelectedFile();
                 prefs.put("LAST_SOURCE_FOLDER", root.getPath());
-                generator.importSourcesDir(root);
-                panel.display(null);
-                panel.revalidate();
+                new Thread(() -> {
+                    setStatus("Importing sources");
+                    try {
+                        generator.importSourcesDir(root);
+                        EventQueue.invokeLater(() -> {
+                            panel.display(null);
+                            panel.revalidate();
+                            setStatus("Sources imported", 3000);
+                        });
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Error during import: " + ex,
+                                "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }).start();
             }
         });
 
@@ -184,10 +201,16 @@ public class Main {
                 prefs.put("LAST_GRAPH_FILE", file.getPath());
                 HashMap<UMLClass, Point2D.Double> verticesPositions = new HashMap<>();
                 panel.clear();
-                new Importer().importGraph(file, generator, verticesPositions);
-                panel.display(verticesPositions);
-                panel.revalidate();
-                setTitle(f, getFilenameWithoutExtension(file.getName()));
+                new Thread(() -> {
+                    setStatus("Loading diagram");
+                    new Importer().importGraph(file, generator, verticesPositions);
+                    EventQueue.invokeLater(() -> {
+                        panel.display(verticesPositions);
+                        panel.revalidate();
+                        setTitle(f, getFilenameWithoutExtension(file.getName()));
+                        setStatus("Diagram loaded", 3000);
+                    });
+                }).start();
             }
         });
 
@@ -235,7 +258,9 @@ public class Main {
                 File file = fc.getSelectedFile();
                 prefs.put("LAST_EXPORT_FILE", file.getPath());
                 new Thread(() -> {
+                    setStatus("Exporting image");
                     new ImageExporter().saveImage(file, panel);
+                    setStatus("Image exported", 3000);
                 }).start();
             }
         });
@@ -289,8 +314,14 @@ public class Main {
     private static void save(JFrame f, String filepath) {
         if (filepath != null) {
             File file = new File(filepath);
-            new Exporter().exportGraph(file, generator, panel.getVertexPositions());
-            setTitle(f, getFilenameWithoutExtension(file.getName()));
+            new Thread(() -> {
+                setStatus("Saving diagram");
+                new Exporter().exportGraph(file, generator, panel.getVertexPositions());
+                EventQueue.invokeLater((() -> {
+                    setTitle(f, getFilenameWithoutExtension(file.getName()));
+                    setStatus("Diagram saved", 3000);
+                }));
+            }).start();
         } else {
             saveAs(f);
         }
@@ -298,9 +329,32 @@ public class Main {
 
     private static void setTitle(JFrame f, String name) {
         String title = "LiveUML";
-        if(name != null)
+        if (name != null)
             title += " - " + name;
         f.setTitle(title);
+    }
+
+    private static void setStatus(String status) {
+        setStatus(status, 0);
+    }
+
+    private static void setStatus(String status, int expiry) {
+        EventQueue.invokeLater(() -> {
+            if (status == null)
+                Main.status.setText("");
+            else
+                Main.status.setText(status);
+        });
+
+        if (expiry > 0) {
+            javax.swing.Timer timer = new javax.swing.Timer(expiry, event -> {
+                EventQueue.invokeLater(() -> {
+                    setStatus(null);
+                });
+            });
+            timer.setRepeats(false);
+            timer.start();
+        }
     }
 
     private static void saveAs(JFrame f) {
