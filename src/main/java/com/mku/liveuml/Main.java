@@ -36,6 +36,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.HashMap;
@@ -98,6 +99,14 @@ public class Main {
         JMenuItem exportGraphItem = new JMenuItem("Export Image");
         exportGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK));
         menu.add(exportGraphItem);
+
+        JMenuItem closeGraphItem = new JMenuItem("Close");
+        closeGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK | InputEvent.SHIFT_DOWN_MASK));
+        menu.add(closeGraphItem);
+
+        JMenuItem exitGraphItem = new JMenuItem("Exit");
+        exitGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
+        menu.add(exitGraphItem);
 
         menu = new JMenu("Source");
         menubar.add(menu);
@@ -168,12 +177,7 @@ public class Main {
         });
 
         saveGraphItem.addActionListener((e) -> {
-            if(filepath != null) {
-                File file = new File(filepath);
-                new Exporter().exportGraph(file, generator, panel.getVertexPositions());
-            } else {
-                saveAs(f);
-            }
+            save(f);
         });
 
 
@@ -214,6 +218,11 @@ public class Main {
             }
         });
 
+        closeGraphItem.addActionListener(((e) -> {
+            panel.clear();
+            panel.revalidate();
+        }));
+
         helpItem.addActionListener((e) -> {
             JOptionPane.showMessageDialog(null,
                     "Ctrl+Click: Selects UML Class or Relationship \n"
@@ -235,6 +244,26 @@ public class Main {
                             + "Gson https://github.com/google/gson ",
                     "About", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(getIconImage()));
         });
+
+        exitGraphItem.addActionListener(((e) -> {
+            int response = JOptionPane.showConfirmDialog(null, "Save before exit?", "Confirm",
+                    JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (response == JOptionPane.YES_OPTION) {
+                save(f);
+                f.dispatchEvent(new WindowEvent(f, WindowEvent.WINDOW_CLOSING));
+            } else if (response == JOptionPane.NO_OPTION) {
+                f.dispatchEvent(new WindowEvent(f, WindowEvent.WINDOW_CLOSING));
+            }
+        }));
+    }
+
+    private static void save(JFrame f) {
+        if (filepath != null) {
+            File file = new File(filepath);
+            new Exporter().exportGraph(file, generator, panel.getVertexPositions());
+        } else {
+            saveAs(f);
+        }
     }
 
     private static void saveAs(JFrame f) {
