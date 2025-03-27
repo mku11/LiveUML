@@ -111,25 +111,37 @@ public class Main {
         menu = new JMenu("Source");
         menubar.add(menu);
         f.setJMenuBar(menubar);
+
         JMenuItem importSourceFilesItem = new JMenuItem("Import Source");
+        importSourceFilesItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_MASK));
         menu.add(importSourceFilesItem);
+
         JMenuItem listSourceFilesItem = new JMenuItem("List Sources");
+        listSourceFilesItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK));
         menu.add(listSourceFilesItem);
+
         JMenuItem refreshSourceFilesItem = new JMenuItem("Refresh Sources");
+        refreshSourceFilesItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK));
         menu.add(refreshSourceFilesItem);
 
         menu = new JMenu("Settings");
         menubar.add(menu);
         f.setJMenuBar(menubar);
+
         JMenuItem chooseEditorItem = new JMenuItem("Choose Text Editor");
+        chooseEditorItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_MASK));
         menu.add(chooseEditorItem);
 
         menu = new JMenu("Help");
         menubar.add(menu);
         f.setJMenuBar(menubar);
+
         JMenuItem helpItem = new JMenuItem("Help");
+        helpItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_MASK));
         menu.add(helpItem);
+
         JMenuItem aboutItem = new JMenuItem("About");
+        aboutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
         menu.add(aboutItem);
 
         f.setMinimumSize(new Dimension(1200, 800));
