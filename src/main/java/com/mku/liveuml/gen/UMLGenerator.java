@@ -45,8 +45,11 @@ import java.util.List;
 import java.util.Map;
 
 public class UMLGenerator {
+    private ReflectionTypeSolver reflectionTypeSolver;
+    private CombinedTypeSolver combinedSolver;
     private Graph<UMLClass, UMLRelationship> graph;
     private final UMLFinder finder;
+    private ParserConfiguration parserConfiguration;
 
     public UMLGenerator() {
         this.finder = new UMLFinder();
@@ -59,14 +62,15 @@ public class UMLGenerator {
         addClasses(classes);
     }
 
-    private static void setupFolder(File sourceFolder) {
-        ReflectionTypeSolver reflectionTypeSolver = new ReflectionTypeSolver();
+    private void setupFolder(File sourceFolder) {
+        if(reflectionTypeSolver == null) {
+            reflectionTypeSolver = new ReflectionTypeSolver();
+            combinedSolver = new CombinedTypeSolver();
+            combinedSolver.add(reflectionTypeSolver);
+        }
         JavaParserTypeSolver javaParserTypeSolver = new JavaParserTypeSolver(sourceFolder);
-        CombinedTypeSolver combinedSolver = new CombinedTypeSolver();
-        combinedSolver.add(reflectionTypeSolver);
         combinedSolver.add(javaParserTypeSolver);
-
-        ParserConfiguration parserConfiguration = new ParserConfiguration()
+        parserConfiguration = new ParserConfiguration()
                 .setSymbolResolver(new JavaSymbolSolver(combinedSolver));
         StaticJavaParser.setConfiguration(parserConfiguration);
     }
