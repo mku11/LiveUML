@@ -68,6 +68,8 @@ public class GraphPanel extends JPanel {
     private final HashSet<Field> selectedFields = new HashSet<>();
     private HashMap<UMLClass, Shape> verticesBounds = new HashMap<>();
     private BufferedImage img;
+    private boolean useViewerPadding;
+    private int viewerPadding = 200;
 
     /**
      * create an instance of a simple graph with basic controls
@@ -217,8 +219,9 @@ public class GraphPanel extends JPanel {
             miny = Math.min(miny, entry.getValue().y);
         }
         if (minx < 0 || miny < 0) {
-            fitVertices(minx < 0 ? -minx : 0, miny < 0 ? -miny : 0);
+            moveVertices(minx < 0 ? -minx : 0, miny < 0 ? -miny : 0);
         }
+
         double maxx = 0;
         double maxy = 0;
         for (Map.Entry<UMLClass, org.jungrapht.visualization.layout.model.Point> entry
@@ -228,17 +231,38 @@ public class GraphPanel extends JPanel {
         }
         if (maxx > vv.getVisualizationModel().getLayoutModel().getWidth()
                 || maxy > vv.getVisualizationModel().getLayoutModel().getHeight()) {
-            int newX = (int) maxx + 200;
-            int newY = (int) maxy + 200;
-            vv.getVisualizationModel().getLayoutModel().setSize(newX, newY);
-            vv.getVisualizationModel().getLayoutModel().setPreferredSize(newX, newY);
-            Dimension newSize = new Dimension(newX, newY);
-            vv.setPreferredSize(newSize);
-            visualizationScrollPane.setPreferredSize(newSize);
-            setPreferredSize(newSize);
-            repaint();
+            resizeViewer((int) maxx, (int) maxy);
         }
+    }
 
+
+    private void moveVertices(double dx, double dy) {
+        if(useViewerPadding) {
+            dx += viewerPadding;
+            dy += viewerPadding;
+        }
+        for (Map.Entry<UMLClass, org.jungrapht.visualization.layout.model.Point> entry
+                : this.vv.getVisualizationModel().getLayoutModel().getLocations().entrySet()) {
+            org.jungrapht.visualization.layout.model.Point p
+                    = org.jungrapht.visualization.layout.model.Point.of(
+                    entry.getValue().x + dx, entry.getValue().y + dy);
+            this.vv.getVisualizationModel().getLayoutModel().set(entry.getKey(), p);
+        }
+        repaint();
+    }
+
+    private void resizeViewer(int width, int height) {
+        if(useViewerPadding) {
+            width += viewerPadding;
+            height += viewerPadding;
+        }
+        vv.getVisualizationModel().getLayoutModel().setSize(width, height);
+        vv.getVisualizationModel().getLayoutModel().setPreferredSize(width, height);
+        Dimension newSize = new Dimension(width, height);
+        vv.setPreferredSize(newSize);
+        visualizationScrollPane.setPreferredSize(newSize);
+        setPreferredSize(newSize);
+        repaint();
     }
 
     private Dimension estimateGraphSize(Graph<UMLClass, UMLRelationship> graph) {
@@ -541,17 +565,6 @@ public class GraphPanel extends JPanel {
                 this.repaint();
             });
         }
-    }
-
-    private void fitVertices(double dx, double dy) {
-        for (Map.Entry<UMLClass, org.jungrapht.visualization.layout.model.Point> entry
-                : this.vv.getVisualizationModel().getLayoutModel().getLocations().entrySet()) {
-            org.jungrapht.visualization.layout.model.Point p
-                    = org.jungrapht.visualization.layout.model.Point.of(
-                    entry.getValue().x + dx, entry.getValue().y + dy);
-            this.vv.getVisualizationModel().getLayoutModel().set(entry.getKey(), p);
-        }
-        repaint();
     }
 
     static class Diamond extends Path2D.Double {
