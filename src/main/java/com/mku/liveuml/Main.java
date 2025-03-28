@@ -339,11 +339,18 @@ public class Main {
 
         helpItem.addActionListener((e) -> {
             JOptionPane.showMessageDialog(null,
-                    "Ctrl+Click: Selects UML Class or Relationship \n"
-                            + "Ctrl+Mouse Move: Move UML Class or Relationship \n"
+                    "Select Source / Import to import java source files. \n"
+                            + "Make sure you select root package folders. \n"
+                            + "Multiple source folders are allowed. \n"
+                            + " \n"
+                            + "Mouse gestures: \n"
+                            + "Ctrl+Click: Selects UML Class or Relationship \n"
+                            + "Ctrl+Shift+Click: Multiple selection\n"
+                            + "Ctrl+Mouse Move: Move UML Class(es) or Relationship(s) \n"
                             + "Right Click: Display options for a UML Class \n"
                             + "Double Click: Expand/Collapse UML Class \n"
-                            + "Mouse Scroll: Zoom in/out \n",
+                            + "Mouse Wheel: Zoom in/out \n"
+                            + "\n\n",
                     "Help", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(getIconImage()));
         });
 
