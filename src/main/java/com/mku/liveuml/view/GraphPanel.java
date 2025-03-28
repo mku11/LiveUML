@@ -35,6 +35,7 @@ import com.mku.liveuml.graph.UMLRelationshipType;
 import com.mku.liveuml.utils.FileUtils;
 import org.jgrapht.Graph;
 import org.jungrapht.visualization.*;
+import org.jungrapht.visualization.control.CrossoverScalingControl;
 import org.jungrapht.visualization.control.GraphMouseListener;
 import org.jungrapht.visualization.layout.algorithms.FRLayoutAlgorithm;
 import org.jungrapht.visualization.layout.algorithms.LayoutAlgorithm;
@@ -43,6 +44,7 @@ import org.jungrapht.visualization.renderers.BiModalRenderer;
 import org.jungrapht.visualization.renderers.GradientVertexRenderer;
 import org.jungrapht.visualization.renderers.JLabelVertexLabelRenderer;
 import org.jungrapht.visualization.renderers.VertexLabelAsShapeRenderer;
+import org.jungrapht.visualization.transform.MutableTransformer;
 import org.jungrapht.visualization.transform.shape.GraphicsDecorator;
 
 import javax.swing.*;
@@ -201,6 +203,40 @@ public class GraphPanel extends JPanel {
 
         addVisualizationPane(vv);
         setMouseListener(vv);
+        refit();
+    }
+
+    private void refit() {
+        double minx = Double.MAX_VALUE;
+        double miny = Double.MAX_VALUE;
+        for (Map.Entry<UMLClass, org.jungrapht.visualization.layout.model.Point> entry
+                : this.vv.getVisualizationModel().getLayoutModel().getLocations().entrySet()) {
+            minx = Math.min(minx, entry.getValue().x);
+            miny = Math.min(miny, entry.getValue().y);
+        }
+        if (minx < 0 || miny < 0) {
+            fitVertices(minx < 0 ? -minx : 0, miny < 0 ? -miny : 0);
+        }
+        double maxx = 0;
+        double maxy = 0;
+        for (Map.Entry<UMLClass, org.jungrapht.visualization.layout.model.Point> entry
+                : this.vv.getVisualizationModel().getLayoutModel().getLocations().entrySet()) {
+            maxx = Math.max(maxx, entry.getValue().x);
+            maxy = Math.max(maxy, entry.getValue().y);
+        }
+        if (maxx > vv.getVisualizationModel().getLayoutModel().getWidth()
+                || maxy > vv.getVisualizationModel().getLayoutModel().getHeight()) {
+            int newX = (int) maxx + 200;
+            int newY = (int) maxy + 200;
+            vv.getVisualizationModel().getLayoutModel().setSize(newX, newY);
+            vv.getVisualizationModel().getLayoutModel().setPreferredSize(newX, newY);
+            Dimension newSize = new Dimension(newX, newY);
+            vv.setPreferredSize(newSize);
+            visualizationScrollPane.setPreferredSize(newSize);
+            setPreferredSize(newSize);
+            repaint();
+        }
+
     }
 
     private Dimension estimateGraphSize(Graph<UMLClass, UMLRelationship> graph) {
@@ -498,8 +534,20 @@ public class GraphPanel extends JPanel {
             EventQueue.invokeLater(() -> {
                 visualizationScrollPane.getHorizontalScrollBar().setValue((int) point.x);
                 visualizationScrollPane.getVerticalScrollBar().setValue((int) point.y);
+                this.repaint();
             });
         }
+    }
+
+    private void fitVertices(double dx, double dy) {
+        for (Map.Entry<UMLClass, org.jungrapht.visualization.layout.model.Point> entry
+                : this.vv.getVisualizationModel().getLayoutModel().getLocations().entrySet()) {
+            org.jungrapht.visualization.layout.model.Point p
+                    = org.jungrapht.visualization.layout.model.Point.of(
+                    entry.getValue().x + dx, entry.getValue().y + dy);
+            this.vv.getVisualizationModel().getLayoutModel().set(entry.getKey(), p);
+        }
+        repaint();
     }
 
     static class Diamond extends Path2D.Double {
