@@ -35,6 +35,7 @@ import com.github.javaparser.ast.nodeTypes.NodeWithMembers;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.types.ResolvedArrayType;
 import com.github.javaparser.resolution.types.ResolvedType;
@@ -47,7 +48,6 @@ import com.mku.liveuml.entities.Class;
 import com.mku.liveuml.graph.UMLRelationshipType;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -56,8 +56,22 @@ import java.util.List;
 public class UMLParser {
     public HashMap<String, UMLClass> objects = new HashMap<>();
 
-    public List<UMLClass> getClasses(File projectDir) {
+    public HashMap<String, SymbolInformation> getUnresolvedSymbols() {
+        return unresolvedSymbols;
+    }
+
+    private HashMap<String, SymbolInformation> unresolvedSymbols = new HashMap<>();
+
+    public void clear() {
+        unresolvedSymbols.clear();
         objects.clear();
+    }
+
+    public class SymbolInformation {
+        ArrayList<UMLClass> classes = new ArrayList<>();
+    }
+
+    public List<UMLClass> getClasses(File projectDir) {
         List<UMLClass> list = new LinkedList<>();
         getObjects(list, projectDir);
         getMethodCalls(list, projectDir);
@@ -132,13 +146,23 @@ public class UMLParser {
                     @Override
                     public void visit(MethodCallExpr n, UMLClass arg) {
                         super.visit(n, arg);
-                        System.out.println("Method Call: [" + n.getBegin().get().line + "] " + n);
+                        System.out.println("Method Call: [" + file.getName() + ":" + n.getBegin().get().line + "] " + n.getName());
                         UMLClass caller = getMethodCallerObject(n);
-                        UMLClass callee = getMethodCalleeObject(n);
+                        UMLClass callee = null;
+                        try {
+                            callee = getMethodCalleeObject(n);
+                        } catch (UnsolvedSymbolException ex) {
+                            addUnresolvedSymbol(ex.getName(), caller);
+                        }
                         if (callee != null && caller != null
                                 && callee != caller) {
                             Method callerMethod = getMethodCallerMethod(caller, n);
-                            Method calleeMethod = getMethodCalleeMethod(callee, n);
+                            Method calleeMethod = null;
+                            try {
+                                calleeMethod = getMethodCalleeMethod(callee, n);
+                            } catch (UnsolvedSymbolException ex) {
+                                addUnresolvedSymbol(ex.getName(), arg);
+                            }
                             if (calleeMethod != null) {
                                 createMethodCallRelationship(caller, callerMethod, callee, calleeMethod);
                             }
@@ -147,9 +171,14 @@ public class UMLParser {
 
                     @Override
                     public void visit(final ObjectCreationExpr n, final UMLClass arg) {
-                        System.out.println("ObjectCreationExpr: [" + n.getBegin().get().line + "] " + n);
+                        System.out.println("ObjectCreationExpr: [" + file.getName() + ":" + n.getBegin().get().line + "] " + n.getType().getName());
                         UMLClass caller = getMethodCallerObject(n);
-                        UMLClass callee = getMethodCalleeObject(n);
+                        UMLClass callee = null;
+                        try {
+                            callee = getMethodCalleeObject(n);
+                        } catch (UnsolvedSymbolException ex) {
+                            addUnresolvedSymbol(ex.getName(), caller);
+                        }
                         if (caller != null && callee != null) {
                             Method callerMethod = getMethodCallerMethod(caller, n);
                             Constructor constructor = getConstructor(callee, n);
@@ -167,7 +196,12 @@ public class UMLParser {
                         super.visit(n, arg);
                         System.out.println("Field Access: [" + n.getBegin().get().line + "] " + n);
                         UMLClass accessor = getFieldAccessorObject(n);
-                        UMLClass accessedFieldObject = getFieldAccessedObject(n);
+                        UMLClass accessedFieldObject = null;
+                        try {
+                            accessedFieldObject = getFieldAccessedObject(n);
+                        } catch (UnsolvedSymbolException ex) {
+                            addUnresolvedSymbol(ex.getName(), accessor);
+                        }
                         if (accessor != null && accessedFieldObject != null
                                 && accessor != accessedFieldObject) {
                             Method accessorMethod = getFieldAccessorMethod(accessor, n);
@@ -184,6 +218,20 @@ public class UMLParser {
                 throw new RuntimeException(e);
             }
         }).explore(projectDir);
+    }
+
+    private void addUnresolvedSymbol(String name, UMLClass arg) {
+        SymbolInformation info;
+        if(name.startsWith("Solving ")) {
+            name = name.split(" ")[1];
+        }
+        if (unresolvedSymbols.containsKey(name)) {
+            info = unresolvedSymbols.get(name);
+        } else {
+            info = new SymbolInformation();
+            unresolvedSymbols.put(name, info);
+        }
+        info.classes.add(arg);
     }
 
     private Method getMethodCallerMethod(UMLClass caller, ObjectCreationExpr n) {
@@ -285,14 +333,10 @@ public class UMLParser {
     }
 
     private UMLClass getMethodCalleeObject(ObjectCreationExpr n) {
-        try {
-            ResolvedReferenceTypeDeclaration decl = n.calculateResolvedType().asReferenceType().getTypeDeclaration().get();
-            String fullName = decl.getPackageName() + "." + decl.getClassName();
-            if (objects.containsKey(fullName)) {
-                return objects.get(fullName);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        ResolvedReferenceTypeDeclaration decl = n.calculateResolvedType().asReferenceType().getTypeDeclaration().get();
+        String fullName = decl.getPackageName() + "." + decl.getClassName();
+        if (objects.containsKey(fullName)) {
+            return objects.get(fullName);
         }
         return null;
     }
@@ -300,33 +344,25 @@ public class UMLParser {
     private UMLClass getMethodCalleeObject(MethodCallExpr n) {
         if (n.getScope().isEmpty())
             return null;
-        try {
-            ResolvedType type = n.getScope().get().calculateResolvedType();
-            String fullName = null;
-            if (type.isReferenceType()) {
-                ResolvedReferenceTypeDeclaration decl = type.asReferenceType().getTypeDeclaration().get();
-                fullName = decl.getPackageName() + "." + decl.getClassName();
-            }
-            if (objects.containsKey(fullName)) {
-                return objects.get(fullName);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        ResolvedType type = n.getScope().get().calculateResolvedType();
+        String fullName = null;
+        if (type.isReferenceType()) {
+            ResolvedReferenceTypeDeclaration decl = type.asReferenceType().getTypeDeclaration().get();
+            fullName = decl.getPackageName() + "." + decl.getClassName();
+        }
+        if (objects.containsKey(fullName)) {
+            return objects.get(fullName);
         }
         return null;
     }
 
 
     private Method getMethodCalleeMethod(UMLClass callee, MethodCallExpr n) {
-        try {
-            String methodName = n.getNameAsString();
-            for (Method m : callee.getMethods()) {
-                if (m.getName().equals(methodName) && m.getParameters().size() == n.getArguments().size()) {
-                    return m;
-                }
+        String methodName = n.getNameAsString();
+        for (Method m : callee.getMethods()) {
+            if (m.getName().equals(methodName) && m.getParameters().size() == n.getArguments().size()) {
+                return m;
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
         }
         return null;
     }
@@ -437,8 +473,8 @@ public class UMLParser {
                     return m;
                 }
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (UnsolvedSymbolException ex) {
+            addUnresolvedSymbol(ex.getName(), callee);
         }
 
         return null;
@@ -450,18 +486,14 @@ public class UMLParser {
                 || n.getScope().toString().equals("System")
                 || n.getScope().toString().startsWith("System."))
             return null;
-        try {
-            ResolvedType type = n.getScope().calculateResolvedType();
-            String fullName = null;
-            if (type.isReferenceType()) {
-                ResolvedReferenceTypeDeclaration decl = type.asReferenceType().getTypeDeclaration().get();
-                fullName = decl.getPackageName() + "." + decl.getClassName();
-            }
-            if (fullName != null && objects.containsKey(fullName)) {
-                return objects.get(fullName);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        ResolvedType type = n.getScope().calculateResolvedType();
+        String fullName = null;
+        if (type.isReferenceType()) {
+            ResolvedReferenceTypeDeclaration decl = type.asReferenceType().getTypeDeclaration().get();
+            fullName = decl.getPackageName() + "." + decl.getClassName();
+        }
+        if (fullName != null && objects.containsKey(fullName)) {
+            return objects.get(fullName);
         }
         return null;
     }
@@ -549,14 +581,20 @@ public class UMLParser {
 
     private UMLClass parseClassOrInterface(ClassOrInterfaceDeclaration n, String filePath) {
         UMLClass obj = getOrCreateObject(n, filePath);
-        Class superClassObj = getSuperClass(n, filePath);
+        Class superClassObj = null;
+        try {
+            superClassObj = getSuperClass(n, filePath);
+        } catch (UnsolvedSymbolException ex) {
+            addUnresolvedSymbol(ex.getName(), obj);
+        }
+
         if (superClassObj != null) {
             UMLRelationship rel = getSuperClassRel(obj, superClassObj);
             obj.relationships.put(rel.toString(), rel);
             superClassObj.relationships.put(rel.toString(), rel);
         }
 
-        List<Interface> interfacesImplemented = getImplementedInterfaces(n, filePath);
+        List<Interface> interfacesImplemented = getImplementedInterfaces(obj, n, filePath);
         if (interfacesImplemented != null) {
             for (Interface interfaceImplementedObj : interfacesImplemented) {
                 UMLRelationship rel = getInterfaceRel(obj, interfaceImplementedObj);
@@ -605,24 +643,20 @@ public class UMLParser {
         Class superClassObj = null;
         if (node.getExtendedTypes().size() > 0) {
             ClassOrInterfaceType extType = node.getExtendedTypes(0);
-            try {
-                ResolvedType decl = extType.resolve();
-                if (decl.isReferenceType()) {
-                    ResolvedReferenceTypeDeclaration typeDecl = decl.asReferenceType().getTypeDeclaration().get();
-                    String superClassPackageName = typeDecl.getPackageName();
-                    String superClassName = typeDecl.getName();
-                    String superClassFullName = superClassPackageName + "." + superClassName;
-                    if (objects.containsKey(superClassFullName)) {
-                        superClassObj = (Class) objects.get(superClassFullName);
-                    } else {
-                        superClassObj = new Class(superClassName);
-                        superClassObj.setFilePath(filePath);
-                        superClassObj.setPackageName(superClassPackageName);
-                        objects.put(superClassFullName, superClassObj);
-                    }
+            ResolvedType decl = extType.resolve();
+            if (decl.isReferenceType()) {
+                ResolvedReferenceTypeDeclaration typeDecl = decl.asReferenceType().getTypeDeclaration().get();
+                String superClassPackageName = typeDecl.getPackageName();
+                String superClassName = typeDecl.getName();
+                String superClassFullName = superClassPackageName + "." + superClassName;
+                if (objects.containsKey(superClassFullName)) {
+                    superClassObj = (Class) objects.get(superClassFullName);
+                } else {
+                    superClassObj = new Class(superClassName);
+                    superClassObj.setFilePath(filePath);
+                    superClassObj.setPackageName(superClassPackageName);
+                    objects.put(superClassFullName, superClassObj);
                 }
-            } catch (Exception ex) {
-                ex.printStackTrace();
             }
             return superClassObj;
         }
@@ -634,7 +668,7 @@ public class UMLParser {
         return new UMLRelationship(derivedClass, superClass, UMLRelationshipType.Realization);
     }
 
-    private List<Interface> getImplementedInterfaces(ClassOrInterfaceDeclaration node, String filePath) {
+    private List<Interface> getImplementedInterfaces(UMLClass obj, ClassOrInterfaceDeclaration node, String filePath) {
         List<Interface> implementedInterfaces = new ArrayList<>();
         if (node.getImplementedTypes().size() > 0) {
             for (int i = 0; i < node.getImplementedTypes().size(); i++) {
@@ -657,8 +691,8 @@ public class UMLParser {
                         }
                         implementedInterfaces.add(interfaceObj);
                     }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                } catch (UnsolvedSymbolException ex) {
+                    addUnresolvedSymbol(ex.getName(), obj);
                 }
             }
             return implementedInterfaces;
@@ -714,8 +748,8 @@ public class UMLParser {
                     } else if (!variableType.isArray()) {
                         System.err.println("Could not get type: " + variableType);
                     }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                } catch (UnsolvedSymbolException ex) {
+                    addUnresolvedSymbol(ex.getName(), obj);
                 }
                 field.setLine(variableDeclarator.getBegin().get().line);
                 field.setModifiers(modifiers);
@@ -747,14 +781,18 @@ public class UMLParser {
                 } else if (!resolvedReturnType.isArray() && !resolvedReturnType.isVoid() && !resolvedReturnType.isTypeVariable()) {
                     System.err.println("Could not get resolvedReturnType: " + resolvedReturnType);
                 }
-            } catch (Exception ex) {
-                ex.printStackTrace();
+            } catch (UnsolvedSymbolException ex) {
+                addUnresolvedSymbol(ex.getName(), obj);
             }
             List<Parameter> parameters = new ArrayList<>();
             for (com.github.javaparser.ast.body.Parameter param : params) {
                 String paramName = param.getNameAsString();
                 Parameter parameter = new Parameter(paramName);
-                parseParameterType(parameter, param);
+                try {
+                    parseParameterType(parameter, param);
+                } catch (UnsolvedSymbolException ex) {
+                    addUnresolvedSymbol(ex.getName(), obj);
+                }
                 parameter.modifiers = parseParameterModifiers(param);
                 parameters.add(parameter);
                 if (!parameter.isPrimitiveType())
@@ -788,34 +826,30 @@ public class UMLParser {
     }
 
     private void parseParameterType(Parameter parameter, com.github.javaparser.ast.body.Parameter param) {
-        try {
-            ResolvedType type = param.resolve().getType();
-            if (type.isReferenceType()) {
-                ResolvedReferenceTypeDeclaration parameterTypeDecl = type.asReferenceType().getTypeDeclaration().get();
-                parameter.setTypeName(parameterTypeDecl.getName());
-                parameter.setTypePackageName(parameterTypeDecl.getPackageName());
-            } else if (type.isPrimitive()) {
-                parameter.setPrimitiveType(type.asPrimitive().name().toLowerCase());
-            } else if (type.isArray()) {
-                parameter.setArray(true);
-                ResolvedType baseType = ((ResolvedArrayType) type).getComponentType();
-                while (baseType instanceof ResolvedArrayType) {
-                    baseType = ((ResolvedArrayType) baseType).getComponentType();
-                }
-                if (baseType.isPrimitive()) {
-                    parameter.setPrimitiveType(type.describe());
-                } else if (baseType.isReferenceType()) {
-                    ResolvedReferenceTypeDeclaration parameterTypeDecl = baseType.asReferenceType().getTypeDeclaration().get();
-                    parameter.setTypePackageName(parameterTypeDecl.getPackageName());
-                    parameter.setTypeName(type.describe());
-                    if (type.describe().startsWith(parameter.getTypePackageName()))
-                        parameter.setTypeName(parameter.getTypeName().substring(parameter.getTypePackageName().length() + 1));
-                }
-            } else if (!type.isArray() && !type.isVoid() && !type.isTypeVariable()) {
-                System.err.println("Could not get param type: " + type);
+        ResolvedType type = param.resolve().getType();
+        if (type.isReferenceType()) {
+            ResolvedReferenceTypeDeclaration parameterTypeDecl = type.asReferenceType().getTypeDeclaration().get();
+            parameter.setTypeName(parameterTypeDecl.getName());
+            parameter.setTypePackageName(parameterTypeDecl.getPackageName());
+        } else if (type.isPrimitive()) {
+            parameter.setPrimitiveType(type.asPrimitive().name().toLowerCase());
+        } else if (type.isArray()) {
+            parameter.setArray(true);
+            ResolvedType baseType = ((ResolvedArrayType) type).getComponentType();
+            while (baseType instanceof ResolvedArrayType) {
+                baseType = ((ResolvedArrayType) baseType).getComponentType();
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            if (baseType.isPrimitive()) {
+                parameter.setPrimitiveType(type.describe());
+            } else if (baseType.isReferenceType()) {
+                ResolvedReferenceTypeDeclaration parameterTypeDecl = baseType.asReferenceType().getTypeDeclaration().get();
+                parameter.setTypePackageName(parameterTypeDecl.getPackageName());
+                parameter.setTypeName(type.describe());
+                if (type.describe().startsWith(parameter.getTypePackageName()))
+                    parameter.setTypeName(parameter.getTypeName().substring(parameter.getTypePackageName().length() + 1));
+            }
+        } else if (!type.isArray() && !type.isVoid() && !type.isTypeVariable()) {
+            System.err.println("Could not get param type: " + type);
         }
     }
 
@@ -911,7 +945,11 @@ public class UMLParser {
             for (com.github.javaparser.ast.body.Parameter param : params) {
                 String paramName = param.getNameAsString();
                 Parameter parameter = new Parameter(paramName);
-                parseParameterType(parameter, param);
+                try {
+                    parseParameterType(parameter, param);
+                } catch (UnsolvedSymbolException ex) {
+                    addUnresolvedSymbol(ex.getName(), obj);
+                }
                 parameter.modifiers = parseParameterModifiers(param);
                 parameters.add(parameter);
                 if (!parameter.isPrimitiveType())

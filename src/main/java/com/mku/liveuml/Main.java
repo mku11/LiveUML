@@ -24,6 +24,7 @@ SOFTWARE.
 package com.mku.liveuml;
 
 import com.mku.liveuml.gen.UMLGenerator;
+import com.mku.liveuml.gen.UMLParser;
 import com.mku.liveuml.graph.UMLClass;
 import com.mku.liveuml.utils.Exporter;
 import com.mku.liveuml.utils.ImageExporter;
@@ -40,6 +41,7 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.prefs.Preferences;
 
 public class Main {
@@ -48,6 +50,8 @@ public class Main {
     private static GraphPanel panel;
     private static String filepath;
     private static JLabel status;
+    private static JButton errors;
+    private static String msg;
 
     public static void main(String[] args) {
         generator = new UMLGenerator();
@@ -68,9 +72,31 @@ public class Main {
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
         p.add(panel);
         p.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        JPanel errorsBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        errors = new JButton();
+        errors.setBorderPainted(false);
+        errors.setOpaque(false);
+        errors.setBackground(Color.WHITE);
+        errors.addActionListener((e) -> {
+            SwingUtilities.invokeLater(() -> {
+                JTextArea message = new JTextArea();
+                message.setText(msg);
+                message.setEditable(false);
+                message.setWrapStyleWord(true);
+                JScrollPane scrollPane = new JScrollPane(message, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+                scrollPane.setPreferredSize(new Dimension(400, 200));
+                JOptionPane.showMessageDialog(f, scrollPane, "Unresolved symbols", JOptionPane.PLAIN_MESSAGE);
+            });
+        });
+
+        errorsBar.add(errors);
+
         JPanel statusBar = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         status = new JLabel();
         statusBar.add(status);
+
+        p.add(errorsBar);
         p.add(statusBar);
         f.getContentPane().add(p);
     }
@@ -170,6 +196,7 @@ public class Main {
                             panel.revalidate();
                             setStatus("Sources imported", 3000);
                         });
+                        updateErrors(generator);
                     } catch (Exception ex) {
                         ex.printStackTrace();
                         JOptionPane.showMessageDialog(null, "Error during import: " + ex,
@@ -182,6 +209,7 @@ public class Main {
         newGraphItem.addActionListener((e) -> {
             panel.clear();
             panel.revalidate();
+            updateErrors(panel.getGenerator());
             filepath = null;
             setTitle(f, null);
         });
@@ -304,6 +332,23 @@ public class Main {
         }));
     }
 
+    private static void updateErrors(UMLGenerator generator) {
+        int errorsCount = generator.getParser().getUnresolvedSymbols().size();
+        if (errorsCount > 0) {
+            msg = "Unresolved symbols: " + "\n" + formatUnresolvedSymbols(generator.getParser());
+            errors.setText("<HTML>Unresolved symbols found: <FONT color=\"#000099\"><U>" + errorsCount + "</U></FONT></HTML>");
+        }
+    }
+
+    private static String formatUnresolvedSymbols(UMLParser parser) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Map.Entry<String, UMLParser.SymbolInformation> entry : parser.getUnresolvedSymbols().entrySet()) {
+            stringBuilder.append(entry.getKey());
+            stringBuilder.append("\n");
+        }
+        return stringBuilder.toString();
+    }
+
     private static String getFilenameWithoutExtension(String filename) {
         int index = filename.lastIndexOf(".");
         if (index >= 0)
@@ -383,4 +428,5 @@ public class Main {
             save(f, file.getPath());
         }
     }
+
 }

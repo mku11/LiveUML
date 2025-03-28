@@ -38,6 +38,7 @@ import org.jgrapht.graph.DefaultGraphType;
 import org.jgrapht.graph.builder.GraphTypeBuilder;
 import org.jgrapht.util.SupplierUtil;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,27 +52,34 @@ public class UMLGenerator {
     private final UMLFinder finder;
     private ParserConfiguration parserConfiguration;
 
+    public UMLParser getParser() {
+        return parser;
+    }
+
+    private UMLParser parser;
+
     public UMLGenerator() {
         this.finder = new UMLFinder();
+        this.parser = new UMLParser();
         createGraph();
     }
 
     public void importSourcesDir(File root) {
         setupFolder(root);
-        List<UMLClass> classes = new UMLParser().getClasses(root);
+        List<UMLClass> classes = parser.getClasses(root);
         addClasses(classes);
     }
 
     private void setupFolder(File sourceFolder) {
-        if(reflectionTypeSolver == null) {
+        if (reflectionTypeSolver == null) {
             reflectionTypeSolver = new ReflectionTypeSolver();
             combinedSolver = new CombinedTypeSolver();
             combinedSolver.add(reflectionTypeSolver);
+            parserConfiguration = new ParserConfiguration();
         }
         JavaParserTypeSolver javaParserTypeSolver = new JavaParserTypeSolver(sourceFolder);
         combinedSolver.add(javaParserTypeSolver);
-        parserConfiguration = new ParserConfiguration()
-                .setSymbolResolver(new JavaSymbolSolver(combinedSolver));
+        parserConfiguration.setSymbolResolver(new JavaSymbolSolver(combinedSolver));
         StaticJavaParser.setConfiguration(parserConfiguration);
     }
 
@@ -82,7 +90,7 @@ public class UMLGenerator {
     }
 
     public void addClasses(List<UMLClass> umlClasses) {
-        if(graph == null)
+        if (graph == null)
             createGraph();
         for (UMLClass obj : umlClasses) {
             graph.addVertex(obj);
@@ -91,7 +99,7 @@ public class UMLGenerator {
     }
 
     public void updateVertices(HashMap<String, UMLClass> vertices) {
-        for (UMLRelationship rel: graph.edgeSet()) {
+        for (UMLRelationship rel : graph.edgeSet()) {
             UMLClass from = vertices.getOrDefault(rel.from.toString(), null);
             UMLClass to = vertices.getOrDefault(rel.to.toString(), null);
             from.relationships.put(rel.toString(), rel);
@@ -138,5 +146,6 @@ public class UMLGenerator {
 
     public void clear() {
         graph = null;
+        parser.clear();
     }
 }

@@ -485,6 +485,10 @@ public class GraphPanel extends JPanel {
         this.repaint();
     }
 
+    public UMLGenerator getGenerator() {
+        return generator;
+    }
+
     static class Diamond extends Path2D.Double {
         public Diamond(double width, double height) {
             moveTo(0, 0);
