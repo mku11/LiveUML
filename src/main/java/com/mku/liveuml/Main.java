@@ -77,11 +77,12 @@ public class Main {
         classes = new JList<>();
         JScrollPane classesScrollPane = new JScrollPane(classes, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         classesScrollPane.setPreferredSize(new Dimension(200, 600));
+        classesScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         classes.addListSelectionListener((e) -> {
             graphPanel.selectClass(e.getSource());
         });
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, graphPanel, classes);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, graphPanel, classesScrollPane);
         splitPane.setResizeWeight(0.8);
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.BOTH;
