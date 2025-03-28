@@ -215,6 +215,7 @@ public class GraphPanel extends JPanel {
         if (visualizationScrollPane != null)
             remove(visualizationScrollPane);
         visualizationScrollPane = new VisualizationScrollPane(vv);
+        visualizationScrollPane.setPreferredSize(this.getPreferredSize());
         add(visualizationScrollPane);
     }
 
@@ -489,7 +490,16 @@ public class GraphPanel extends JPanel {
         return generator;
     }
 
-    public void selectClass(Object source) {
+    public void selectClass(List<UMLClass> classes) {
+        this.vv.getRenderContext().getSelectedVertexState().clear();
+        this.vv.getRenderContext().getSelectedVertexState().select(classes);
+        if (classes.size() == 1) {
+            org.jungrapht.visualization.layout.model.Point point = vv.getVisualizationModel().getLayoutModel().get(classes.get(0));
+            EventQueue.invokeLater(() -> {
+                visualizationScrollPane.getHorizontalScrollBar().setValue((int) point.x);
+                visualizationScrollPane.getVerticalScrollBar().setValue((int) point.y);
+            });
+        }
     }
 
     static class Diamond extends Path2D.Double {
@@ -519,6 +529,7 @@ public class GraphPanel extends JPanel {
             lineTo(-width / 2, height / 2);
             closePath();
         }
+
     }
 
     public BufferedImage getImage() {

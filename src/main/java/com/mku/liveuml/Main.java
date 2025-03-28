@@ -79,7 +79,7 @@ public class Main {
         classesScrollPane.setPreferredSize(new Dimension(200, 600));
         classesScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         classes.addListSelectionListener((e) -> {
-            graphPanel.selectClass(e.getSource());
+            graphPanel.selectClass(classes.getSelectedValuesList());
         });
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, graphPanel, classesScrollPane);
@@ -276,6 +276,7 @@ public class Main {
                         setTitle(f, getFilenameWithoutExtension(file.getName()));
                         setStatus("Diagram loaded", 3000);
                     });
+                    classes.setListData(graphPanel.getGenerator().getGraph().vertexSet().toArray(new UMLClass[0]));
                 }).start();
             }
         });
