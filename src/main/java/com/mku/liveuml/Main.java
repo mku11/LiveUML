@@ -32,7 +32,6 @@ import com.mku.liveuml.utils.Importer;
 import com.mku.liveuml.view.GraphPanel;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -47,11 +46,13 @@ import java.util.prefs.Preferences;
 public class Main {
     private static final String version = "0.9.0";
     private static UMLGenerator generator;
-    private static GraphPanel panel;
+    private static GraphPanel graphPanel;
     private static String filepath;
     private static JLabel status;
     private static JButton errors;
     private static String msg;
+
+    private static JList<UMLClass> classes;
 
     public static void main(String[] args) {
         generator = new UMLGenerator();
@@ -67,13 +68,31 @@ public class Main {
     }
 
     private static void createPanel(JFrame f) {
-        panel = new GraphPanel(generator);
-        JPanel p = new JPanel();
-        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        p.add(panel);
-        p.setBorder(new EmptyBorder(10, 10, 10, 10));
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
 
-        JPanel errorsBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        graphPanel = new GraphPanel(generator);
+
+        classes = new JList<>();
+        JScrollPane classesScrollPane = new JScrollPane(classes, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        classesScrollPane.setPreferredSize(new Dimension(200, 600));
+        classes.addListSelectionListener((e) -> {
+            graphPanel.selectClass(e.getSource());
+        });
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, graphPanel, classes);
+        splitPane.setResizeWeight(0.8);
+        gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        gbc.weightx = 100;
+        gbc.weighty = 100;
+        gbc.insets = new Insets(2, 2, 2, 2);
+        mainPanel.add(splitPane, gbc);
+
         errors = new JButton();
         errors.setBorderPainted(false);
         errors.setOpaque(false);
@@ -89,16 +108,34 @@ public class Main {
                 JOptionPane.showMessageDialog(f, scrollPane, "Unresolved symbols", JOptionPane.PLAIN_MESSAGE);
             });
         });
+        errors.setHorizontalAlignment(SwingConstants.LEFT);
+        errors.getPreferredSize().height = 50;
+        gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.weightx = 50;
+        gbc.weighty = 0;
+        gbc.insets = new Insets(2, 2, 2, 2);
+        mainPanel.add(errors, gbc);
 
-        errorsBar.add(errors);
-
-        JPanel statusBar = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         status = new JLabel();
-        statusBar.add(status);
+        status.setHorizontalAlignment(SwingConstants.RIGHT);
+        status.getPreferredSize().height = 50;
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.weightx = 50;
+        gbc.weighty = 0;
+        gbc.insets = new Insets(2, 2, 2, 2);
+        mainPanel.add(status, gbc);
 
-        p.add(errorsBar);
-        p.add(statusBar);
-        f.getContentPane().add(p);
+        f.setMinimumSize(new Dimension(1000, 800));
+        f.getContentPane().add(mainPanel);
+
     }
 
     private static Image getIconImage() {
@@ -175,7 +212,6 @@ public class Main {
         aboutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
         menu.add(aboutItem);
 
-        f.setMinimumSize(new Dimension(1200, 800));
         f.pack();
 
         importSourceFilesItem.addActionListener((e) -> {
@@ -192,11 +228,12 @@ public class Main {
                     try {
                         generator.importSourcesDir(root);
                         EventQueue.invokeLater(() -> {
-                            panel.display(null);
-                            panel.revalidate();
+                            graphPanel.display(null);
+                            graphPanel.revalidate();
                             setStatus("Sources imported", 3000);
                         });
                         updateErrors(generator);
+                        classes.setListData(graphPanel.getGenerator().getGraph().vertexSet().toArray(new UMLClass[0]));
                     } catch (Exception ex) {
                         ex.printStackTrace();
                         JOptionPane.showMessageDialog(null, "Error during import: " + ex,
@@ -207,9 +244,9 @@ public class Main {
         });
 
         newGraphItem.addActionListener((e) -> {
-            panel.clear();
-            panel.revalidate();
-            updateErrors(panel.getGenerator());
+            graphPanel.clear();
+            graphPanel.revalidate();
+            updateErrors(graphPanel.getGenerator());
             filepath = null;
             setTitle(f, null);
         });
@@ -228,13 +265,13 @@ public class Main {
                 filepath = file.getPath();
                 prefs.put("LAST_GRAPH_FILE", file.getPath());
                 HashMap<UMLClass, Point2D.Double> verticesPositions = new HashMap<>();
-                panel.clear();
+                graphPanel.clear();
                 new Thread(() -> {
                     setStatus("Loading diagram");
                     new Importer().importGraph(file, generator, verticesPositions);
                     EventQueue.invokeLater(() -> {
-                        panel.display(verticesPositions);
-                        panel.revalidate();
+                        graphPanel.display(verticesPositions);
+                        graphPanel.revalidate();
                         setTitle(f, getFilenameWithoutExtension(file.getName()));
                         setStatus("Diagram loaded", 3000);
                     });
@@ -287,15 +324,15 @@ public class Main {
                 prefs.put("LAST_EXPORT_FILE", file.getPath());
                 new Thread(() -> {
                     setStatus("Exporting image");
-                    new ImageExporter().saveImage(file, panel);
+                    new ImageExporter().saveImage(file, graphPanel);
                     setStatus("Image exported", 3000);
                 }).start();
             }
         });
 
         closeGraphItem.addActionListener(((e) -> {
-            panel.clear();
-            panel.revalidate();
+            graphPanel.clear();
+            graphPanel.revalidate();
         }));
 
         helpItem.addActionListener((e) -> {
@@ -361,7 +398,7 @@ public class Main {
             File file = new File(filepath);
             new Thread(() -> {
                 setStatus("Saving diagram");
-                new Exporter().exportGraph(file, generator, panel.getVertexPositions());
+                new Exporter().exportGraph(file, generator, graphPanel.getVertexPositions());
                 EventQueue.invokeLater((() -> {
                     setTitle(f, getFilenameWithoutExtension(file.getName()));
                     setStatus("Diagram saved", 3000);

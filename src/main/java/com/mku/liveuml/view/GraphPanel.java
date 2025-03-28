@@ -489,6 +489,9 @@ public class GraphPanel extends JPanel {
         return generator;
     }
 
+    public void selectClass(Object source) {
+    }
+
     static class Diamond extends Path2D.Double {
         public Diamond(double width, double height) {
             moveTo(0, 0);
