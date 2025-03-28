@@ -26,10 +26,12 @@ package com.mku.liveuml;
 import com.mku.liveuml.gen.UMLGenerator;
 import com.mku.liveuml.gen.UMLParser;
 import com.mku.liveuml.graph.UMLClass;
+import com.mku.liveuml.graph.UMLRelationship;
 import com.mku.liveuml.utils.Exporter;
 import com.mku.liveuml.utils.ImageExporter;
 import com.mku.liveuml.utils.Importer;
 import com.mku.liveuml.view.GraphPanel;
+import org.jungrapht.visualization.VisualizationViewer;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -39,6 +41,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.prefs.Preferences;
@@ -53,6 +56,7 @@ public class Main {
     private static String msg;
 
     private static JList<UMLClass> classes;
+    private static ArrayList<UMLClass> classesList;
 
     public static void main(String[] args) {
         generator = new UMLGenerator();
@@ -232,9 +236,10 @@ public class Main {
                             graphPanel.display(null);
                             graphPanel.revalidate();
                             setStatus("Sources imported", 3000);
+                            addClassListener();
+                            updateErrors(generator);
+                            setClasses();
                         });
-                        updateErrors(generator);
-                        classes.setListData(graphPanel.getGenerator().getGraph().vertexSet().toArray(new UMLClass[0]));
                     } catch (Exception ex) {
                         ex.printStackTrace();
                         JOptionPane.showMessageDialog(null, "Error during import: " + ex,
@@ -275,8 +280,9 @@ public class Main {
                         graphPanel.revalidate();
                         setTitle(f, getFilenameWithoutExtension(file.getName()));
                         setStatus("Diagram loaded", 3000);
+                        addClassListener();
+                        setClasses();
                     });
-                    classes.setListData(graphPanel.getGenerator().getGraph().vertexSet().toArray(new UMLClass[0]));
                 }).start();
             }
         });
@@ -376,6 +382,25 @@ public class Main {
                 f.dispatchEvent(new WindowEvent(f, WindowEvent.WINDOW_CLOSING));
             }
         }));
+    }
+
+    private static void setClasses() {
+        UMLClass[] classesArr = graphPanel.getGenerator().getGraph().vertexSet().toArray(new UMLClass[0]);
+        classesList = new ArrayList<>(java.util.List.of(classesArr));
+        classes.setListData(classesArr);
+    }
+
+    private static void addClassListener() {
+        VisualizationViewer<UMLClass, UMLRelationship> viewer = graphPanel.getViewer();
+        viewer.getSelectedVertexState().addItemListener((l)->{
+            graphPanel.setSelectedFromGui(true);
+            classes.clearSelection();
+            for(UMLClass cls : viewer.getSelectedVertices()) {
+                int idx = classesList.indexOf(cls);
+                classes.addSelectionInterval(idx, idx);
+            }
+            graphPanel.setSelectedFromGui(false);
+        });
     }
 
     private static void updateErrors(UMLGenerator generator) {

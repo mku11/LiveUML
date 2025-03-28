@@ -70,6 +70,7 @@ public class GraphPanel extends JPanel {
     private BufferedImage img;
     private boolean useViewerPadding;
     private int viewerPadding = 200;
+    private boolean selectedFromGui;
 
     /**
      * create an instance of a simple graph with basic controls
@@ -105,7 +106,6 @@ public class GraphPanel extends JPanel {
         vv = VisualizationViewer.builder(visualizationModel)
                 .viewSize(preferredSize)
                 .build();
-
         Map<?, ?> desktopHints = (Map<?, ?>) Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
         if (desktopHints != null) {
             HashMap<RenderingHints.Key, Object> renderingHints = new HashMap<>();
@@ -553,6 +553,8 @@ public class GraphPanel extends JPanel {
     }
 
     public void selectClass(List<UMLClass> classes) {
+        if(selectedFromGui)
+            return;
         this.vv.getRenderContext().getSelectedVertexState().clear();
         this.vv.getRenderContext().getSelectedVertexState().select(classes);
         if (classes.size() == 1) {
@@ -565,6 +567,14 @@ public class GraphPanel extends JPanel {
                 this.repaint();
             });
         }
+    }
+
+    public VisualizationViewer<UMLClass, UMLRelationship> getViewer() {
+        return vv;
+    }
+
+    public void setSelectedFromGui(boolean value) {
+        selectedFromGui = value;
     }
 
     static class Diamond extends Path2D.Double {
