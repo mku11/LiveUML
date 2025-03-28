@@ -66,6 +66,7 @@ public class GraphPanel extends JPanel {
     private final HashSet<UMLRelationship> selectedEdges = new HashSet<>();
     private final HashSet<Method> selectedMethods = new HashSet<>();
     private final HashSet<Field> selectedFields = new HashSet<>();
+    private HashMap<UMLClass, Shape> verticesBounds = new HashMap<>();
     private BufferedImage img;
 
     /**
@@ -119,6 +120,7 @@ public class GraphPanel extends JPanel {
                         Component component = this.prepareRenderer(this.renderContext, this.renderContext.getVertexLabelFunction().apply(v), this.renderContext.getSelectedVertexState().isSelected(v), v);
                         Dimension size = component.getPreferredSize();
                         Rectangle bounds = new Rectangle(-size.width / 2 + 2, -size.height / 2 + 2, size.width - 4, size.height - 4);
+                        verticesBounds.put(v, bounds);
                         return bounds;
                     }
 
@@ -144,10 +146,10 @@ public class GraphPanel extends JPanel {
                             Dimension size = component.getPreferredSize();
                             Rectangle bounds = new Rectangle(-size.width / 2 + 2, -size.height / 2 + 2, size.width - 4, size.height - 4);
                             this.shapes.put(v, bounds);
+                            verticesBounds.put(v, bounds);
                         }
                     }
                 };
-
         vv.getRenderContext().setVertexLabelFunction(object -> Formatter.display(object, !object.isCompact(),
                 selectedVertices, selectedEdges, selectedMethods, selectedFields));
         vv.getRenderContext().setVertexShapeFunction(vlasr);
@@ -530,10 +532,12 @@ public class GraphPanel extends JPanel {
         this.vv.getRenderContext().getSelectedVertexState().clear();
         this.vv.getRenderContext().getSelectedVertexState().select(classes);
         if (classes.size() == 1) {
-            org.jungrapht.visualization.layout.model.Point point = vv.getVisualizationModel().getLayoutModel().get(classes.get(0));
+            UMLClass obj = classes.get(0);
+            org.jungrapht.visualization.layout.model.Point point = vv.getVisualizationModel().getLayoutModel().get(obj);
             EventQueue.invokeLater(() -> {
-                visualizationScrollPane.getHorizontalScrollBar().setValue((int) point.x);
-                visualizationScrollPane.getVerticalScrollBar().setValue((int) point.y);
+                Shape shape = verticesBounds.get(obj);
+                visualizationScrollPane.getHorizontalScrollBar().setValue((int) point.x - vv.getWidth() / 2);
+                visualizationScrollPane.getVerticalScrollBar().setValue((int) point.y - shape.getBounds().height / 2);
                 this.repaint();
             });
         }
