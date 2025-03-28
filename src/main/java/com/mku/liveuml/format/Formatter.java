@@ -38,7 +38,8 @@ public class Formatter {
     private static final String font = "Garamond, serif";
     private static final int fontSize = 10;
     private static final int headerFontSize = 12;
-    private static final int padding = 4;
+    private static final int headerPadding = 8;
+    private static final int padding = 2;
 
 
     public static String display(UMLClass object, boolean compact,
@@ -46,10 +47,11 @@ public class Formatter {
                                  HashSet<Method> selectedMethods, HashSet<Field> selectedFields) {
         String classBackgroundColor = getSelectionColor(object, selectedVertices, selectedEdges, selectedMethods, selectedFields);
         StringBuilder body = new StringBuilder("<html><body style='font-family: " + font + "; font-size: " + fontSize + "px; font-weight: bold;'>");
-        body.append("<div style='padding-right: 6px;'>");
+        body.append("<div>");
         body.append("<div style='"
                 + "font-size: " + headerFontSize + "px;"
-                + "padding: " + padding + "px;"
+                + "padding: " + headerPadding + "px;"
+                + "padding-right: " + (headerPadding + 6) + "px;"
                 + classBackgroundColor
                 + "'>");
         body.append("<center>");
