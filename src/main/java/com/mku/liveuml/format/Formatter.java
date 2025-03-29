@@ -23,12 +23,9 @@ SOFTWARE.
 */
 package com.mku.liveuml.format;
 
+import com.mku.liveuml.entities.*;
 import com.mku.liveuml.graph.UMLRelationship;
 import com.mku.liveuml.graph.UMLClass;
-import com.mku.liveuml.entities.AccessModifier;
-import com.mku.liveuml.entities.Parameter;
-import com.mku.liveuml.entities.Field;
-import com.mku.liveuml.entities.Method;
 
 import java.util.HashSet;
 
@@ -44,7 +41,8 @@ public class Formatter {
 
     public static String display(UMLClass object, boolean compact,
                                  HashSet<UMLClass> selectedVertices, HashSet<UMLRelationship> selectedEdges,
-                                 HashSet<Method> selectedMethods, HashSet<Field> selectedFields) {
+                                 HashSet<Method> selectedMethods, HashSet<Field> selectedFields,
+                                 HashSet<EnumConstant> selectedEnumConsts) {
         String classBackgroundColor = getSelectionColor(object, selectedVertices, selectedEdges, selectedMethods, selectedFields);
         StringBuilder body = new StringBuilder("<html><body style='font-family: " + font + "; font-size: " + fontSize + "px; font-weight: bold;'>");
         body.append("<div>");
@@ -59,6 +57,21 @@ public class Formatter {
         body.append("</center>");
         body.append("</div>");
         if (!compact) {
+            if (object.getEnumConstants().size() > 0) {
+                body.append("<div style='font-size: 1px; height: 1px; background-color: gray; margin: 0px; padding: 0px; border-width: 0px;'></div>");
+                body.append("<div>");
+                for (EnumConstant enumConst : object.getEnumConstants()) {
+                    String methodBackgroundColor = "";
+                    if (selectedEnumConsts.contains(enumConst.getName()))
+                        methodBackgroundColor = "background-color: " + selectionBackgroundColor + ";";
+                    String enumConstStr = "<pre style='" + methodBackgroundColor + "padding-left: " + padding + "px;" + "'>"
+                            + enumConst.getName()
+                            + "</pre>";
+                    body.append(enumConstStr);
+                }
+                body.append("</div>");
+                body.append("<br>");
+            }
             if (object.getFields().size() > 0) {
                 body.append("<div style='font-size: 1px; height: 1px; background-color: gray; margin: 0px; padding: 0px; border-width: 0px;'></div>");
                 body.append("<div>");
@@ -114,7 +127,7 @@ public class Formatter {
                 selectionColor = selectionBackgroundColor;
             }
         }
-        if(selectionColor == null)
+        if (selectionColor == null)
             return "";
         else
             return "background-color: " + selectionColor + ";";

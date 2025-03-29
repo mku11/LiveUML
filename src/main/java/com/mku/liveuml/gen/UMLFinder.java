@@ -63,12 +63,14 @@ public class UMLFinder {
 
     public List<HashSet<?>> findClassReference(UMLClass s) {
         HashSet<Method> methodRefs = new HashSet<>();
+        HashSet<Method> enumConstRefs = new HashSet<>();
         HashSet<Field> fieldRefs = new HashSet<>();
         HashSet<UMLClass> classRefs = new HashSet<>();
         HashSet<UMLRelationship> relationshipRefs = new HashSet<>();
 
         List<HashSet<?>> results = new ArrayList<>();
         results.add(methodRefs);
+        results.add(enumConstRefs);
         results.add(fieldRefs);
         results.add(classRefs);
         results.add(relationshipRefs);

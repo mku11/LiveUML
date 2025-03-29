@@ -153,6 +153,7 @@ public class Exporter {
         exporter.registerAttribute("packageName", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
         exporter.registerAttribute("fields", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
         exporter.registerAttribute("methods", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
+        exporter.registerAttribute("enumConstants", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
         exporter.registerAttribute("compact", GraphMLExporter.AttributeCategory.NODE, AttributeType.BOOLEAN);
     }
 
@@ -169,6 +170,7 @@ public class Exporter {
 
         map.put("fields", new DefaultAttribute<>(new Gson().toJson(obj.getFields()), AttributeType.STRING));
         map.put("methods", new DefaultAttribute<>(new Gson().toJson(obj.getMethods()), AttributeType.STRING));
+        map.put("enumConstants", new DefaultAttribute<>(new Gson().toJson(obj.getEnumConstants()), AttributeType.STRING));
         map.put("compact", new DefaultAttribute<>(obj.isCompact(), AttributeType.BOOLEAN));
         return map;
     }

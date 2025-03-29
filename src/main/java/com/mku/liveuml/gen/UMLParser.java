@@ -40,6 +40,7 @@ import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclar
 import com.github.javaparser.resolution.types.ResolvedArrayType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.google.common.base.Strings;
+import com.mku.liveuml.entities.Enumeration;
 import com.mku.liveuml.graph.UMLRelationship;
 import com.mku.liveuml.graph.UMLClass;
 import com.mku.liveuml.entities.Parameter;
@@ -48,10 +49,7 @@ import com.mku.liveuml.entities.Class;
 import com.mku.liveuml.graph.UMLRelationshipType;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class UMLParser {
     public HashMap<String, UMLClass> objects = new HashMap<>();
@@ -76,8 +74,10 @@ public class UMLParser {
     }
 
     public List<UMLClass> getClasses(File projectDir) {
-        List<UMLClass> list = new LinkedList<>();
-        getObjects(list, projectDir);
+        HashSet<UMLClass> classes = new HashSet<>();
+        getObjects(classes, projectDir);
+        ArrayList<UMLClass> list = new ArrayList<>(classes);
+        getObjectsAttrs(list, projectDir);
         getMethodCalls(list, projectDir);
         resolveTypes(list);
         return list;
@@ -226,7 +226,7 @@ public class UMLParser {
 
     private void addUnresolvedSymbol(String name, UMLClass arg) {
         SymbolInformation info;
-        if(name.startsWith("Solving ")) {
+        if (name.startsWith("Solving ")) {
             name = name.split(" ")[1];
         }
         if (unresolvedSymbols.containsKey(name)) {
@@ -528,7 +528,44 @@ public class UMLParser {
         rel.addFieldAccess(accessorMethod, accessedField);
     }
 
-    private void getObjects(List<UMLClass> list, File projectDir) {
+
+    private void getObjects(HashSet<UMLClass> list, File projectDir) {
+        new DirExplorer((level, path, file) -> path.endsWith(".java"), (level, path, file) -> {
+            System.out.println(path);
+            System.out.println(Strings.repeat("=", path.length()));
+            try {
+                new VoidVisitorAdapter<UMLClass>() {
+                    @Override
+                    public void visit(ClassOrInterfaceDeclaration n, UMLClass arg) {
+                        super.visit(n, arg);
+                        System.out.println(n.isInterface() ? "Interface" : "Class: " + n.getName());
+                        UMLClass obj = getOrCreateObject(n, file.getPath());
+                        list.add(obj);
+                    }
+                }.visit(StaticJavaParser.parse(file), null);
+                System.out.println();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            try {
+                new VoidVisitorAdapter<UMLClass>() {
+                    @Override
+                    public void visit(EnumDeclaration n, UMLClass arg) {
+                        super.visit(n, arg);
+                        System.out.println("Enum: " + n.getName());
+                        UMLClass obj = parseEnumConsts(n, file.getPath());
+                        list.add(obj);
+                    }
+                }.visit(StaticJavaParser.parse(file), null);
+                System.out.println(); // empty line
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }).explore(projectDir);
+    }
+
+    private void getObjectsAttrs(List<UMLClass> list, File projectDir) {
         new DirExplorer((level, path, file) -> path.endsWith(".java"), (level, path, file) -> {
             System.out.println(path);
             System.out.println(Strings.repeat("=", path.length()));
@@ -553,7 +590,7 @@ public class UMLParser {
                     public void visit(EnumDeclaration n, UMLClass arg) {
                         super.visit(n, arg);
                         System.out.println("Enum: " + n.getName());
-                        UMLClass obj = parseEnum(n, file.getPath());
+                        UMLClass obj = parseEnumConsts(n, file.getPath());
                         list.add(obj);
                     }
                 }.visit(StaticJavaParser.parse(file), null);
@@ -564,8 +601,8 @@ public class UMLParser {
         }).explore(projectDir);
     }
 
-    private UMLClass parseEnum(EnumDeclaration n, String filePath) {
-        UMLClass obj = new Enumeration(n.getName().asString());
+    private UMLClass parseEnumConsts(EnumDeclaration n, String filePath) {
+        UMLClass obj = getOrCreateEnum(n, filePath);
         obj.setFilePath(filePath);
         Node node = n;
         while (node.hasParentNode()) {
@@ -576,12 +613,14 @@ public class UMLParser {
             }
         }
         obj.setLine(n.getBegin().get().line);
+        obj.setEnumConstants(parseEnums(n, obj));
         obj.setFields(parseFields(n, obj));
         obj.addMethods(parseConstructors(obj, n));
         obj.addMethods(parseMethods(obj, n));
         objects.put(obj.getPackageName() + "." + obj.getName(), obj);
         return obj;
     }
+
 
     private UMLClass parseClassOrInterface(ClassOrInterfaceDeclaration n, String filePath) {
         UMLClass obj = getOrCreateObject(n, filePath);
@@ -617,6 +656,29 @@ public class UMLParser {
         String packageName = getPackageName(n);
         String className = n.getName().asString();
         return getOrCreateObject(packageName, className, n.isInterface(), filePath, n.getBegin().get().line);
+    }
+
+    private UMLClass getOrCreateEnum(EnumDeclaration n, String filePath) {
+        String packageName = getPackageName(n);
+        String className = n.getName().asString();
+        return getOrCreateEnum(packageName, className, filePath, n.getBegin().get().line);
+    }
+
+
+    private UMLClass getOrCreateEnum(String packageName, String name, String filePath,
+                                       int line) {
+        UMLClass obj = null;
+        String fullName = packageName + "." + name;
+        if (objects.containsKey(fullName)) {
+            obj = objects.get(fullName);
+        } else {
+            obj = new Enumeration(name);
+            objects.put(fullName, obj);
+        }
+        obj.setFilePath(filePath);
+        obj.setLine(line);
+        obj.setPackageName(packageName);
+        return obj;
     }
 
     private UMLClass getOrCreateObject(String packageName, String name, boolean isInterface, String filePath,
@@ -762,6 +824,15 @@ public class UMLParser {
             }
         }
         return fields;
+    }
+
+    private List<EnumConstant> parseEnums(EnumDeclaration n, UMLClass obj) {
+        List<EnumConstant> enums = new LinkedList<>();
+        int num = 0;
+        for(EnumConstantDeclaration constantDeclaration : n.getEntries()) {
+            enums.add(new EnumConstant(constantDeclaration.getNameAsString(), num++));
+        }
+        return enums;
     }
 
     private List<Method> parseMethods(UMLClass obj, NodeWithMembers<?> n) {

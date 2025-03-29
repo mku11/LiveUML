@@ -91,6 +91,9 @@ public class Importer {
             case "fields":
                 obj.setFields(parseFields((List<StringMap>) new Gson().fromJson(attribute.getValue(), List.class), obj, vertices));
                 break;
+            case "enumConstants":
+                obj.setEnumConstants(parseEnumConsts((List<String>) new Gson().fromJson(attribute.getValue(), List.class), obj, vertices));
+                break;
             case "methods":
                 obj.setMethods(parseMethods((List<StringMap>) new Gson().fromJson(attribute.getValue(), List.class), obj, vertices));
                 break;
@@ -332,6 +335,14 @@ public class Importer {
             fields.add(field);
         }
         return fields;
+    }
+
+    private static List<EnumConstant> parseEnumConsts(List<String> map, UMLClass obj, HashMap<String, UMLClass> vertices) {
+        List<EnumConstant> enumConstants = new ArrayList<>();
+        for (String fmap : map) {
+
+        }
+        return enumConstants;
     }
 
     private static List<Method> getMethods(HashMap<String, String> map, HashMap<String, UMLClass> vertices) {

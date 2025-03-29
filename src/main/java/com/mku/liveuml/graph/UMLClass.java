@@ -23,6 +23,7 @@ SOFTWARE.
 */
 package com.mku.liveuml.graph;
 
+import com.mku.liveuml.entities.EnumConstant;
 import com.mku.liveuml.entities.Field;
 import com.mku.liveuml.entities.Method;
 
@@ -37,6 +38,7 @@ public abstract class UMLClass {
     private boolean compact;
     private List<Method> methods = new LinkedList<>();
     private List<Field> fields = new LinkedList<>();
+    private List<EnumConstant> enumConstants = new LinkedList<>();
     private int line;
     public void addMethods(List<Method> methods) {
         this.methods.addAll(methods);
@@ -84,6 +86,15 @@ public abstract class UMLClass {
     public void setFields(List<Field> fields) {
         this.fields.clear();
         this.fields.addAll(fields);
+    }
+
+    public List<EnumConstant> getEnumConstants() {
+        return enumConstants;
+    }
+
+    public void setEnumConstants(List<EnumConstant> enums) {
+        this.enumConstants.clear();
+        this.enumConstants.addAll(enums);
     }
 
     public int getLine() {

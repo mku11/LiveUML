@@ -23,10 +23,7 @@ SOFTWARE.
 */
 package com.mku.liveuml.view;
 
-import com.mku.liveuml.entities.AccessModifier;
-import com.mku.liveuml.entities.Constructor;
-import com.mku.liveuml.entities.Field;
-import com.mku.liveuml.entities.Method;
+import com.mku.liveuml.entities.*;
 import com.mku.liveuml.format.Formatter;
 import com.mku.liveuml.gen.UMLGenerator;
 import com.mku.liveuml.graph.UMLClass;
@@ -51,6 +48,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.*;
 
@@ -64,6 +62,7 @@ public class GraphPanel extends JPanel {
     private final HashSet<UMLRelationship> selectedEdges = new HashSet<>();
     private final HashSet<Method> selectedMethods = new HashSet<>();
     private final HashSet<Field> selectedFields = new HashSet<>();
+    private final HashSet<EnumConstant> selectedEnumConsts = new HashSet<>();
     private HashMap<UMLClass, Shape> verticesBounds = new HashMap<>();
     private BufferedImage img;
     private boolean useViewerPadding;
@@ -139,11 +138,9 @@ public class GraphPanel extends JPanel {
                             int y = (int) p2d.getY();
                             boolean selected = renderContext.getSelectedVertexState().isSelected(v);
                             JLabelVertexLabelRenderer renderer = (JLabelVertexLabelRenderer) component;
+                            renderer.setBorder(BorderFactory.createStrokeBorder(new BasicStroke(4.0f)));
                             if (selected) {
                                 component.setBackground(vertexBackgroundColor);
-                                renderer.setBorder(BorderFactory.createStrokeBorder(new BasicStroke(6.0f)));
-                            } else {
-                                renderer.setBorder(BorderFactory.createStrokeBorder(new BasicStroke(4.0f)));
                             }
 
                             g.draw(component, renderContext.getRendererPane(), x + h_offset, y + v_offset, d.width, d.height, true);
@@ -155,7 +152,7 @@ public class GraphPanel extends JPanel {
                     }
                 };
         vv.getRenderContext().setVertexLabelFunction(object -> Formatter.display(object, !object.isCompact(),
-                selectedVertices, selectedEdges, selectedMethods, selectedFields));
+                selectedVertices, selectedEdges, selectedMethods, selectedFields, selectedEnumConsts));
         vv.getRenderContext().setVertexShapeFunction(vlasr);
 //        vv.getRenderContext().setVertexFontFunction(v->new Font(Font.MONOSPACED, Font.PLAIN, 12));
         vv.getRenderContext().setEdgeStrokeFunction(rel -> {
@@ -514,6 +511,11 @@ public class GraphPanel extends JPanel {
                     String owner = ((Field) obj).getOwner();
                     UMLClass cls = getOwnerByName(owner);
                     classes.add(cls);
+                } else if (obj instanceof EnumConstant) {
+                    selectedEnumConsts.add((EnumConstant) obj);
+                    String owner = ((EnumConstant) obj).getOwner();
+                    UMLClass cls = getOwnerByName(owner);
+                    classes.add(cls);
                 }
                 else if (obj instanceof Method) {
                     selectedMethods.add((Method) obj);
@@ -549,6 +551,7 @@ public class GraphPanel extends JPanel {
     private void clearSelections() {
         vv.getSelectedVertexState().clear();
         vv.getSelectedEdgeState().clear();
+        selectedEnumConsts.clear();
         selectedFields.clear();
         selectedMethods.clear();
         selectedEdges.clear();

@@ -23,15 +23,35 @@ SOFTWARE.
 */
 package com.mku.liveuml.entities;
 
-import com.mku.liveuml.graph.UMLClass;
-
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Enumeration extends UMLClass {
+public class EnumConstant {
+    private String name;
+    private int num;
+    private String owner;
 
-    public Enumeration(String name) {
-        super(name);
+    public String getName() {
+        return name;
     }
+
+    public int getNum() {
+        return num;
+    }
+
+    public String getOwner() {
+        return owner;
+    }
+
+    public EnumConstant(String name, int num) {
+        this.name = name;
+        this.num = num;
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
+
 }
