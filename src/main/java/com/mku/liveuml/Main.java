@@ -413,7 +413,7 @@ public class Main {
 
     private static void setClasses() {
         UMLClass[] classesArr = graphPanel.getGenerator().getGraph().vertexSet().toArray(new UMLClass[0]);
-        Arrays.sort(classesArr, Comparator.comparing(UMLClass::getName));
+        Arrays.sort(classesArr, Comparator.comparing(UMLClass::toString));
         classesList = new ArrayList<>(java.util.List.of(classesArr));
         classes.setListData(classesArr);
     }
