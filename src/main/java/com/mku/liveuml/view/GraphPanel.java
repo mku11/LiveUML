@@ -393,7 +393,7 @@ public class GraphPanel extends JPanel {
                     continue;
                 if (m.getAccessModifiers().contains(AccessModifier.Private))
                     continue;
-                String methodName = com.mku.liveuml.format.Formatter.getMethodSignature(m, true);
+                String methodName = com.mku.liveuml.format.Formatter.getMethodSignature(m, true, false);
                 JMenuItem mItem = new JMenuItem(methodName);
                 mItem.addActionListener(e -> {
                     clearSelections();
@@ -420,7 +420,7 @@ public class GraphPanel extends JPanel {
                     continue;
                 if (m.getAccessModifiers().contains(AccessModifier.Private))
                     continue;
-                String methodName = com.mku.liveuml.format.Formatter.getMethodSignature(m, true);
+                String methodName = com.mku.liveuml.format.Formatter.getMethodSignature(m, true, false);
                 JMenuItem mItem = new JMenuItem(methodName);
                 mItem.addActionListener(e -> {
                     clearSelections();
@@ -476,7 +476,7 @@ public class GraphPanel extends JPanel {
             for (Method m : s.getMethods()) {
                 if (!(m instanceof Constructor))
                     continue;
-                String methodName = com.mku.liveuml.format.Formatter.getMethodSignature(m, true);
+                String methodName = com.mku.liveuml.format.Formatter.getMethodSignature(m, true, false);
                 JMenuItem mItem = new JMenuItem(methodName);
                 mItem.addActionListener(e -> {
                     goToMethodReference(s, m);
@@ -499,7 +499,7 @@ public class GraphPanel extends JPanel {
             for (Method m : s.getMethods()) {
                 if (m instanceof Constructor)
                     continue;
-                String methodName = Formatter.getMethodSignature(m, true);
+                String methodName = Formatter.getMethodSignature(m, true, false);
                 JMenuItem mItem = new JMenuItem(methodName);
                 mItem.addActionListener(e -> {
                     goToMethodReference(s, m);

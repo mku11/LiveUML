@@ -138,6 +138,10 @@ public class Formatter {
     }
 
     public static String getMethodSignature(Method method, boolean usePrefix) {
+        return getMethodSignature(method, usePrefix, true);
+    }
+
+    public static String getMethodSignature(Method method, boolean usePrefix, boolean truncate) {
         String signature = "";
         if (usePrefix)
             signature += getMethodQualifier(method) + " ";
@@ -152,7 +156,7 @@ public class Formatter {
         signature += ")";
         if (!method.isReturnTypeVoid())
             signature += " : " + method.getReturnTypeName();
-        if (signature.length() > MAX_CHARS)
+        if (truncate && signature.length() > MAX_CHARS)
             signature = signature.substring(0, MAX_CHARS) + "...";
         return signature;
     }
