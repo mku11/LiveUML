@@ -43,7 +43,7 @@ import java.util.*;
 import java.util.prefs.Preferences;
 
 public class Main {
-    private static final String version = "0.9.0";
+    private static final String version = "0.9.1";
     private static UMLGenerator generator;
     private static GraphPanel graphPanel;
     private static String filepath;
