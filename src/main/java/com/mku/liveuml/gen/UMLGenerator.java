@@ -153,6 +153,7 @@ public class UMLGenerator {
 
     public void clear() {
         graph = null;
+        reflectionTypeSolver = null;
         parser.clear();
     }
 
