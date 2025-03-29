@@ -51,6 +51,7 @@ public class UMLGenerator {
     private Graph<UMLClass, UMLRelationship> graph;
     private final UMLFinder finder;
     private ParserConfiguration parserConfiguration;
+    private HashMap<String, UMLClass> vertices;
 
     public UMLParser getParser() {
         return parser;
@@ -99,6 +100,7 @@ public class UMLGenerator {
     }
 
     public void updateVertices(HashMap<String, UMLClass> vertices) {
+        this.vertices = vertices;
         for (UMLRelationship rel : graph.edgeSet()) {
             UMLClass from = vertices.getOrDefault(rel.from.toString(), null);
             UMLClass to = vertices.getOrDefault(rel.to.toString(), null);
@@ -147,5 +149,11 @@ public class UMLGenerator {
     public void clear() {
         graph = null;
         parser.clear();
+    }
+
+    public UMLClass getClassByName(String name) {
+        if(vertices == null)
+            return null;
+        return vertices.getOrDefault(name, null);
     }
 }

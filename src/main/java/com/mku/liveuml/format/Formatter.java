@@ -34,7 +34,7 @@ import java.util.HashSet;
 
 public class Formatter {
     private static final int MAX_CHARS = 80;
-    private static final String selectionBackgroundColor = "background-color: #c5ffdb;";
+    private static final String selectionBackgroundColor = "#9cfac0";
     private static final String font = "Garamond, serif";
     private static final int fontSize = 10;
     private static final int headerFontSize = 12;
@@ -65,7 +65,7 @@ public class Formatter {
                 for (Field field : object.getFields()) {
                     String fieldBackgroundColor = "";
                     if (selectedFields.contains(field))
-                        fieldBackgroundColor = selectionBackgroundColor;
+                        fieldBackgroundColor = "background-color: " + selectionBackgroundColor + ";";
                     body.append("<pre style='" + fieldBackgroundColor + "padding-left: " + padding + "px;" + "'>"
                             + getFieldFormatted(field)
                             + "</pre>");
@@ -79,7 +79,7 @@ public class Formatter {
                     String signature = getMethodSignature(method, true);
                     String methodBackgroundColor = "";
                     if (selectedMethods.contains(method))
-                        methodBackgroundColor = selectionBackgroundColor;
+                        methodBackgroundColor = "background-color: " + selectionBackgroundColor + ";";
                     signature = "<pre style='" + methodBackgroundColor + "padding-left: " + padding + "px;" + "'>"
                             + signature
                             + "</pre>";
@@ -96,24 +96,28 @@ public class Formatter {
 
     private static String getSelectionColor(UMLClass object, HashSet<UMLClass> selectedVertices, HashSet<UMLRelationship> selectedEdges,
                                             HashSet<Method> selectedMethods, HashSet<Field> selectedFields) {
+        String selectionColor = null;
         if (selectedVertices.contains(object))
-            return selectionBackgroundColor;
+            selectionColor = selectionBackgroundColor;
         for (UMLRelationship rel : object.relationships.values()) {
             if (selectedEdges.contains(rel)) {
-                return selectionBackgroundColor;
+                selectionColor = selectionBackgroundColor;
             }
         }
         for (Field field : object.getFields()) {
             if (selectedFields.contains(field)) {
-                return selectionBackgroundColor;
+                selectionColor = selectionBackgroundColor;
             }
         }
         for (Method method : object.getMethods()) {
             if (selectedMethods.contains(method)) {
-                return selectionBackgroundColor;
+                selectionColor = selectionBackgroundColor;
             }
         }
-        return "";
+        if(selectionColor == null)
+            return "";
+        else
+            return "background-color: " + selectionColor + ";";
     }
 
     public static String getFieldFormatted(Field field) {

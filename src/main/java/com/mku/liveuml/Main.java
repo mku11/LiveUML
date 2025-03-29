@@ -36,9 +36,7 @@ import org.jungrapht.visualization.VisualizationViewer;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.ArrayList;
@@ -57,6 +55,7 @@ public class Main {
 
     private static JList<UMLClass> classes;
     private static ArrayList<UMLClass> classesList;
+    private static JMenuItem toggleCollapseFilesItem;
 
     public static void main(String[] args) {
         generator = new UMLGenerator();
@@ -84,6 +83,23 @@ public class Main {
         classesScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         classes.addListSelectionListener((e) -> {
             graphPanel.selectClass(classes.getSelectedValuesList());
+        });
+        classes.addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    // reselect the class
+                    graphPanel.selectClass(classes.getSelectedValuesList());
+                } else if (e.getButton() == MouseEvent.BUTTON3) {
+                    if(classes.getSelectedValuesList().size() == 0)
+                        return;
+                    UMLClass cls = classes.getSelectedValuesList().get(0);
+                    JPopupMenu menu = new JPopupMenu();
+                    graphPanel.addContextMenu(menu, cls);
+                    menu.show(classes, 5, classes.getCellBounds(
+                            classes.getSelectedIndex() + 1,
+                            classes.getSelectedIndex() + 1).y);
+                }
+            }
         });
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, graphPanel, classesScrollPane);
@@ -181,6 +197,14 @@ public class Main {
         exitGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
         menu.add(exitGraphItem);
 
+        menu = new JMenu("View");
+        menubar.add(menu);
+        f.setJMenuBar(menubar);
+
+        toggleCollapseFilesItem = new JMenuItem("Expand All");
+        toggleCollapseFilesItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK | InputEvent.SHIFT_DOWN_MASK));
+        menu.add(toggleCollapseFilesItem);
+
         menu = new JMenu("Source");
         menubar.add(menu);
         f.setJMenuBar(menubar);
@@ -218,6 +242,11 @@ public class Main {
         menu.add(aboutItem);
 
         f.pack();
+
+        toggleCollapseFilesItem.addActionListener((e) -> {
+            boolean collapsed = graphPanel.toggleCollapse();
+            toggleCollapseFilesItem.setLabel(collapsed ? "Expand All" : "Collapse All");
+        });
 
         importSourceFilesItem.addActionListener((e) -> {
             Preferences prefs = Preferences.userRoot().node(Main.class.getName());
@@ -392,10 +421,10 @@ public class Main {
 
     private static void addClassListener() {
         VisualizationViewer<UMLClass, UMLRelationship> viewer = graphPanel.getViewer();
-        viewer.getSelectedVertexState().addItemListener((l)->{
+        viewer.getSelectedVertexState().addItemListener((l) -> {
             graphPanel.setSelectedFromGui(true);
             classes.clearSelection();
-            for(UMLClass cls : viewer.getSelectedVertices()) {
+            for (UMLClass cls : viewer.getSelectedVertices()) {
                 int idx = classesList.indexOf(cls);
                 classes.addSelectionInterval(idx, idx);
             }

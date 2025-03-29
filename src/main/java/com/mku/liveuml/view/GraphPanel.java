@@ -35,7 +35,6 @@ import com.mku.liveuml.graph.UMLRelationshipType;
 import com.mku.liveuml.utils.FileUtils;
 import org.jgrapht.Graph;
 import org.jungrapht.visualization.*;
-import org.jungrapht.visualization.control.CrossoverScalingControl;
 import org.jungrapht.visualization.control.GraphMouseListener;
 import org.jungrapht.visualization.layout.algorithms.FRLayoutAlgorithm;
 import org.jungrapht.visualization.layout.algorithms.LayoutAlgorithm;
@@ -44,7 +43,6 @@ import org.jungrapht.visualization.renderers.BiModalRenderer;
 import org.jungrapht.visualization.renderers.GradientVertexRenderer;
 import org.jungrapht.visualization.renderers.JLabelVertexLabelRenderer;
 import org.jungrapht.visualization.renderers.VertexLabelAsShapeRenderer;
-import org.jungrapht.visualization.transform.MutableTransformer;
 import org.jungrapht.visualization.transform.shape.GraphicsDecorator;
 
 import javax.swing.*;
@@ -71,6 +69,8 @@ public class GraphPanel extends JPanel {
     private boolean useViewerPadding;
     private int viewerPadding = 200;
     private boolean selectedFromGui;
+    private boolean collapsedAll = true;
+    private Color vertexBackgroundColor = new Color(223, 255, 255);;
 
     /**
      * create an instance of a simple graph with basic controls
@@ -139,9 +139,11 @@ public class GraphPanel extends JPanel {
                             int y = (int) p2d.getY();
                             boolean selected = renderContext.getSelectedVertexState().isSelected(v);
                             JLabelVertexLabelRenderer renderer = (JLabelVertexLabelRenderer) component;
-                            renderer.setBorder(BorderFactory.createStrokeBorder(new BasicStroke(4.0f)));
                             if (selected) {
-                                component.setBackground(new Color(223, 247, 250));
+                                component.setBackground(vertexBackgroundColor);
+                                renderer.setBorder(BorderFactory.createStrokeBorder(new BasicStroke(6.0f)));
+                            } else {
+                                renderer.setBorder(BorderFactory.createStrokeBorder(new BasicStroke(4.0f)));
                             }
 
                             g.draw(component, renderContext.getRendererPane(), x + h_offset, y + v_offset, d.width, d.height, true);
@@ -196,7 +198,7 @@ public class GraphPanel extends JPanel {
         });
 
         vv.getRenderContext().setSelectedVertexFillPaintFunction((e) -> {
-            return new Color(223, 247, 250);
+            return vertexBackgroundColor;
         });
 
         vv.getRenderContext().setArrowDrawPaintFunction((rel) -> {
@@ -311,6 +313,16 @@ public class GraphPanel extends JPanel {
 
     private void showContextMenu(UMLClass s, MouseEvent me) {
         JPopupMenu menu = new JPopupMenu();
+        addContextMenu(menu, s);
+        EventQueue.invokeLater(() -> menu.show(me.getComponent(), me.getX(), me.getY()));
+    }
+
+    public void addContextMenu(JPopupMenu menu, UMLClass s) {
+        JMenuItem nameItem = new JMenuItem(s.getName());
+        nameItem.setEnabled(false);
+        menu.add(nameItem);
+        menu.addSeparator();
+
         JMenuItem item = new JMenuItem(s.isCompact() ? "Collapse" : "Expand");
         item.addActionListener(e -> EventQueue.invokeLater(() -> {
             toggleCompact(s);
@@ -322,11 +334,11 @@ public class GraphPanel extends JPanel {
         JMenu refMenu = new JMenu("Find references");
         menu.add(refMenu);
 
-        JMenuItem cItem = new JMenuItem("Class " + s.getName());
+        JMenuItem cItem = new JMenuItem("All references");
         cItem.addActionListener(e -> {
             clearSelections();
             List<HashSet<?>> refs = generator.findClassReference(s);
-            selectRefs(refs);
+            selectRefs(s, refs);
             vv.repaint();
         });
         refMenu.add(cItem);
@@ -340,7 +352,7 @@ public class GraphPanel extends JPanel {
                 fItem.addActionListener(e -> {
                     clearSelections();
                     List<HashSet<?>> refs = generator.findFieldReference(s, f);
-                    selectRefs(refs);
+                    selectRefs(s, refs);
                     vv.repaint();
                 });
                 items.add(fItem);
@@ -367,7 +379,7 @@ public class GraphPanel extends JPanel {
                 mItem.addActionListener(e -> {
                     clearSelections();
                     List<HashSet<?>> refs = generator.findMethodReference(s, m);
-                    selectRefs(refs);
+                    selectRefs(s, refs);
                     vv.repaint();
                 });
                 items.add(mItem);
@@ -394,7 +406,7 @@ public class GraphPanel extends JPanel {
                 mItem.addActionListener(e -> {
                     clearSelections();
                     List<HashSet<?>> refs = generator.findMethodReference(s, m);
-                    selectRefs(refs);
+                    selectRefs(s, refs);
                     vv.repaint();
                 });
                 items.add(mItem);
@@ -485,23 +497,41 @@ public class GraphPanel extends JPanel {
             for (JMenuItem fItem : items)
                 goToMenu.add(fItem);
         }
-
-        EventQueue.invokeLater(() -> menu.show(me.getComponent(), me.getX(), me.getY()));
     }
 
-    private void selectRefs(List<HashSet<?>> refs) {
+    private void selectRefs(UMLClass s, List<HashSet<?>> refs) {
+        HashSet<UMLClass> classes = new HashSet<>();
         for (HashSet<?> href : refs) {
             for (Object obj : href) {
-                if (obj instanceof UMLClass)
+                if (obj instanceof UMLClass) {
                     selectedVertices.add((UMLClass) obj);
-                if (obj instanceof UMLRelationship)
+                    classes.add((UMLClass) obj);
+                } else if (obj instanceof UMLRelationship) {
                     selectedEdges.add((UMLRelationship) obj);
-                if (obj instanceof Field)
+                    classes.add(((UMLRelationship) obj).from);
+                } else if (obj instanceof Field) {
                     selectedFields.add((Field) obj);
-                if (obj instanceof Method)
+                    String owner = ((Field) obj).getOwner();
+                    UMLClass cls = getOwnerByName(owner);
+                    classes.add(cls);
+                }
+                else if (obj instanceof Method) {
                     selectedMethods.add((Method) obj);
+                    String owner = ((Method) obj).getOwner();
+                    UMLClass cls = getOwnerByName(owner);
+                    classes.add(cls);
+                }
             }
         }
+        selectClass(new ArrayList<>(classes));
+    }
+
+    private UMLClass getOwnerByName(String owner) {
+        UMLClass cls = generator.getParser().getClassByName(owner);
+        if(cls == null) {
+            cls = generator.getClassByName(owner);
+        }
+        return cls;
     }
 
     private void goToClassReference(UMLClass s) {
@@ -575,6 +605,16 @@ public class GraphPanel extends JPanel {
 
     public void setSelectedFromGui(boolean value) {
         selectedFromGui = value;
+    }
+
+    public boolean toggleCollapse() {
+        for (Map.Entry<UMLClass, org.jungrapht.visualization.layout.model.Point> entry
+                : this.vv.getVisualizationModel().getLayoutModel().getLocations().entrySet()) {
+            entry.getKey().setCompact(collapsedAll);
+        }
+        collapsedAll = !collapsedAll;
+        repaint();
+        return collapsedAll;
     }
 
     static class Diamond extends Path2D.Double {

@@ -67,6 +67,10 @@ public class UMLParser {
         objects.clear();
     }
 
+    public UMLClass getClassByName(String owner) {
+        return objects.getOrDefault(owner, null);
+    }
+
     public class SymbolInformation {
         ArrayList<UMLClass> classes = new ArrayList<>();
     }
