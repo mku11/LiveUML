@@ -369,8 +369,12 @@ public class Main {
         helpItem.addActionListener((e) -> {
             JOptionPane.showMessageDialog(null,
                     "Select Source / Import to import java source files. \n"
-                            + "Make sure you select root package folders. \n"
+                            + "Make sure you select root package folders only! \n"
                             + "Multiple source folders are allowed. \n"
+                            + " \n"
+                            + "Text Editor / IDE: \n"
+                            + "Select Settings / Choose Text Editor to view classes in your Editor / IDE. \n "
+                            + "Notepad++, IDEA, and Eclipse are supported. \n "
                             + " \n"
                             + "Mouse gestures: \n"
                             + "Ctrl+Click: Selects UML Class or Relationship \n"
