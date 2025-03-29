@@ -341,6 +341,28 @@ public class GraphPanel extends JPanel {
         refMenu.add(cItem);
 
         List<JMenuItem> items = new ArrayList<>();
+        if (s.getEnumConstants().size() > 0) {
+            for (EnumConstant enumConstant : s.getEnumConstants()) {
+                JMenuItem fItem = new JMenuItem(enumConstant.getName());
+                fItem.addActionListener(e -> {
+                    clearSelections();
+                    List<HashSet<?>> refs = generator.findEnumConstReference(s, enumConstant);
+                    selectRefs(s, refs);
+                    vv.repaint();
+                });
+                items.add(fItem);
+            }
+        }
+        if (items.size() > 0) {
+            refMenu.addSeparator();
+            JLabel tItem = new JLabel("Enum Constants");
+            tItem.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+            refMenu.add(tItem);
+            for (JMenuItem fItem : items)
+                refMenu.add(fItem);
+        }
+
+        items.clear();
         if (s.getFields().size() > 0) {
             for (Field f : s.getFields()) {
                 if (f.getAccessModifiers().contains(AccessModifier.Private))

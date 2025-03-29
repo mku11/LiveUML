@@ -23,6 +23,7 @@ SOFTWARE.
 */
 package com.mku.liveuml.gen;
 
+import com.mku.liveuml.entities.EnumConstant;
 import com.mku.liveuml.entities.Field;
 import com.mku.liveuml.entities.Method;
 import com.mku.liveuml.graph.UMLClass;
@@ -34,6 +35,35 @@ import java.util.HashSet;
 import java.util.List;
 
 public class UMLFinder {
+
+    public List<HashSet<?>> findEnumConstReference(UMLClass s, EnumConstant ec) {
+        HashSet<Method> methodRefs = new HashSet<>();
+        HashSet<EnumConstant> enumConstRefs = new HashSet<>();
+        HashSet<Field> fieldRefs = new HashSet<>();
+        HashSet<UMLClass> classRefs = new HashSet<>();
+        HashSet<UMLRelationship> relationshipRefs = new HashSet<>();
+
+        List<HashSet<?>> results = new ArrayList<>();
+        results.add(methodRefs);
+        results.add(enumConstRefs);
+        results.add(fieldRefs);
+        results.add(classRefs);
+        results.add(relationshipRefs);
+
+        for (UMLRelationship rel : s.relationships.values()) {
+            if (rel.type == UMLRelationshipType.Dependency) {
+                if (rel.accessedEnumConstsBy.containsKey(ec)) {
+                    Method accessorMethod = rel.accessedEnumConstsBy.get(ec);
+                    methodRefs.add(accessorMethod);
+                    enumConstRefs.add(ec);
+                    classRefs.add(rel.from);
+                    classRefs.add(rel.to);
+                    relationshipRefs.add(rel);
+                }
+            }
+        }
+        return results;
+    }
 
     public List<HashSet<?>> findFieldReference(UMLClass s, Field f) {
         HashSet<Method> methodRefs = new HashSet<>();
@@ -49,8 +79,8 @@ public class UMLFinder {
 
         for (UMLRelationship rel : s.relationships.values()) {
             if (rel.type == UMLRelationshipType.Dependency) {
-                if (rel.accessedBy.containsKey(f)) {
-                    Method accessorMethod = rel.accessedBy.get(f);
+                if (rel.accessedFieldsBy.containsKey(f)) {
+                    Method accessorMethod = rel.accessedFieldsBy.get(f);
                     methodRefs.add(accessorMethod);
                     classRefs.add(rel.from);
                     classRefs.add(rel.to);
@@ -63,7 +93,7 @@ public class UMLFinder {
 
     public List<HashSet<?>> findClassReference(UMLClass s) {
         HashSet<Method> methodRefs = new HashSet<>();
-        HashSet<Method> enumConstRefs = new HashSet<>();
+        HashSet<EnumConstant> enumConstRefs = new HashSet<>();
         HashSet<Field> fieldRefs = new HashSet<>();
         HashSet<UMLClass> classRefs = new HashSet<>();
         HashSet<UMLRelationship> relationshipRefs = new HashSet<>();
@@ -83,6 +113,11 @@ public class UMLFinder {
                         methodRefs.add(method);
                         methodRefs.add(rel.callTo.get(method));
                     }
+                    for (Method method : rel.accessingEnumConsts.keySet()) {
+                        methodRefs.add(method);
+                        enumConstRefs.add(rel.accessingEnumConsts.get(method));
+                    }
+
                     classRefs.add(rel.from);
                     classRefs.add(rel.to);
                     relationshipRefs.add(rel);

@@ -213,9 +213,12 @@ public class UMLParser {
                             if (accessedField != null) {
                                 createFieldAccessRelationship(accessor, accessorMethod, accessedFieldObject, accessedField);
                             }
+                            EnumConstant accessedEnumConstant = getEnumConstAccessed(accessedFieldObject, n);
+                            if (accessedEnumConstant != null) {
+                                createEnumConstAccessRelationship(accessor, accessorMethod, accessedFieldObject, accessedEnumConstant);
+                            }
                         }
                     }
-
                 }.visit(StaticJavaParser.parse(file), null);
                 System.out.println(); // empty line
             } catch (Exception e) {
@@ -511,6 +514,15 @@ public class UMLParser {
         return null;
     }
 
+    private EnumConstant getEnumConstAccessed(UMLClass accessed, FieldAccessExpr n) {
+        for (EnumConstant f : accessed.getEnumConstants()) {
+            if (f.getName().equals(n.getNameAsString())) {
+                return f;
+            }
+        }
+        return null;
+    }
+
     private void createFieldAccessRelationship(UMLClass accessor, Method accessorMethod, UMLClass accessed, Field accessedField) {
         UMLRelationshipType type = UMLRelationshipType.Dependency;
         UMLRelationship rel = new UMLRelationship(accessor, accessed, type);
@@ -526,6 +538,24 @@ public class UMLParser {
             accessed.relationships.put(key, rel);
         }
         rel.addFieldAccess(accessorMethod, accessedField);
+    }
+
+    private void createEnumConstAccessRelationship(UMLClass accessor, Method accessorMethod, UMLClass accessed,
+                                                   EnumConstant accessedEnumConst) {
+        UMLRelationshipType type = UMLRelationshipType.Dependency;
+        UMLRelationship rel = new UMLRelationship(accessor, accessed, type);
+        String key = rel.toString();
+        if (accessor.relationships.containsKey(key)) {
+            rel = accessor.relationships.get(key);
+        } else {
+            accessor.relationships.put(key, rel);
+        }
+        if (accessed.relationships.containsKey(key)) {
+            rel = accessed.relationships.get(key);
+        } else {
+            accessed.relationships.put(key, rel);
+        }
+        rel.addEnumConstAccess(accessorMethod, accessedEnumConst);
     }
 
 
@@ -830,7 +860,9 @@ public class UMLParser {
         List<EnumConstant> enums = new LinkedList<>();
         int num = 0;
         for(EnumConstantDeclaration constantDeclaration : n.getEntries()) {
-            enums.add(new EnumConstant(constantDeclaration.getNameAsString(), num++));
+            EnumConstant enumConst = new EnumConstant(constantDeclaration.getNameAsString(), num++);
+            enumConst.setOwner(obj.toString());
+            enums.add(enumConst);
         }
         return enums;
     }

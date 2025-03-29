@@ -23,6 +23,7 @@ SOFTWARE.
 */
 package com.mku.liveuml.graph;
 
+import com.mku.liveuml.entities.EnumConstant;
 import com.mku.liveuml.entities.Field;
 import com.mku.liveuml.entities.Method;
 
@@ -38,8 +39,11 @@ public class UMLRelationship {
     public HashMap<Method, Method> calledBy = new HashMap<>();
     public HashMap<Method, Method> callTo = new HashMap<>();
 
-    public HashMap<Field, Method> accessedBy = new HashMap<>();
-    public HashMap<Method, Field> accessing = new HashMap<>();
+    public HashMap<Field, Method> accessedFieldsBy = new HashMap<>();
+    public HashMap<Method, Field> accessingFields = new HashMap<>();
+
+    public HashMap<EnumConstant, Method> accessedEnumConstsBy = new HashMap<>();
+    public HashMap<Method, EnumConstant> accessingEnumConsts = new HashMap<>();
 
     public HashSet<Method> classAccessors = new HashSet<>();
 
@@ -64,8 +68,14 @@ public class UMLRelationship {
 
     public void addFieldAccess(Method accessorMethod, Field accessedField) {
         if (accessorMethod != null)
-            accessing.put(accessorMethod, accessedField);
-        accessedBy.put(accessedField, accessorMethod);
+            accessingFields.put(accessorMethod, accessedField);
+        accessedFieldsBy.put(accessedField, accessorMethod);
+    }
+
+    public void addEnumConstAccess(Method accessorMethod, EnumConstant accessedField) {
+        if (accessorMethod != null)
+            accessingEnumConsts.put(accessorMethod, accessedField);
+        accessedEnumConstsBy.put(accessedField, accessorMethod);
     }
 
     public void addClassAccess(Method accessorMethod) {

@@ -80,8 +80,8 @@ public class Exporter {
         map.put("to", new DefaultAttribute<>(UMLRelationship.to.toString(), AttributeType.STRING));
         map.put("fieldAssociation", new DefaultAttribute<>(new Gson().toJson(getFieldsOwnerMap(UMLRelationship.fieldAssociation)), AttributeType.STRING));
         map.put("classAccessors", new DefaultAttribute<>(new Gson().toJson(getMethodOwnerMap(UMLRelationship.classAccessors)), AttributeType.STRING));
-        map.put("accessedBy", new DefaultAttribute<>(new Gson().toJson(getFieldMethodOwnerMap(UMLRelationship.accessedBy)), AttributeType.STRING));
-        map.put("accessing", new DefaultAttribute<>(new Gson().toJson(getMethodFieldOwnerMap(UMLRelationship.accessing)), AttributeType.STRING));
+        map.put("accessedBy", new DefaultAttribute<>(new Gson().toJson(getFieldMethodOwnerMap(UMLRelationship.accessedFieldsBy)), AttributeType.STRING));
+        map.put("accessing", new DefaultAttribute<>(new Gson().toJson(getMethodFieldOwnerMap(UMLRelationship.accessingFields)), AttributeType.STRING));
         map.put("calledBy", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(UMLRelationship.calledBy)), AttributeType.STRING));
         map.put("callTo", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(UMLRelationship.callTo)), AttributeType.STRING));
         return map;

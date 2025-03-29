@@ -29,6 +29,7 @@ import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
+import com.mku.liveuml.entities.EnumConstant;
 import com.mku.liveuml.entities.Field;
 import com.mku.liveuml.entities.Method;
 import com.mku.liveuml.graph.UMLClass;
@@ -144,6 +145,10 @@ public class UMLGenerator {
 
     public List<HashSet<?>> findFieldReference(UMLClass s, Field f) {
         return finder.findFieldReference(s, f);
+    }
+
+    public List<HashSet<?>> findEnumConstReference(UMLClass s, EnumConstant ec) {
+        return finder.findEnumConstReference(s, ec);
     }
 
     public void clear() {

@@ -62,7 +62,7 @@ public class Formatter {
                 body.append("<div>");
                 for (EnumConstant enumConst : object.getEnumConstants()) {
                     String methodBackgroundColor = "";
-                    if (selectedEnumConsts.contains(enumConst.getName()))
+                    if (selectedEnumConsts.contains(enumConst))
                         methodBackgroundColor = "background-color: " + selectionBackgroundColor + ";";
                     String enumConstStr = "<pre style='" + methodBackgroundColor + "padding-left: " + padding + "px;" + "'>"
                             + enumConst.getName()

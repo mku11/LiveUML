@@ -23,10 +23,6 @@ SOFTWARE.
 */
 package com.mku.liveuml.entities;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-
 public class EnumConstant {
     private String name;
     private int num;
@@ -42,6 +38,10 @@ public class EnumConstant {
 
     public String getOwner() {
         return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
     }
 
     public EnumConstant(String name, int num) {

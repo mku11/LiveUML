@@ -128,11 +128,11 @@ public class Importer {
                 break;
             case "accessedBy":
                 HashMap<String, StringMap> accessedBy = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
-                relationship.accessedBy = getFieldMethodMap(accessedBy, vertices);
+                relationship.accessedFieldsBy = getFieldMethodMap(accessedBy, vertices);
                 break;
             case "accessing":
                 HashMap<String, StringMap> accessing = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
-                relationship.accessing = getMethodFieldMap(accessing, vertices);
+                relationship.accessingFields = getMethodFieldMap(accessing, vertices);
                 break;
             case "calledBy":
                 HashMap<String, StringMap> calledBy = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
