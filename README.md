@@ -1,16 +1,16 @@
-![alt text](https://github.com/mku11/LiveUML/blob/main/src/main/resources/icons/logo.png)  
-
 # LiveUML
 [![License: MIT](https://img.shields.io/github/license/mku11/LiveUML.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.9.0-blue)](https://github.com/mku11/LiveUML/releases)
+[![Version](https://img.shields.io/badge/version-0.9.1-blue)](https://github.com/mku11/LiveUML/releases)
 
 Generate UML Class Diagrams from java source code.  
 
 ![alt text](https://github.com/mku11/LiveUML/blob/main/screenshots/Screenshot.png)  
 
 # Features
-- Create UML Diagrams from Java source code  
-- Allow moving around UML classes  
+- Create UML Diagrams from Java source code 
+- Allow multiple source roots
+- Allow change classes position
+- Classes list for easier selection
 - Compact display option for UML classes  
 - Find class, field, and method references  
 - Open text editor at specific class, field, method (Notepad++, IDEA, and Eclipse supported)  
