@@ -48,7 +48,6 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.*;
 
@@ -67,7 +66,6 @@ public class GraphPanel extends JPanel {
     private BufferedImage img;
     private boolean useViewerPadding;
     private int viewerPadding = 200;
-    private boolean selectedFromGui;
     private boolean collapsedAll = true;
     private Color vertexBackgroundColor = new Color(223, 255, 255);;
 
@@ -121,7 +119,8 @@ public class GraphPanel extends JPanel {
                         Component component = this.prepareRenderer(this.renderContext, this.renderContext.getVertexLabelFunction().apply(v), this.renderContext.getSelectedVertexState().isSelected(v), v);
                         Dimension size = component.getPreferredSize();
                         Rectangle bounds = new Rectangle(-size.width / 2 + 2, -size.height / 2 + 2, size.width - 4, size.height - 4);
-                        verticesBounds.put(v, bounds);
+                        if(!verticesBounds.containsKey(v))
+                            verticesBounds.put(v, bounds);
                         return bounds;
                     }
 
@@ -228,10 +227,7 @@ public class GraphPanel extends JPanel {
             maxx = Math.max(maxx, entry.getValue().x);
             maxy = Math.max(maxy, entry.getValue().y);
         }
-        if (maxx > vv.getVisualizationModel().getLayoutModel().getWidth()
-                || maxy > vv.getVisualizationModel().getLayoutModel().getHeight()) {
-            resizeViewer((int) maxx, (int) maxy);
-        }
+        resizeViewer((int) maxx, (int) maxy);
     }
 
 
@@ -247,7 +243,7 @@ public class GraphPanel extends JPanel {
                     entry.getValue().x + dx, entry.getValue().y + dy);
             this.vv.getVisualizationModel().getLayoutModel().set(entry.getKey(), p);
         }
-        repaint();
+        vv.repaint();
     }
 
     private void resizeViewer(int width, int height) {
@@ -257,11 +253,14 @@ public class GraphPanel extends JPanel {
         }
         vv.getVisualizationModel().getLayoutModel().setSize(width, height);
         vv.getVisualizationModel().getLayoutModel().setPreferredSize(width, height);
-        Dimension newSize = new Dimension(width, height);
-        vv.setPreferredSize(newSize);
-        visualizationScrollPane.setPreferredSize(newSize);
-        setPreferredSize(newSize);
-        repaint();
+        EventQueue.invokeLater(() -> {
+            visualizationScrollPane.getHorizontalScrollBar().setValue(
+                    vv.getVisualizationModel().getLayoutModel().getWidth() / 2);
+            visualizationScrollPane.getVerticalScrollBar().setValue(
+                    vv.getVisualizationModel().getLayoutModel().getHeight() / 2);
+            vv.repaint();
+            repaint();
+        });
     }
 
     private Dimension estimateGraphSize(Graph<UMLClass, UMLRelationship> graph) {
@@ -286,7 +285,11 @@ public class GraphPanel extends JPanel {
         ((Component) vv).addMouseListener(new UMLMouseListenerTranslator<>(new GraphMouseListener<>() {
             @Override
             public void graphClicked(UMLClass s, MouseEvent me) {
-                vv.getVisualizationModel().getLayoutModel().get(s);
+                if((me.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK
+                    && (me.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) != MouseEvent.SHIFT_DOWN_MASK) {
+                    vv.getRenderContext().getSelectedVertexState().clear();
+                    vv.getRenderContext().getSelectedVertexState().select(new ArrayList<>(List.of(s)));
+                }
                 if (me.getButton() == MouseEvent.BUTTON3) {
                     // show context menu
                     showContextMenu(s, me);
@@ -607,9 +610,7 @@ public class GraphPanel extends JPanel {
         return generator;
     }
 
-    public void selectClass(List<UMLClass> classes) {
-        if(selectedFromGui)
-            return;
+    public synchronized void selectClass(List<UMLClass> classes) {
         this.vv.getRenderContext().getSelectedVertexState().clear();
         this.vv.getRenderContext().getSelectedVertexState().select(classes);
         if (classes.size() == 1) {
@@ -617,19 +618,17 @@ public class GraphPanel extends JPanel {
             org.jungrapht.visualization.layout.model.Point point = vv.getVisualizationModel().getLayoutModel().get(obj);
             EventQueue.invokeLater(() -> {
                 Shape shape = verticesBounds.get(obj);
-                visualizationScrollPane.getHorizontalScrollBar().setValue((int) point.x - vv.getWidth() / 2);
-                visualizationScrollPane.getVerticalScrollBar().setValue((int) point.y - shape.getBounds().height / 2);
-                this.repaint();
+                int newX = (int) point.x - shape.getBounds().width / 2;
+                int newY = (int) point.y - shape.getBounds().height / 2;
+                visualizationScrollPane.getHorizontalScrollBar().setValue(newX);
+                visualizationScrollPane.getVerticalScrollBar().setValue(newY);
+                vv.repaint();
             });
         }
     }
 
     public VisualizationViewer<UMLClass, UMLRelationship> getViewer() {
         return vv;
-    }
-
-    public void setSelectedFromGui(boolean value) {
-        selectedFromGui = value;
     }
 
     public boolean toggleCollapse() {
@@ -674,7 +673,9 @@ public class GraphPanel extends JPanel {
 
     public BufferedImage getImage() {
         Dimension size = getSize();
-        setSize(getPreferredSize());
+        refit();
+        Dimension newSize = vv.getVisualizationModel().getLayoutSize();
+        setSize(newSize);
         layoutComponent(this);
         img = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TRANSLUCENT);
         Graphics2D graphics = img.createGraphics();

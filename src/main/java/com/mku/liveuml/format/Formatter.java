@@ -31,7 +31,7 @@ import java.util.HashSet;
 
 public class Formatter {
     private static final int MAX_CHARS = 80;
-    private static final String selectionBackgroundColor = "#9cfac0";
+    private static final String selectionBackgroundColor = "#b9f9d2";
     private static final String font = "Garamond, serif";
     private static final int fontSize = 10;
     private static final int headerFontSize = 12;

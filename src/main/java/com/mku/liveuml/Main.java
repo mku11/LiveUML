@@ -79,9 +79,6 @@ public class Main {
         JScrollPane classesScrollPane = new JScrollPane(classes, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         classesScrollPane.setPreferredSize(new Dimension(200, 600));
         classesScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        classes.addListSelectionListener((e) -> {
-            graphPanel.selectClass(classes.getSelectedValuesList());
-        });
         classes.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
@@ -236,7 +233,6 @@ public class Main {
         menu.add(helpItem);
 
         JMenuItem aboutItem = new JMenuItem("About");
-        aboutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
         menu.add(aboutItem);
 
         f.pack();
@@ -421,13 +417,11 @@ public class Main {
     private static void addClassListener() {
         VisualizationViewer<UMLClass, UMLRelationship> viewer = graphPanel.getViewer();
         viewer.getSelectedVertexState().addItemListener((l) -> {
-            graphPanel.setSelectedFromGui(true);
             classes.clearSelection();
             for (UMLClass cls : viewer.getSelectedVertices()) {
                 int idx = classesList.indexOf(cls);
                 classes.addSelectionInterval(idx, idx);
             }
-            graphPanel.setSelectedFromGui(false);
         });
     }
 
