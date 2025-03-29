@@ -39,9 +39,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.prefs.Preferences;
 
 public class Main {
@@ -415,6 +413,7 @@ public class Main {
 
     private static void setClasses() {
         UMLClass[] classesArr = graphPanel.getGenerator().getGraph().vertexSet().toArray(new UMLClass[0]);
+        Arrays.sort(classesArr, Comparator.comparing(UMLClass::getName));
         classesList = new ArrayList<>(java.util.List.of(classesArr));
         classes.setListData(classesArr);
     }
