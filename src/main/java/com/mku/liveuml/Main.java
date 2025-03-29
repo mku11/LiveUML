@@ -136,7 +136,7 @@ public class Main {
         gbc.gridheight = 1;
         gbc.weightx = 50;
         gbc.weighty = 0;
-        gbc.insets = new Insets(2, 2, 2, 2);
+        gbc.insets = new Insets(6, 6, 6, 6);
         mainPanel.add(errors, gbc);
 
         status = new JLabel();
@@ -149,7 +149,7 @@ public class Main {
         gbc.gridheight = 1;
         gbc.weightx = 50;
         gbc.weighty = 0;
-        gbc.insets = new Insets(2, 2, 2, 2);
+        gbc.insets = new Insets(6, 6, 6, 6);
         mainPanel.add(status, gbc);
 
         f.setMinimumSize(new Dimension(1000, 800));
