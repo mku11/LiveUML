@@ -673,14 +673,35 @@ public class GraphPanel extends JPanel {
 
     public BufferedImage getImage() {
         Dimension size = getSize();
-        refit();
+
+        JFrame secondFrame = new JFrame();
+        Container parent = getParent();
+        getParent().remove(this);
+        secondFrame.add(this);
+        secondFrame.setVisible(true);
+
+        visualizationScrollPane.getHorizontalScrollBar().setValue(0);
+        visualizationScrollPane.getVerticalScrollBar().setValue(0);
         Dimension newSize = vv.getVisualizationModel().getLayoutSize();
+        secondFrame.setSize(newSize);
+        secondFrame.setPreferredSize(newSize);
         setSize(newSize);
+        setPreferredSize(newSize);
+        secondFrame.invalidate();
+        vv.repaint();
+        repaint();
+        secondFrame.repaint();
+
         layoutComponent(this);
         img = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TRANSLUCENT);
         Graphics2D graphics = img.createGraphics();
         print(graphics);
         graphics.dispose();
+
+        secondFrame.remove(this);
+        secondFrame.setVisible(false);
+        parent.add(this);
+
         setSize(size);
         setPreferredSize(size);
         return img;
