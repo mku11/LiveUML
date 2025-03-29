@@ -24,6 +24,7 @@ SOFTWARE.
 package com.mku.liveuml.utils;
 
 import com.google.gson.Gson;
+import com.mku.liveuml.entities.EnumConstant;
 import com.mku.liveuml.entities.Field;
 import com.mku.liveuml.entities.Method;
 import com.mku.liveuml.gen.UMLGenerator;
@@ -69,6 +70,8 @@ public class Exporter {
         exporter.registerAttribute("classAccessors", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
         exporter.registerAttribute("accessedBy", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
         exporter.registerAttribute("accessing", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
+        exporter.registerAttribute("accessedEnumConstsBy", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
+        exporter.registerAttribute("accessingEnumConsts", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
         exporter.registerAttribute("calledBy", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
         exporter.registerAttribute("callTo", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
     }
@@ -82,6 +85,8 @@ public class Exporter {
         map.put("classAccessors", new DefaultAttribute<>(new Gson().toJson(getMethodOwnerMap(UMLRelationship.classAccessors)), AttributeType.STRING));
         map.put("accessedBy", new DefaultAttribute<>(new Gson().toJson(getFieldMethodOwnerMap(UMLRelationship.accessedFieldsBy)), AttributeType.STRING));
         map.put("accessing", new DefaultAttribute<>(new Gson().toJson(getMethodFieldOwnerMap(UMLRelationship.accessingFields)), AttributeType.STRING));
+        map.put("accessedEnumConstsBy", new DefaultAttribute<>(new Gson().toJson(getEnumConstMethodOwnerMap(UMLRelationship.accessedEnumConstsBy)), AttributeType.STRING));
+        map.put("accessingEnumConsts", new DefaultAttribute<>(new Gson().toJson(getMethodEnumConstOwnerMap(UMLRelationship.accessingEnumConsts)), AttributeType.STRING));
         map.put("calledBy", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(UMLRelationship.calledBy)), AttributeType.STRING));
         map.put("callTo", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(UMLRelationship.callTo)), AttributeType.STRING));
         return map;
@@ -112,6 +117,34 @@ public class Exporter {
             ownerMap.put("fieldOwner", f == null ? null : f.getOwner());
         }
         return fieldMethodOwnerMap;
+    }
+
+
+    private HashMap<String, HashMap<String, String>> getEnumConstMethodOwnerMap(HashMap<EnumConstant, Method> enumConstantMethodHashMap) {
+        HashMap<String, HashMap<String, String>> enumConstMethodOwnerMap = new HashMap<>();
+        for (EnumConstant ec : enumConstantMethodHashMap.keySet()) {
+            Method m = enumConstantMethodHashMap.get(ec);
+            HashMap<String, String> ownerMap = new HashMap<>();
+            enumConstMethodOwnerMap.put(ec.getName(), ownerMap);
+            ownerMap.put("enumConstOwner", ec.getOwner());
+            ownerMap.put("methodName", m == null ? null : m.getSignature());
+            ownerMap.put("methodOwner", m == null ? null : m.getOwner());
+        }
+        return enumConstMethodOwnerMap;
+    }
+
+    private HashMap<String, HashMap<String, String>> getMethodEnumConstOwnerMap(HashMap<Method, EnumConstant> enumConstMethodMap) {
+        HashMap<String, HashMap<String, String>> enumConstMethodOwnerMap = new HashMap<>();
+        for (Method m : enumConstMethodMap.keySet()) {
+            EnumConstant ec = enumConstMethodMap.get(m);
+            HashMap<String, String> ownerMap = new HashMap<>();
+            enumConstMethodOwnerMap.put(m.getSignature(), ownerMap);
+            ownerMap.put("methodName", m.getName());
+            ownerMap.put("methodOwner", m.getOwner());
+            ownerMap.put("enumConstName", ec == null ? null : ec.getName());
+            ownerMap.put("enumConstOwner", ec == null ? null : ec.getOwner());
+        }
+        return enumConstMethodOwnerMap;
     }
 
     private HashMap<String, HashMap<String, String>> getMethodMethodOwnerMap(HashMap<Method, Method> fieldMethodMap) {

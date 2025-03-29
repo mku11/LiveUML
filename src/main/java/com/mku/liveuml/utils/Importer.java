@@ -92,7 +92,7 @@ public class Importer {
                 obj.setFields(parseFields((List<StringMap>) new Gson().fromJson(attribute.getValue(), List.class), obj, vertices));
                 break;
             case "enumConstants":
-                obj.setEnumConstants(parseEnumConsts((List<String>) new Gson().fromJson(attribute.getValue(), List.class), obj, vertices));
+                obj.setEnumConstants(parseEnumConsts((List<StringMap>) new Gson().fromJson(attribute.getValue(), List.class), obj, vertices));
                 break;
             case "methods":
                 obj.setMethods(parseMethods((List<StringMap>) new Gson().fromJson(attribute.getValue(), List.class), obj, vertices));
@@ -126,6 +126,7 @@ public class Importer {
                 HashMap<String, String> classOwnerMap = (HashMap<String, String>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.classAccessors = new HashSet<>(getMethods(classOwnerMap, vertices));
                 break;
+
             case "accessedBy":
                 HashMap<String, StringMap> accessedBy = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.accessedFieldsBy = getFieldMethodMap(accessedBy, vertices);
@@ -134,6 +135,16 @@ public class Importer {
                 HashMap<String, StringMap> accessing = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.accessingFields = getMethodFieldMap(accessing, vertices);
                 break;
+
+            case "accessedEnumConstsBy":
+                HashMap<String, StringMap> accessedEnumConstsBy = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
+                relationship.accessedEnumConstsBy = getEnumConstMethodMap(accessedEnumConstsBy, vertices);
+                break;
+            case "accessingEnumConsts":
+                HashMap<String, StringMap> accessingEnumConsts = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
+                relationship.accessingEnumConsts = getMethodEnumConstMap(accessingEnumConsts, vertices);
+                break;
+
             case "calledBy":
                 HashMap<String, StringMap> calledBy = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.calledBy = getMethodMethodMap(calledBy, vertices);
@@ -227,6 +238,86 @@ public class Importer {
         return methodFieldHashMap;
     }
 
+
+    private static HashMap<EnumConstant, Method> getEnumConstMethodMap(HashMap<String, StringMap> accessedBy, HashMap<String, UMLClass> vertices) {
+        HashMap<EnumConstant, Method> enumConstMethodHashMap = new HashMap<>();
+        for (String enumConstName : accessedBy.keySet()) {
+            StringMap ownerMap = accessedBy.get(enumConstName);
+            String enumConstOwner = (String) ownerMap.get("enumConstOwner");
+            String methodName = (String) ownerMap.getOrDefault("methodName", null);
+            String methodOwner = (String) ownerMap.getOrDefault("methodOwner", null);
+            if (!vertices.containsKey(enumConstOwner)) {
+                continue;
+            }
+            UMLClass enumConstOwnerObj = vertices.get(enumConstOwner);
+            EnumConstant enumConstant = null;
+            for (EnumConstant ec : enumConstOwnerObj.getEnumConstants()) {
+                if (ec.getName().equals(enumConstName)) {
+                    enumConstant = ec;
+                    break;
+                }
+            }
+            if (enumConstant == null) {
+                continue;
+            }
+
+            UMLClass methodOwnerObj = null;
+            if (vertices.containsKey(methodOwner)) {
+                methodOwnerObj = vertices.get(methodOwner);
+            }
+            Method method = null;
+            if (methodName != null && methodOwnerObj != null) {
+                for (Method m : methodOwnerObj.getMethods()) {
+                    if (m.getSignature().equals(methodName)) {
+                        method = m;
+                        break;
+                    }
+                }
+            }
+            enumConstMethodHashMap.put(enumConstant, method);
+        }
+        return enumConstMethodHashMap;
+    }
+
+    private static HashMap<Method, EnumConstant> getMethodEnumConstMap(HashMap<String, StringMap> map, HashMap<String, UMLClass> vertices) {
+        HashMap<Method, EnumConstant> methodFieldHashMap = new HashMap<>();
+        for (String methodName : map.keySet()) {
+            StringMap ownerMap = map.get(methodName);
+            String methodOwner = (String) ownerMap.get("methodOwner");
+            String enumConstName = (String) ownerMap.getOrDefault("enumConstName", null);
+            String enumConstOwner = (String) ownerMap.getOrDefault("enumConstOwner", null);
+            if (!vertices.containsKey(methodOwner)) {
+                continue;
+            }
+            UMLClass methodOwnerObj = vertices.get(methodOwner);
+            Method method = null;
+            for (Method m : methodOwnerObj.getMethods()) {
+                if (m.getSignature().equals(methodName)) {
+                    method = m;
+                    break;
+                }
+            }
+            if (method == null) {
+                continue;
+            }
+
+            UMLClass enumConstOwnerObj = null;
+            if (vertices.containsKey(enumConstOwner)) {
+                enumConstOwnerObj = vertices.get(enumConstOwner);
+            }
+            EnumConstant enumConst = null;
+            if (enumConstName != null && enumConstOwnerObj != null) {
+                for (EnumConstant ec : enumConstOwnerObj.getEnumConstants()) {
+                    if (ec.getName().equals(enumConstName)) {
+                        enumConst = ec;
+                        break;
+                    }
+                }
+            }
+            methodFieldHashMap.put(method, enumConst);
+        }
+        return methodFieldHashMap;
+    }
 
     private static HashMap<Method, Method> getMethodMethodMap(HashMap<String, StringMap> map, HashMap<String, UMLClass> vertices) {
         HashMap<Method, Method> methodMethodHashMap = new HashMap<>();
@@ -337,10 +428,29 @@ public class Importer {
         return fields;
     }
 
-    private static List<EnumConstant> parseEnumConsts(List<String> map, UMLClass obj, HashMap<String, UMLClass> vertices) {
+    private static List<EnumConstant> parseEnumConsts(List<StringMap> map, UMLClass obj, HashMap<String, UMLClass> vertices) {
         List<EnumConstant> enumConstants = new ArrayList<>();
-        for (String fmap : map) {
+        for (StringMap fmap : map) {
+            String ownerName = (String) fmap.getOrDefault("owner", null);
+            if (obj == null && !vertices.containsKey(ownerName))
+                continue;
+            if (obj == null)
+                obj = vertices.get(ownerName);
+            String name = (String) fmap.getOrDefault("name", null);
+            int num = ((Double) fmap.getOrDefault("num", null)).intValue();
+            EnumConstant enumConstant = null;
 
+            for (EnumConstant ec : obj.getEnumConstants()) {
+                if (ec.getName().equals(name)) {
+                    enumConstant = ec;
+                    break;
+                }
+            }
+            if(enumConstant == null) {
+                enumConstant = new EnumConstant(name, num);
+                enumConstant.setOwner(obj.toString());
+            }
+            enumConstants.add(enumConstant);
         }
         return enumConstants;
     }
