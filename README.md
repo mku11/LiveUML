@@ -34,3 +34,4 @@ LiveUML is released under MIT Licence, see [LICENSE](https://github.com/mku11/Li
 Make sure you read the LICENSE file and display proper attribution if you decide to use this software.
 Dependency libraries from Github, Maven, and NuGet are covered by their own license  
 see [NOTICE](https://github.com/mku11/LiveUML/blob/main/NOTICE)  
+Icons provided by https://uxwing.com license: https://uxwing.com/license/  
