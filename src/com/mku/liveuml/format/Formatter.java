@@ -28,120 +28,148 @@ import com.mku.liveuml.graph.UMLRelationship;
 import com.mku.liveuml.graph.UMLClass;
 
 import java.util.HashSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Formatter {
     private static final int MAX_CHARS = 80;
-    private static final String selectionBackgroundColor = "#b9f9d2";
-    private static final String font = "Garamond, serif";
-    private static final int fontSize = 10;
-    private static final int headerFontSize = 12;
-    private static final int headerPadding = 8;
-    private static final int padding = 2;
+    private final String classHtmlTemplate;
+    private final String propertyHtmlTemplate;
+    private final String dividerHtmlTemplate;
+    private static final String classHeaderColor = "black";
+    private static final String classHeaderBackgroundColor = "white";
+    private static final String classSelectedHeaderColor = "#6388E6";
+    private static final String classSelectedHeaderBackgroundColor = "white";
 
+    private static final String propertyColor = "black";
+    private static final String propertyBackgroundColor = "white";
+    private static final String propertySelectedColor = "#6388E6";
+    private static final String propertySelectedBackgroundColor = "#C1D1E3";
 
-    public static String display(UMLClass object, boolean compact,
-                                 HashSet<UMLClass> selectedVertices, HashSet<UMLRelationship> selectedEdges,
-                                 HashSet<Method> selectedMethods, HashSet<Field> selectedFields,
-                                 HashSet<EnumConstant> selectedEnumConsts) {
-        String classBackgroundColor = getSelectionColor(object, selectedVertices, selectedEdges, selectedMethods, selectedFields);
-        StringBuilder body = new StringBuilder("<html><body style='font-family: " + font + "; font-size: " + fontSize + "px; font-weight: bold;'>");
-        body.append("<div>");
-        body.append("<div style='"
-                + "font-size: " + headerFontSize + "px;"
-                + "padding: " + headerPadding + "px;"
-                + "padding-right: " + (headerPadding + 6) + "px;"
-                + classBackgroundColor
-                + "'>");
-        body.append("<center>");
-        body.append(object.getName());
-        body.append("</center>");
-        body.append("</div>");
-        if (!compact) {
-            if (object.getEnumConstants().size() > 0) {
-                body.append("<div style='font-size: 1px; height: 1px; background-color: gray; margin: 0px; padding: 0px; border-width: 0px;'></div>");
-                body.append("<div>");
-                for (EnumConstant enumConst : object.getEnumConstants()) {
-                    String methodBackgroundColor = "";
-                    if (selectedEnumConsts.contains(enumConst))
-                        methodBackgroundColor = "background-color: " + selectionBackgroundColor + ";";
-                    String enumConstStr = "<pre style='" + methodBackgroundColor + "padding-left: " + padding + "px;" + "'>"
-                            + enumConst.getName()
-                            + "</pre>";
-                    body.append(enumConstStr);
-                }
-                body.append("</div>");
-                body.append("<br>");
-            }
-            if (object.getFields().size() > 0) {
-                body.append("<div style='font-size: 1px; height: 1px; background-color: gray; margin: 0px; padding: 0px; border-width: 0px;'></div>");
-                body.append("<div>");
-                for (Field field : object.getFields()) {
-                    String fieldBackgroundColor = "";
-                    if (selectedFields.contains(field))
-                        fieldBackgroundColor = "background-color: " + selectionBackgroundColor + ";";
-                    body.append("<pre style='" + fieldBackgroundColor + "padding-left: " + padding + "px;" + "'>"
-                            + getFieldFormatted(field)
-                            + "</pre>");
-                }
-                body.append("</div>");
-            }
-            if (object.getMethods().size() > 0) {
-                body.append("<div style='font-size: 1px; height: 1px; background-color: gray; margin: 0px; padding: 0px; border-width: 0px;'></div>");
-                body.append("<div>");
-                for (Method method : object.getMethods()) {
-                    String signature = getMethodSignature(method, true);
-                    String methodBackgroundColor = "";
-                    if (selectedMethods.contains(method))
-                        methodBackgroundColor = "background-color: " + selectionBackgroundColor + ";";
-                    signature = "<pre style='" + methodBackgroundColor + "padding-left: " + padding + "px;" + "'>"
-                            + signature
-                            + "</pre>";
-                    body.append(signature);
-                }
-                body.append("</div>");
-                body.append("<br>");
-            }
-        }
-        body.append("<div>");
-        body.append("</body></html>");
-        return body.toString();
+    public Formatter(String classHtmlTemplate, String propertyHtmlTemplate, String dividerHtmlTemplate) {
+        this.classHtmlTemplate = classHtmlTemplate;
+        this.propertyHtmlTemplate = propertyHtmlTemplate;
+        this.dividerHtmlTemplate = dividerHtmlTemplate;
     }
 
-    private static String getSelectionColor(UMLClass object, HashSet<UMLClass> selectedVertices, HashSet<UMLRelationship> selectedEdges,
-                                            HashSet<Method> selectedMethods, HashSet<Field> selectedFields) {
-        String selectionColor = null;
-        if (selectedVertices.contains(object))
-            selectionColor = selectionBackgroundColor;
-        for (UMLRelationship rel : object.relationships.values()) {
-            if (selectedEdges.contains(rel)) {
-                selectionColor = selectionBackgroundColor;
+    public String getUmlAsHtml(UMLClass object, boolean compact,
+                               HashSet<UMLClass> selectedVertices, HashSet<UMLRelationship> selectedEdges,
+                               HashSet<Method> selectedMethods, HashSet<Field> selectedFields,
+                               HashSet<EnumConstant> selectedEnumConsts) {
+        boolean classSelected = isClassSelected(object, selectedVertices, selectedEdges, selectedMethods, selectedFields);
+        String formattedHtml = classHtmlTemplate
+                .replaceAll(Pattern.quote("${name}"),
+                        Matcher.quoteReplacement(object.getName()))
+                .replaceAll(Pattern.quote("${class-color}"),
+                        Matcher.quoteReplacement(classSelected ?
+                                classSelectedHeaderColor : classHeaderColor))
+                .replaceAll(Pattern.quote("${class-background-color}"),
+                        Matcher.quoteReplacement(classSelected ?
+                                classSelectedHeaderBackgroundColor : classHeaderBackgroundColor));
+
+        // get enums
+        String formattedEnums = getFormattedEnums(object, selectedEnumConsts, compact);
+        formattedHtml = formattedHtml.replaceAll(Pattern.quote("${enums}"),
+                Matcher.quoteReplacement(formattedEnums.toString()));
+
+        // get fields
+        String formattedFields = getFormattedFields(object, selectedFields, compact);
+        formattedHtml = formattedHtml.replaceAll(Pattern.quote("${fields}"),
+                Matcher.quoteReplacement(formattedFields.toString()));
+
+        // get methods
+        String formattedMethods = getFormattedMethods(object, selectedMethods, compact);
+        formattedHtml = formattedHtml.replaceAll(Pattern.quote("${methods}"),
+                Matcher.quoteReplacement(formattedMethods.toString()));
+
+        return formattedHtml;
+    }
+
+    private String getFormattedEnums(UMLClass object, HashSet<EnumConstant> selectedEnums, boolean compact) {
+        StringBuilder enums = new StringBuilder();
+        if (!compact && object.getEnumConstants().size() > 0) {
+            enums.append(dividerHtmlTemplate).append("\n");
+            for (EnumConstant enumConst : object.getEnumConstants()) {
+                String property = propertyHtmlTemplate.replaceAll(Pattern.quote("${content}"),
+                                Matcher.quoteReplacement(enumConst.getName()))
+                        .replaceAll(Pattern.quote("${property-color}"),
+                                Matcher.quoteReplacement(selectedEnums.contains(enumConst) ?
+                                        propertySelectedColor : propertyColor))
+                        .replaceAll(Pattern.quote("${property-background-color}"),
+                                Matcher.quoteReplacement(selectedEnums.contains(enumConst) ?
+                                        propertySelectedBackgroundColor : propertyBackgroundColor));
+                enums.append(property).append("\n");
             }
+        }
+        return enums.toString();
+    }
+
+    private String getFormattedFields(UMLClass object, HashSet<Field> selectedFields, boolean compact) {
+        StringBuilder fields = new StringBuilder();
+        if (!compact && object.getFields().size() > 0) {
+            fields.append(dividerHtmlTemplate).append("\n");
+            for (Field field : object.getFields()) {
+                String property = propertyHtmlTemplate.replaceAll(Pattern.quote("${content}"),
+                                Matcher.quoteReplacement(getFieldFormatted(field)))
+                        .replaceAll(Pattern.quote("${property-color}"),
+                                Matcher.quoteReplacement(selectedFields.contains(field) ?
+                                        propertySelectedColor : propertyColor))
+                        .replaceAll(Pattern.quote("${property-background-color}"),
+                                Matcher.quoteReplacement(selectedFields.contains(field) ?
+                                        propertySelectedBackgroundColor : propertyBackgroundColor));
+                fields.append(property).append("\n");
+            }
+        }
+        return fields.toString();
+    }
+
+    private String getFormattedMethods(UMLClass object, HashSet<Method> selectedMethods, boolean compact) {
+        StringBuilder fields = new StringBuilder();
+        if (!compact && object.getFields().size() > 0) {
+            fields.append(dividerHtmlTemplate).append("\n");
+            for (Method method : object.getMethods()) {
+                String property = propertyHtmlTemplate.replaceAll(Pattern.quote("${content}"),
+                                Matcher.quoteReplacement(getMethodSignature(method, true)))
+                        .replaceAll(Pattern.quote("${property-color}"),
+                                Matcher.quoteReplacement(selectedMethods.contains(method) ?
+                                        propertySelectedColor : propertyColor))
+                        .replaceAll(Pattern.quote("${property-background-color}"),
+                                Matcher.quoteReplacement(selectedMethods.contains(method) ?
+                                        propertySelectedBackgroundColor : propertyBackgroundColor));
+                fields.append(property).append("\n");
+            }
+        }
+        return fields.toString();
+    }
+
+    private static boolean isClassSelected(UMLClass object, HashSet<UMLClass> selectedVertices, HashSet<UMLRelationship> selectedEdges,
+                                           HashSet<Method> selectedMethods, HashSet<Field> selectedFields) {
+        if (selectedVertices.contains(object))
+            return true;
+        for (UMLRelationship rel : object.relationships.values()) {
+            if (selectedEdges.contains(rel))
+                return true;
         }
         for (Field field : object.getFields()) {
-            if (selectedFields.contains(field)) {
-                selectionColor = selectionBackgroundColor;
-            }
+            if (selectedFields.contains(field))
+                return true;
         }
         for (Method method : object.getMethods()) {
-            if (selectedMethods.contains(method)) {
-                selectionColor = selectionBackgroundColor;
-            }
+            if (selectedMethods.contains(method))
+                return true;
         }
-        if (selectionColor == null)
-            return "";
-        else
-            return "background-color: " + selectionColor + ";";
+        return false;
     }
 
-    public static String getFieldFormatted(Field field) {
+    public String getFieldFormatted(Field field) {
         return getFieldQualifier(field) + " " + field.getName() + " : " + field.getTypeName();
     }
 
-    public static String getMethodSignature(Method method, boolean usePrefix) {
+    public String getMethodSignature(Method method, boolean usePrefix) {
         return getMethodSignature(method, usePrefix, true);
     }
 
-    public static String getMethodSignature(Method method, boolean usePrefix, boolean truncate) {
+    public String getMethodSignature(Method method, boolean usePrefix, boolean truncate) {
         String signature = "";
         if (usePrefix)
             signature += getMethodQualifier(method) + " ";
@@ -161,7 +189,7 @@ public class Formatter {
         return signature;
     }
 
-    private static String getMethodQualifier(Method method) {
+    private String getMethodQualifier(Method method) {
         if (method.getAccessModifiers().contains(AccessModifier.Protected))
             return "#";
         else if (method.getAccessModifiers().contains(AccessModifier.Private))
@@ -171,7 +199,7 @@ public class Formatter {
         return "";
     }
 
-    private static String getFieldQualifier(Field field) {
+    private String getFieldQualifier(Field field) {
         if (field.getAccessModifiers().contains(AccessModifier.Protected))
             return "#";
         else if (field.getAccessModifiers().contains(AccessModifier.Private))

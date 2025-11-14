@@ -31,9 +31,8 @@ import java.io.File;
 import java.io.IOException;
 
 public class ImageExporter {
-    public void saveImage(File file, GraphPanel panel) {
+    public void saveImage(File file, BufferedImage image) {
         try {
-            BufferedImage image = panel.getImage();
             ImageIO.write(image, "png", file);
         } catch (IOException e) {
             throw new RuntimeException(e);

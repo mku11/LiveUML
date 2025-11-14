@@ -24,23 +24,24 @@ SOFTWARE.
 package com.mku.liveuml;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
+import com.mku.liveuml.format.Formatter;
 import com.mku.liveuml.gen.UMLGenerator;
 import com.mku.liveuml.gen.UMLParser;
 import com.mku.liveuml.graph.UMLClass;
 import com.mku.liveuml.graph.UMLRelationship;
 import com.mku.liveuml.image.Icons;
-import com.mku.liveuml.utils.Exporter;
-import com.mku.liveuml.utils.ImageExporter;
-import com.mku.liveuml.utils.Importer;
+import com.mku.liveuml.utils.*;
+import com.mku.liveuml.view.ContextMenu;
 import com.mku.liveuml.view.GraphPanel;
 import org.jungrapht.visualization.VisualizationViewer;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -58,11 +59,15 @@ public class Main {
     private static JList<UMLClass> classes;
     private static ArrayList<UMLClass> classesList;
     private static JMenuItem toggleCollapseFilesItem;
+    private static Formatter formatter;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         FlatDarculaLaf.setup();
         generator = new UMLGenerator();
-
+        String classHtmlTemplate = ResourceUtils.getResourceAsString("/html/class.html");
+        String propertyHtmlTemplate = ResourceUtils.getResourceAsString("/html/property.html");
+        String dividerHtmlTemplate = ResourceUtils.getResourceAsString("/html/divider.html");
+        formatter = new Formatter(classHtmlTemplate, propertyHtmlTemplate, dividerHtmlTemplate);
         JFrame frame = new JFrame();
         frame.setTitle("LiveUML");
         frame.setIconImage(getIconImage());
@@ -77,12 +82,12 @@ public class Main {
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-
-        graphPanel = new GraphPanel(generator);
+        graphPanel = new GraphPanel(generator, formatter);
+        graphPanel.display(null);
 
         classes = new JList<>();
         JScrollPane classesScrollPane = new JScrollPane(classes, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-        classesScrollPane.setPreferredSize(new Dimension(200, 600));
+        classesScrollPane.setPreferredSize(new Dimension(100, 600));
         classesScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         classes.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
@@ -90,11 +95,11 @@ public class Main {
                     // reselect the class
                     graphPanel.selectClass(classes.getSelectedValuesList());
                 } else if (e.getButton() == MouseEvent.BUTTON3) {
-                    if(classes.getSelectedValuesList().size() == 0)
+                    if (classes.getSelectedValuesList().size() == 0)
                         return;
                     UMLClass cls = classes.getSelectedValuesList().get(0);
-                    JPopupMenu menu = new JPopupMenu();
-                    graphPanel.addContextMenu(menu, cls);
+                    ContextMenu contextMenu = new ContextMenu();
+                    JPopupMenu menu = contextMenu.getContextMenu(cls, graphPanel);
                     menu.show(classes, 5, classes.getCellBounds(
                             classes.getSelectedIndex() + 1,
                             classes.getSelectedIndex() + 1).y);
@@ -103,7 +108,8 @@ public class Main {
         });
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, graphPanel, classesScrollPane);
-        splitPane.setResizeWeight(0.8);
+        splitPane.setBorder(new EmptyBorder(8, 8, 8, 8));
+        splitPane.setResizeWeight(0.9);
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.gridy = 0;
@@ -154,7 +160,7 @@ public class Main {
         gbc.insets = new Insets(6, 6, 6, 6);
         mainPanel.add(status, gbc);
 
-        f.setMinimumSize(new Dimension(1000, 800));
+        f.setMinimumSize(new Dimension(1200, 800));
         f.getContentPane().add(mainPanel);
 
     }
@@ -170,37 +176,42 @@ public class Main {
         f.setJMenuBar(menubar);
 
         JMenuItem newGraphItem = new JMenuItem("New");
-        newGraphItem.setIcon(Icons.getIcon("/icons/uxwing/import_file_small.png"));
+        newGraphItem.setIcon(Icons.getIcon("/icons/menu/import_file_small.png"));
         newGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK));
         menu.add(newGraphItem);
 
         JMenuItem openGraphItem = new JMenuItem("Open");
-        openGraphItem.setIcon(Icons.getIcon("/icons/uxwing/folder_menu_small.png"));
+        openGraphItem.setIcon(Icons.getIcon("/icons/menu/folder_menu_small.png"));
         openGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
         menu.add(openGraphItem);
 
         JMenuItem saveGraphItem = new JMenuItem("Save");
-        saveGraphItem.setIcon(Icons.getIcon("/icons/uxwing/save_small.png"));
+        saveGraphItem.setIcon(Icons.getIcon("/icons/menu/save_small.png"));
         saveGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
         menu.add(saveGraphItem);
 
         JMenuItem saveAsGraphItem = new JMenuItem("Save As");
-        saveAsGraphItem.setIcon(Icons.getIcon("/icons/uxwing/save_small.png"));
+        saveAsGraphItem.setIcon(Icons.getIcon("/icons/menu/save_small.png"));
         saveAsGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK | InputEvent.SHIFT_DOWN_MASK));
         menu.add(saveAsGraphItem);
 
+        JMenuItem deleteGraphItem = new JMenuItem("Delete");
+        deleteGraphItem.setIcon(Icons.getIcon("/icons/menu/delete_small.png"));
+        deleteGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK | InputEvent.SHIFT_DOWN_MASK));
+        menu.add(deleteGraphItem);
+
         JMenuItem exportGraphItem = new JMenuItem("Export Image");
-        exportGraphItem.setIcon(Icons.getIcon("/icons/uxwing/export_file_small.png"));
+        exportGraphItem.setIcon(Icons.getIcon("/icons/menu/export_file_small.png"));
         exportGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK));
         menu.add(exportGraphItem);
 
         JMenuItem closeGraphItem = new JMenuItem("Close");
-        closeGraphItem.setIcon(Icons.getIcon("/icons/uxwing/cancel_small.png"));
+        closeGraphItem.setIcon(Icons.getIcon("/icons/menu/cancel_small.png"));
         closeGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK | InputEvent.SHIFT_DOWN_MASK));
         menu.add(closeGraphItem);
 
         JMenuItem exitGraphItem = new JMenuItem("Exit");
-        exitGraphItem.setIcon(Icons.getIcon("/icons/uxwing/exit_small.png"));
+        exitGraphItem.setIcon(Icons.getIcon("/icons/menu/exit_small.png"));
         exitGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
         menu.add(exitGraphItem);
 
@@ -209,7 +220,7 @@ public class Main {
         f.setJMenuBar(menubar);
 
         toggleCollapseFilesItem = new JMenuItem("Expand All");
-        toggleCollapseFilesItem.setIcon(Icons.getIcon("/icons/uxwing/sort_small.png"));
+        toggleCollapseFilesItem.setIcon(Icons.getIcon("/icons/menu/sort_small.png"));
         toggleCollapseFilesItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK | InputEvent.SHIFT_DOWN_MASK));
         menu.add(toggleCollapseFilesItem);
 
@@ -218,17 +229,17 @@ public class Main {
         f.setJMenuBar(menubar);
 
         JMenuItem importSourceFilesItem = new JMenuItem("Import Source");
-        importSourceFilesItem.setIcon(Icons.getIcon("/icons/uxwing/import_folder_small.png"));
+        importSourceFilesItem.setIcon(Icons.getIcon("/icons/menu/import_folder_small.png"));
         importSourceFilesItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_MASK));
         menu.add(importSourceFilesItem);
 
         JMenuItem listSourceFilesItem = new JMenuItem("List Sources");
-        listSourceFilesItem.setIcon(Icons.getIcon("/icons/uxwing/text_file_small.png"));
+        listSourceFilesItem.setIcon(Icons.getIcon("/icons/menu/text_file_small.png"));
         listSourceFilesItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK));
         menu.add(listSourceFilesItem);
 
         JMenuItem refreshSourceFilesItem = new JMenuItem("Refresh Sources");
-        refreshSourceFilesItem.setIcon(Icons.getIcon("/icons/uxwing/refresh_small.png"));
+        refreshSourceFilesItem.setIcon(Icons.getIcon("/icons/menu/refresh_small.png"));
         refreshSourceFilesItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK));
         menu.add(refreshSourceFilesItem);
 
@@ -237,7 +248,7 @@ public class Main {
         f.setJMenuBar(menubar);
 
         JMenuItem chooseEditorItem = new JMenuItem("Choose Text Editor / IDE");
-        chooseEditorItem.setIcon(Icons.getIcon("/icons/uxwing/settings_small.png"));
+        chooseEditorItem.setIcon(Icons.getIcon("/icons/menu/settings_small.png"));
         chooseEditorItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_MASK));
         menu.add(chooseEditorItem);
 
@@ -246,12 +257,12 @@ public class Main {
         f.setJMenuBar(menubar);
 
         JMenuItem helpItem = new JMenuItem("Help");
-        helpItem.setIcon(Icons.getIcon("/icons/uxwing/file_properties_small.png"));
+        helpItem.setIcon(Icons.getIcon("/icons/menu/file_properties_small.png"));
         helpItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_MASK));
         menu.add(helpItem);
 
         JMenuItem aboutItem = new JMenuItem("About");
-        aboutItem.setIcon(Icons.getIcon("/icons/uxwing/info_small.png"));
+        aboutItem.setIcon(Icons.getIcon("/icons/menu/info_small.png"));
         menu.add(aboutItem);
 
         f.pack();
@@ -294,9 +305,9 @@ public class Main {
         newGraphItem.addActionListener((e) -> {
             graphPanel.clear();
             graphPanel.revalidate();
-            updateErrors(graphPanel.getGenerator());
             filepath = null;
             setTitle(f, null);
+            graphPanel.display(null);
         });
 
         openGraphItem.addActionListener((e) -> {
@@ -338,6 +349,18 @@ public class Main {
             saveAs(f);
         });
 
+        deleteGraphItem.addActionListener((e) -> {
+            if (filepath == null)
+                return;
+            File file = new File(filepath);
+            int response = JOptionPane.showConfirmDialog(null,
+                    "Delete file: " + file.getName() + "?", "Confirm",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (response == JOptionPane.NO_OPTION)
+                return;
+            delete(f);
+        });
+
         chooseEditorItem.addActionListener((e) -> {
             Preferences prefs = Preferences.userRoot().node(Main.class.getName());
             JFileChooser fc = new JFileChooser(prefs.get("LAST_TEXT_EDITOR_FILE",
@@ -374,7 +397,9 @@ public class Main {
                 prefs.put("LAST_EXPORT_FILE", file.getPath());
                 new Thread(() -> {
                     setStatus("Exporting image");
-                    new ImageExporter().saveImage(file, graphPanel);
+                    ImageGrabber imageGrabber = new ImageGrabber(graphPanel);
+                    BufferedImage image = imageGrabber.getImage();
+                    new ImageExporter().saveImage(file, image);
                     setStatus("Image exported", 3000);
                 }).start();
             }
@@ -383,6 +408,9 @@ public class Main {
         closeGraphItem.addActionListener(((e) -> {
             graphPanel.clear();
             graphPanel.revalidate();
+            filepath = null;
+            setTitle(f, null);
+            graphPanel.display(null);
         }));
 
         helpItem.addActionListener((e) -> {
@@ -414,7 +442,8 @@ public class Main {
                             + "JavaParser https://github.com/javaparser/javaparser  \n"
                             + "JGraphT https://github.com/jgrapht/jgrapht  \n"
                             + "JUNGRAPHT-VISUALIZATION https://github.com/tomnelson/jungrapht-visualization \n"
-                            + "Gson https://github.com/google/gson ",
+                            + "Gson https://github.com/google/gson \n"
+                            + "Icons by https://uxwing.com/license ",
                     "About", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(getIconImage()));
         });
 
@@ -518,6 +547,17 @@ public class Main {
         }
     }
 
+    private static void delete(JFrame f) {
+        File file = new File(filepath);
+        if (file.exists())
+            file.delete();
+        graphPanel.clear();
+        graphPanel.revalidate();
+        filepath = null;
+        setTitle(f, null);
+        graphPanel.display(null);
+    }
+
     private static void saveAs(JFrame f) {
         Preferences prefs = Preferences.userRoot().node(Main.class.getName());
         JFileChooser fc = new JFileChooser(prefs.get("LAST_GRAPH_FILE",
@@ -542,6 +582,7 @@ public class Main {
             }
             prefs.put("LAST_GRAPH_FILE", file.getPath());
             save(f, file.getPath());
+            filepath = file.getPath();
         }
     }
 
