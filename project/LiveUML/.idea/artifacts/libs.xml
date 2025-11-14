@@ -1,0 +1,18 @@
+<component name="ArtifactManager">
+  <artifact name="libs">
+    <output-path>$PROJECT_DIR$/out/artifacts/LiveUML/libs</output-path>
+    <root id="root">
+      <element id="library" level="project" name="Gradle: com.github.javaparser:javaparser-core-serialization:3.26.2" />
+      <element id="library" level="project" name="Gradle: com.github.javaparser:javaparser-core:3.26.2" />
+      <element id="library" level="project" name="Gradle: com.github.javaparser:javaparser-symbol-solver-core:3.26.2" />
+      <element id="library" level="project" name="Gradle: com.github.tomnelson:jungrapht-layout:1.4" />
+      <element id="library" level="project" name="Gradle: com.github.tomnelson:jungrapht-visualization:1.4" />
+      <element id="library" level="project" name="Gradle: com.google.code.gson:gson:2.2.2" />
+      <element id="library" level="project" name="Gradle: org.slf4j:slf4j-api:1.7.32" />
+      <element id="library" level="project" name="Gradle: org.jgrapht:jgrapht-io:1.5.2" />
+      <element id="library" level="project" name="Gradle: org.jgrapht:jgrapht-core:1.5.2" />
+      <element id="library" level="project" name="Gradle: com.google.guava:guava:33.3.0-jre" />
+      <element id="library" level="project" name="Gradle: com.formdev:flatlaf:3.6.2" />
+    </root>
+  </artifact>
+</component>

@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact name="scripts">
+    <output-path>$PROJECT_DIR$/out/artifacts/LiveUML</output-path>
+    <root id="root">
+      <element id="file-copy" path="$PROJECT_DIR$/scripts/start.bat" />
+      <element id="file-copy" path="$PROJECT_DIR$/scripts/start.sh" />
+    </root>
+  </artifact>
+</component>
