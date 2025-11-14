@@ -436,12 +436,13 @@ public class Main {
 
         aboutItem.addActionListener((e) -> {
             JOptionPane.showMessageDialog(null, "LiveUML v" + version + " \n"
-                            + "License: MIT \n"
+                            + "License: MIT License \n"
                             + "Project site: https://github.com/mku11/LiveUML \n\n"
                             + "Parts of this software include products with open source licenses:  \n"
                             + "JavaParser https://github.com/javaparser/javaparser  \n"
                             + "JGraphT https://github.com/jgrapht/jgrapht  \n"
                             + "JUNGRAPHT-VISUALIZATION https://github.com/tomnelson/jungrapht-visualization \n"
+                            + "FlatLaf https://www.formdev.com/flatlaf/ \n"
                             + "Gson https://github.com/google/gson \n"
                             + "Icons by https://uxwing.com/license ",
                     "About", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(getIconImage()));
