@@ -309,7 +309,7 @@ public class GraphPanel extends JPanel {
 
     private Dimension estimateGraphSize(Graph<UMLClass, UMLRelationship> graph) {
         int vertices = graph.vertexSet().size();
-        int width = (int) Math.sqrt(vertices) * 500;
+        int width = (int) Math.sqrt(vertices) * 1000;
         if (width == 0)
             width = 1200;
         return new Dimension(width, width * 2 / 3);
