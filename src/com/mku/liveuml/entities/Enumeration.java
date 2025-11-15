@@ -23,11 +23,7 @@ SOFTWARE.
 */
 package com.mku.liveuml.entities;
 
-import com.mku.liveuml.graph.UMLClass;
-
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import com.mku.liveuml.model.UMLClass;
 
 public class Enumeration extends UMLClass {
 

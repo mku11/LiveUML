@@ -21,21 +21,17 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package com.mku.liveuml.gen;
+package com.mku.liveuml.model;
 
 import com.mku.liveuml.entities.EnumConstant;
 import com.mku.liveuml.entities.Field;
 import com.mku.liveuml.entities.Method;
-import com.mku.liveuml.graph.UMLClass;
-import com.mku.liveuml.graph.UMLRelationship;
-import com.mku.liveuml.graph.UMLRelationshipType;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
 public class UMLFinder {
-
     public List<HashSet<?>> findEnumConstReference(UMLClass s, EnumConstant ec) {
         HashSet<Method> methodRefs = new HashSet<>();
         HashSet<EnumConstant> enumConstRefs = new HashSet<>();

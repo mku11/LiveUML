@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package com.mku.liveuml.gen;
+package com.mku.liveuml.model;
 
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
@@ -32,27 +32,50 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeS
 import com.mku.liveuml.entities.EnumConstant;
 import com.mku.liveuml.entities.Field;
 import com.mku.liveuml.entities.Method;
-import com.mku.liveuml.graph.UMLClass;
-import com.mku.liveuml.graph.UMLRelationship;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultGraphType;
 import org.jgrapht.graph.builder.GraphTypeBuilder;
 import org.jgrapht.util.SupplierUtil;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-public class UMLGenerator {
+public class UMLDiagram {
     private ReflectionTypeSolver reflectionTypeSolver;
     private CombinedTypeSolver combinedSolver;
     private Graph<UMLClass, UMLRelationship> graph;
     private final UMLFinder finder;
     private ParserConfiguration parserConfiguration;
     private HashMap<String, UMLClass> vertices;
+    private final HashSet<UMLClass> selectedVertices = new HashSet<>();
+    private final HashSet<UMLRelationship> selectedEdges = new HashSet<>();
+    private final HashSet<Method> selectedMethods = new HashSet<>();
+    private final HashSet<Field> selectedFields = new HashSet<>();
+
+    public HashSet<UMLClass> getSelectedVertices() {
+        return selectedVertices;
+    }
+
+    public HashSet<UMLRelationship> getSelectedEdges() {
+        return selectedEdges;
+    }
+
+    public HashSet<Method> getSelectedMethods() {
+        return selectedMethods;
+    }
+
+    public HashSet<Field> getSelectedFields() {
+        return selectedFields;
+    }
+
+    public HashSet<EnumConstant> getSelectedEnumConsts() {
+        return selectedEnumConsts;
+    }
+
+    private final HashSet<EnumConstant> selectedEnumConsts = new HashSet<>();
 
     public UMLParser getParser() {
         return parser;
@@ -60,7 +83,18 @@ public class UMLGenerator {
 
     private UMLParser parser;
 
-    public UMLGenerator() {
+    public String getFilepath() {
+        return filepath;
+    }
+
+    private String filepath;
+
+    public UMLDiagram(String filepath) {
+        this();
+        this.filepath = filepath;
+    }
+
+    public UMLDiagram() {
         this.finder = new UMLFinder();
         this.parser = new UMLParser();
         createGraph();
@@ -161,5 +195,25 @@ public class UMLGenerator {
         if(vertices == null)
             return null;
         return vertices.getOrDefault(name, null);
+    }
+
+    public void clearSelections() {
+        getSelectedEnumConsts().clear();
+        getSelectedFields().clear();
+        getSelectedMethods().clear();
+        getSelectedEdges().clear();
+        getSelectedVertices().clear();
+    }
+
+    public UMLClass getOwnerByName(String owner) {
+        UMLClass cls = getParser().getClassByName(owner);
+        if (cls == null) {
+            cls = getClassByName(owner);
+        }
+        return cls;
+    }
+
+    public void setFilePath(String filepath) {
+        this.filepath = filepath;
     }
 }

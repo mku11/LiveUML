@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.util.prefs.Preferences;
 
 public class FileUtils {
-    public static void openFileLine(String filePath, int line) {
+    public static void openFileAtLine(String filePath, int line) {
         Preferences prefs = Preferences.userRoot().node(Main.class.getName());
         String execPath = prefs.get("LAST_TEXT_EDITOR_FILE", null);
         if (execPath == null) {
@@ -52,4 +52,12 @@ public class FileUtils {
             throw new RuntimeException(e);
         }
     }
+
+    public static String getFilenameWithoutExtension(String filename) {
+        int index = filename.lastIndexOf(".");
+        if (index >= 0)
+            return filename.substring(0, index);
+        return filename;
+    }
+
 }

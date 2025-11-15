@@ -1,4 +1,10 @@
 build
 .gradle
-.idea
-/out
+out
+**/.idea/workspace.xml 
+**/.idea/jarRepositories.xml
+**/.idea/uiDesigner.xml
+**/.idea/description.xml
+**/.idea/vcs.xml
+**/.idea/tasks.xml
+**/.idea/compiler.xml

@@ -1,0 +1,15 @@
+Select Source / Import to import java source files.
+Make sure you select root package folders only!
+Multiple source folders are allowed.
+
+Text Editor / IDE:
+Select Settings / Choose Text Editor to view classes in your Editor / IDE.
+Notepad++, IDEA, and Eclipse are supported.
+
+Mouse gestures:
+Ctrl+Click: Selects UML Class or Relationship
+Ctrl+Shift+Click: Multiple selection\n"
+Ctrl+Mouse Move: Move UML Class(es) or Relationship(s)
+Right Click: Display options for a UML Class
+Double Click: Expand/Collapse UML Class
+Mouse Wheel: Zoom in/out

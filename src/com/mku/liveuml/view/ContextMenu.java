@@ -1,7 +1,33 @@
+/*
+MIT License
+
+Copyright (c) 2024 Max Kas
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 package com.mku.liveuml.view;
 
 import com.mku.liveuml.entities.*;
-import com.mku.liveuml.graph.UMLClass;
+import com.mku.liveuml.format.Formatter;
+import com.mku.liveuml.model.UMLClass;
+import com.mku.liveuml.model.UMLDiagram;
 import com.mku.liveuml.utils.FileUtils;
 
 import javax.swing.*;
@@ -11,7 +37,8 @@ import java.util.HashSet;
 import java.util.List;
 
 public class ContextMenu {
-    public JPopupMenu getContextMenu(UMLClass object, GraphPanel panel) {
+
+    public JPopupMenu getContextMenu(UMLClass object, UMLDiagram diagram, GraphPanel panel) {
         JPopupMenu menu = new JPopupMenu();
         JMenuItem nameItem = new JMenuItem(object.getName());
         nameItem.setEnabled(false);
@@ -32,8 +59,8 @@ public class ContextMenu {
         JMenuItem cItem = new JMenuItem("All references");
         cItem.addActionListener(e -> {
             panel.clearSelections();
-            java.util.List<HashSet<?>> refs = panel.getGenerator().findClassReference(object);
-            panel.selectRefs(object, refs);
+            java.util.List<HashSet<?>> refs = diagram.findClassReference(object);
+            panel.updateRefs(refs);
             panel.getViewer().repaint();
         });
         refMenu.add(cItem);
@@ -44,8 +71,8 @@ public class ContextMenu {
                 JMenuItem fItem = new JMenuItem(enumConstant.getName());
                 fItem.addActionListener(e -> {
                     panel.clearSelections();
-                    java.util.List<HashSet<?>> refs = panel.getGenerator().findEnumConstReference(object, enumConstant);
-                    panel.selectRefs(object, refs);
+                    java.util.List<HashSet<?>> refs = diagram.findEnumConstReference(object, enumConstant);
+                    panel.updateRefs(refs);
                     panel.getViewer().repaint();
                 });
                 items.add(fItem);
@@ -65,11 +92,11 @@ public class ContextMenu {
             for (Field f : object.getFields()) {
                 if (f.getAccessModifiers().contains(AccessModifier.Private))
                     continue;
-                JMenuItem fItem = new JMenuItem(panel.getFormatter().getFieldFormatted(f));
+                JMenuItem fItem = new JMenuItem(Formatter.getFieldFormatted(f));
                 fItem.addActionListener(e -> {
                     panel.clearSelections();
-                    java.util.List<HashSet<?>> refs = panel.getGenerator().findFieldReference(object, f);
-                    panel.selectRefs(object, refs);
+                    java.util.List<HashSet<?>> refs = diagram.findFieldReference(object, f);
+                    panel.updateRefs(refs);
                     panel.getViewer().repaint();
                 });
                 items.add(fItem);
@@ -91,12 +118,12 @@ public class ContextMenu {
                     continue;
                 if (m.getAccessModifiers().contains(AccessModifier.Private))
                     continue;
-                String methodName = panel.getFormatter().getMethodSignature(m, true, false);
+                String methodName = Formatter.getMethodSignature(m, true, false);
                 JMenuItem mItem = new JMenuItem(methodName);
                 mItem.addActionListener(e -> {
                     panel.clearSelections();
-                    java.util.List<HashSet<?>> refs = panel.getGenerator().findMethodReference(object, m);
-                    panel.selectRefs(object, refs);
+                    java.util.List<HashSet<?>> refs = diagram.findMethodReference(object, m);
+                    panel.updateRefs(refs);
                     panel.getViewer().repaint();
                 });
                 items.add(mItem);
@@ -118,12 +145,12 @@ public class ContextMenu {
                     continue;
                 if (m.getAccessModifiers().contains(AccessModifier.Private))
                     continue;
-                String methodName = panel.getFormatter().getMethodSignature(m, true, false);
+                String methodName = Formatter.getMethodSignature(m, true, false);
                 JMenuItem mItem = new JMenuItem(methodName);
                 mItem.addActionListener(e -> {
                     panel.clearSelections();
-                    List<HashSet<?>> refs = panel.getGenerator().findMethodReference(object, m);
-                    panel.selectRefs(object, refs);
+                    List<HashSet<?>> refs = diagram.findMethodReference(object, m);
+                    panel.updateRefs(refs);
                     panel.getViewer().repaint();
                 });
                 items.add(mItem);
@@ -152,7 +179,7 @@ public class ContextMenu {
         items.clear();
         if (object.getFields().size() > 0) {
             for (Field f : object.getFields()) {
-                JMenuItem fItem = new JMenuItem(panel.getFormatter().getFieldFormatted(f));
+                JMenuItem fItem = new JMenuItem(Formatter.getFieldFormatted(f));
                 fItem.addActionListener(e -> {
                     goToFieldReference(object, f);
                     panel.getViewer().repaint();
@@ -174,7 +201,7 @@ public class ContextMenu {
             for (Method m : object.getMethods()) {
                 if (!(m instanceof Constructor))
                     continue;
-                String methodName = panel.getFormatter().getMethodSignature(m, true, false);
+                String methodName = Formatter.getMethodSignature(m, true, false);
                 JMenuItem mItem = new JMenuItem(methodName);
                 mItem.addActionListener(e -> {
                     goToMethodReference(object, m);
@@ -197,7 +224,7 @@ public class ContextMenu {
             for (Method m : object.getMethods()) {
                 if (m instanceof Constructor)
                     continue;
-                String methodName = panel.getFormatter().getMethodSignature(m, true, false);
+                String methodName = Formatter.getMethodSignature(m, true, false);
                 JMenuItem mItem = new JMenuItem(methodName);
                 mItem.addActionListener(e -> {
                     goToMethodReference(object, m);
@@ -218,15 +245,15 @@ public class ContextMenu {
     }
 
     public void goToClassReference(UMLClass s) {
-        FileUtils.openFileLine(s.getFilePath(), s.getLine());
+        FileUtils.openFileAtLine(s.getFilePath(), s.getLine());
     }
 
     private void goToMethodReference(UMLClass s, Method m) {
-        FileUtils.openFileLine(s.getFilePath(), m.getLine());
+        FileUtils.openFileAtLine(s.getFilePath(), m.getLine());
     }
 
     private void goToFieldReference(UMLClass s, Field f) {
-        FileUtils.openFileLine(s.getFilePath(), f.getLine());
+        FileUtils.openFileAtLine(s.getFilePath(), f.getLine());
     }
 
 }

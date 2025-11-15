@@ -24,10 +24,13 @@ SOFTWARE.
 package com.mku.liveuml.format;
 
 import com.mku.liveuml.entities.*;
-import com.mku.liveuml.graph.UMLRelationship;
-import com.mku.liveuml.graph.UMLClass;
+import com.mku.liveuml.model.UMLDiagram;
+import com.mku.liveuml.model.UMLParser;
+import com.mku.liveuml.model.UMLRelationship;
+import com.mku.liveuml.model.UMLClass;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,15 +39,15 @@ public class Formatter {
     private final String classHtmlTemplate;
     private final String propertyHtmlTemplate;
     private final String dividerHtmlTemplate;
-    private static final String classHeaderColor = "black";
-    private static final String classHeaderBackgroundColor = "white";
-    private static final String classSelectedHeaderColor = "#6388E6";
-    private static final String classSelectedHeaderBackgroundColor = "white";
-
-    private static final String propertyColor = "black";
-    private static final String propertyBackgroundColor = "white";
-    private static final String propertySelectedColor = "#6388E6";
-    private static final String propertySelectedBackgroundColor = "#C1D1E3";
+    public static final String classSelectedColor = "#6388E6";
+    public static final String classHeaderColor = "black";
+    public static final String classHeaderBackgroundColor = "white";
+    public static final String classSelectedHeaderColor = "#6388E6";
+    public static final String classSelectedHeaderBackgroundColor = "white";
+    public static final String propertyColor = "black";
+    public static final String propertyBackgroundColor = "white";
+    public static final String propertySelectedColor = "#6388E6";
+    public static final String propertySelectedBackgroundColor = "#C1D1E3";
 
     public Formatter(String classHtmlTemplate, String propertyHtmlTemplate, String dividerHtmlTemplate) {
         this.classHtmlTemplate = classHtmlTemplate;
@@ -52,11 +55,8 @@ public class Formatter {
         this.dividerHtmlTemplate = dividerHtmlTemplate;
     }
 
-    public String getUmlAsHtml(UMLClass object, boolean compact,
-                               HashSet<UMLClass> selectedVertices, HashSet<UMLRelationship> selectedEdges,
-                               HashSet<Method> selectedMethods, HashSet<Field> selectedFields,
-                               HashSet<EnumConstant> selectedEnumConsts) {
-        boolean classSelected = isClassSelected(object, selectedVertices, selectedEdges, selectedMethods, selectedFields);
+    public String getUmlAsHtml(UMLClass object, boolean compact, UMLDiagram generator) {
+        boolean classSelected = isClassSelected(object, generator);
         String formattedHtml = classHtmlTemplate
                 .replaceAll(Pattern.quote("${name}"),
                         Matcher.quoteReplacement(object.getName()))
@@ -68,19 +68,19 @@ public class Formatter {
                                 classSelectedHeaderBackgroundColor : classHeaderBackgroundColor));
 
         // get enums
-        String formattedEnums = getFormattedEnums(object, selectedEnumConsts, compact);
+        String formattedEnums = getFormattedEnums(object, generator.getSelectedEnumConsts(), compact);
         formattedHtml = formattedHtml.replaceAll(Pattern.quote("${enums}"),
-                Matcher.quoteReplacement(formattedEnums.toString()));
+                Matcher.quoteReplacement(formattedEnums));
 
         // get fields
-        String formattedFields = getFormattedFields(object, selectedFields, compact);
+        String formattedFields = getFormattedFields(object, generator.getSelectedFields(), compact);
         formattedHtml = formattedHtml.replaceAll(Pattern.quote("${fields}"),
-                Matcher.quoteReplacement(formattedFields.toString()));
+                Matcher.quoteReplacement(formattedFields));
 
         // get methods
-        String formattedMethods = getFormattedMethods(object, selectedMethods, compact);
+        String formattedMethods = getFormattedMethods(object, generator.getSelectedMethods(), compact);
         formattedHtml = formattedHtml.replaceAll(Pattern.quote("${methods}"),
-                Matcher.quoteReplacement(formattedMethods.toString()));
+                Matcher.quoteReplacement(formattedMethods));
 
         return formattedHtml;
     }
@@ -142,34 +142,33 @@ public class Formatter {
         return fields.toString();
     }
 
-    private static boolean isClassSelected(UMLClass object, HashSet<UMLClass> selectedVertices, HashSet<UMLRelationship> selectedEdges,
-                                           HashSet<Method> selectedMethods, HashSet<Field> selectedFields) {
-        if (selectedVertices.contains(object))
+    private static boolean isClassSelected(UMLClass object, UMLDiagram generator) {
+        if (generator.getSelectedVertices().contains(object))
             return true;
         for (UMLRelationship rel : object.relationships.values()) {
-            if (selectedEdges.contains(rel))
+            if (generator.getSelectedEdges().contains(rel))
                 return true;
         }
         for (Field field : object.getFields()) {
-            if (selectedFields.contains(field))
+            if (generator.getSelectedFields().contains(field))
                 return true;
         }
         for (Method method : object.getMethods()) {
-            if (selectedMethods.contains(method))
+            if (generator.getSelectedMethods().contains(method))
                 return true;
         }
         return false;
     }
 
-    public String getFieldFormatted(Field field) {
+    public static String getFieldFormatted(Field field) {
         return getFieldQualifier(field) + " " + field.getName() + " : " + field.getTypeName();
     }
 
-    public String getMethodSignature(Method method, boolean usePrefix) {
+    public static String getMethodSignature(Method method, boolean usePrefix) {
         return getMethodSignature(method, usePrefix, true);
     }
 
-    public String getMethodSignature(Method method, boolean usePrefix, boolean truncate) {
+    public static String getMethodSignature(Method method, boolean usePrefix, boolean truncate) {
         String signature = "";
         if (usePrefix)
             signature += getMethodQualifier(method) + " ";
@@ -189,7 +188,7 @@ public class Formatter {
         return signature;
     }
 
-    private String getMethodQualifier(Method method) {
+    public static String getMethodQualifier(Method method) {
         if (method.getAccessModifiers().contains(AccessModifier.Protected))
             return "#";
         else if (method.getAccessModifiers().contains(AccessModifier.Private))
@@ -199,7 +198,7 @@ public class Formatter {
         return "";
     }
 
-    private String getFieldQualifier(Field field) {
+    public static String getFieldQualifier(Field field) {
         if (field.getAccessModifiers().contains(AccessModifier.Protected))
             return "#";
         else if (field.getAccessModifiers().contains(AccessModifier.Private))
@@ -207,5 +206,14 @@ public class Formatter {
         else if (field.getAccessModifiers().contains(AccessModifier.Public))
             return "+";
         return "";
+    }
+
+    public static String formatUnresolvedSymbols(UMLParser parser) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Map.Entry<String, UMLParser.SymbolInformation> entry : parser.getUnresolvedSymbols().entrySet()) {
+            stringBuilder.append(entry.getKey());
+            stringBuilder.append("\n");
+        }
+        return stringBuilder.toString();
     }
 }

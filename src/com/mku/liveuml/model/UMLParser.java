@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package com.mku.liveuml.gen;
+package com.mku.liveuml.model;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
@@ -41,12 +41,10 @@ import com.github.javaparser.resolution.types.ResolvedArrayType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.google.common.base.Strings;
 import com.mku.liveuml.entities.Enumeration;
-import com.mku.liveuml.graph.UMLRelationship;
-import com.mku.liveuml.graph.UMLClass;
+import com.mku.liveuml.file.DirExplorer;
 import com.mku.liveuml.entities.Parameter;
 import com.mku.liveuml.entities.*;
 import com.mku.liveuml.entities.Class;
-import com.mku.liveuml.graph.UMLRelationshipType;
 
 import java.io.File;
 import java.util.*;

@@ -1,3 +1,2 @@
 Manifest-Version: 0.9.2
 Main-Class: com.mku.liveuml.Main
-

@@ -1,5 +1,5 @@
 // sample code from: https://github.com/ftomassetti/analyze-java-code-examples/blob/master/src/main/java/me/tomassetti/support/DirExplorer.java
-package com.mku.liveuml.gen;
+package com.mku.liveuml.file;
 
 import java.io.File;
 

@@ -26,11 +26,11 @@ package com.mku.liveuml.utils;
 import com.google.gson.Gson;
 import com.google.gson.internal.StringMap;
 import com.mku.liveuml.entities.*;
-import com.mku.liveuml.gen.UMLGenerator;
-import com.mku.liveuml.graph.UMLClass;
-import com.mku.liveuml.graph.UMLClassFactory;
-import com.mku.liveuml.graph.UMLRelationship;
-import com.mku.liveuml.graph.UMLRelationshipType;
+import com.mku.liveuml.model.UMLDiagram;
+import com.mku.liveuml.model.UMLClass;
+import com.mku.liveuml.model.UMLClassFactory;
+import com.mku.liveuml.model.UMLRelationship;
+import com.mku.liveuml.model.UMLRelationshipType;
 import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.graphml.GraphMLImporter;
 
@@ -42,7 +42,7 @@ import java.util.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class Importer {
-    public void importGraph(File file, UMLGenerator generator, HashMap<UMLClass, Point2D.Double> verticesPositions) {
+    public void importGraph(File file, UMLDiagram generator, HashMap<UMLClass, Point2D.Double> verticesPositions) {
         GraphMLImporter<UMLClass, UMLRelationship> importer = new GraphMLImporter<>();
         importer.setSchemaValidation(false);
 

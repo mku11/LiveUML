@@ -23,7 +23,7 @@ SOFTWARE.
 */
 package com.mku.liveuml.entities;
 
-import com.mku.liveuml.graph.UMLClass;
+import com.mku.liveuml.model.UMLClass;
 
 public class Interface extends UMLClass {
     public Interface(String name) {

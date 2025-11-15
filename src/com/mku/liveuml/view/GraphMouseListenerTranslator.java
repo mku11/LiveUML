@@ -4,7 +4,7 @@
  * All rights reserved.
  *
  * This software is open-source under the BSD license; see either
- * "license.txt" or
+ * "help.txt" or
  * https://github.com/tomnelson/jungrapht-visualization/blob/master/LICENSE for a description.
  */
 /*
@@ -31,7 +31,7 @@ import org.jungrapht.visualization.layout.model.LayoutModel;
  * @param <V> vertex type
  * @param <E> edge type
  */
-public class UMLMouseListenerTranslator<V, E> extends MouseAdapter {
+public class GraphMouseListenerTranslator<V, E> extends MouseAdapter {
 
     private VisualizationViewer<V, E> visualizationViewer;
     private GraphMouseListener<V> graphMouseListener;
@@ -40,7 +40,7 @@ public class UMLMouseListenerTranslator<V, E> extends MouseAdapter {
      * @param graphMouseListener listens for mouse events
      * @param visualizationViewer the viewer used for visualization
      */
-    public UMLMouseListenerTranslator(
+    public GraphMouseListenerTranslator(
             GraphMouseListener<V> graphMouseListener, VisualizationViewer<V, E> visualizationViewer) {
         this.graphMouseListener = graphMouseListener;
         this.visualizationViewer = visualizationViewer;
