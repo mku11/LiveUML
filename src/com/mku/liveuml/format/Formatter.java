@@ -55,8 +55,8 @@ public class Formatter {
         this.dividerHtmlTemplate = dividerHtmlTemplate;
     }
 
-    public String getUmlAsHtml(UMLClass object, boolean compact, UMLDiagram generator) {
-        boolean classSelected = isClassSelected(object, generator);
+    public String getUmlAsHtml(UMLClass object, boolean compact, UMLDiagram diagram) {
+        boolean classSelected = isClassSelected(object, diagram);
         String formattedHtml = classHtmlTemplate
                 .replaceAll(Pattern.quote("${name}"),
                         Matcher.quoteReplacement(object.getName()))
@@ -68,17 +68,17 @@ public class Formatter {
                                 classSelectedHeaderBackgroundColor : classHeaderBackgroundColor));
 
         // get enums
-        String formattedEnums = getFormattedEnums(object, generator.getSelectedEnumConsts(), compact);
+        String formattedEnums = getFormattedEnums(object, diagram.getSelectedEnumConsts(), compact);
         formattedHtml = formattedHtml.replaceAll(Pattern.quote("${enums}"),
                 Matcher.quoteReplacement(formattedEnums));
 
         // get fields
-        String formattedFields = getFormattedFields(object, generator.getSelectedFields(), compact);
+        String formattedFields = getFormattedFields(object, diagram.getSelectedFields(), compact);
         formattedHtml = formattedHtml.replaceAll(Pattern.quote("${fields}"),
                 Matcher.quoteReplacement(formattedFields));
 
         // get methods
-        String formattedMethods = getFormattedMethods(object, generator.getSelectedMethods(), compact);
+        String formattedMethods = getFormattedMethods(object, diagram.getSelectedMethods(), compact);
         formattedHtml = formattedHtml.replaceAll(Pattern.quote("${methods}"),
                 Matcher.quoteReplacement(formattedMethods));
 
@@ -142,19 +142,19 @@ public class Formatter {
         return methods.toString();
     }
 
-    private static boolean isClassSelected(UMLClass object, UMLDiagram generator) {
-        if (generator.getSelectedVertices().contains(object))
+    private static boolean isClassSelected(UMLClass object, UMLDiagram diagram) {
+        if (diagram.getSelectedVertices().contains(object))
             return true;
         for (UMLRelationship rel : object.relationships.values()) {
-            if (generator.getSelectedEdges().contains(rel))
+            if (diagram.getSelectedEdges().contains(rel))
                 return true;
         }
         for (Field field : object.getFields()) {
-            if (generator.getSelectedFields().contains(field))
+            if (diagram.getSelectedFields().contains(field))
                 return true;
         }
         for (Method method : object.getMethods()) {
-            if (generator.getSelectedMethods().contains(method))
+            if (diagram.getSelectedMethods().contains(method))
                 return true;
         }
         return false;

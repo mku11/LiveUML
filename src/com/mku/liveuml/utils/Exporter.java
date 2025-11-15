@@ -44,7 +44,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 public class Exporter {
-    public void exportGraph(File file, UMLDiagram generator, Map<UMLClass, Point2D.Double> vertexPositions) {
+    public void exportGraph(File file, UMLDiagram diagram, Map<UMLClass, Point2D.Double> vertexPositions) {
         GraphMLExporter<UMLClass, UMLRelationship> exporter = new GraphMLExporter<>();
 
         exporter.setVertexIdProvider(obj -> obj.getClass().getSimpleName() + ":" + obj);
@@ -56,7 +56,7 @@ public class Exporter {
         exporter.setEdgeAttributeProvider(this::getEdgeAttrs);
 
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file))) {
-            exporter.exportGraph(generator.getGraph(), writer);
+            exporter.exportGraph(diagram.getGraph(), writer);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
