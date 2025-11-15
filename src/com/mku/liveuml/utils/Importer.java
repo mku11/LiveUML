@@ -42,7 +42,7 @@ import java.util.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class Importer {
-    public void importGraph(File file, UMLDiagram generator, HashMap<UMLClass, Point2D.Double> verticesPositions) {
+    public void importGraph(File file, UMLDiagram diagram, HashMap<UMLClass, Point2D.Double> verticesPositions) {
         GraphMLImporter<UMLClass, UMLRelationship> importer = new GraphMLImporter<>();
         importer.setSchemaValidation(false);
 
@@ -55,9 +55,16 @@ public class Importer {
                 pair.getSecond(), attribute, vertices));
 
         try (InputStreamReader inputStreamReader = new FileReader(file)) {
-            generator.createGraph();
-            importer.importGraph(generator.getGraph(), inputStreamReader);
-            generator.updateVertices(vertices);
+            diagram.createGraph();
+            importer.importGraph(diagram.getGraph(), inputStreamReader);
+            diagram.setClasses(diagram.getGraph().vertexSet());
+            HashSet<String> sources = new HashSet<>();
+            for(UMLClass object : diagram.getGraph().vertexSet()) {
+                if(object.getFileSource() != null && !object.getFileSource().equals("null"))
+                    sources.add(object.getFileSource());
+            }
+            diagram.setSources(sources);
+            diagram.updateVertices(vertices);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -84,6 +91,9 @@ public class Importer {
                 break;
             case "filePath":
                 obj.setFilePath(attribute.getValue());
+                break;
+            case "fileSource":
+                obj.setFileSource(attribute.getValue());
                 break;
             case "packageName":
                 obj.setPackageName(attribute.getValue());

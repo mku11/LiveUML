@@ -48,15 +48,19 @@ import com.mku.liveuml.entities.Class;
 
 import java.io.File;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class UMLParser {
     public HashMap<String, UMLClass> objects = new HashMap<>();
-
     public HashMap<String, SymbolInformation> getUnresolvedSymbols() {
         return unresolvedSymbols;
     }
+    private final HashMap<String, SymbolInformation> unresolvedSymbols = new HashMap<>();
+    private Consumer<String> notifyProgress;
 
-    private HashMap<String, SymbolInformation> unresolvedSymbols = new HashMap<>();
+    public static class SymbolInformation {
+        ArrayList<UMLClass> classes = new ArrayList<>();
+    }
 
     public void clear() {
         unresolvedSymbols.clear();
@@ -67,21 +71,19 @@ public class UMLParser {
         return objects.getOrDefault(owner, null);
     }
 
-    public class SymbolInformation {
-        ArrayList<UMLClass> classes = new ArrayList<>();
-    }
-
     public List<UMLClass> getClasses(File projectDir) {
         HashSet<UMLClass> classes = new HashSet<>();
         getObjects(classes, projectDir);
-        ArrayList<UMLClass> list = new ArrayList<>(classes);
-        getObjectsAttrs(list, projectDir);
-        getMethodCalls(list, projectDir);
-        resolveTypes(list);
-        return list;
+        getObjectsAttrs(classes, projectDir);
+        getMethodCalls(classes, projectDir);
+        resolveTypes(classes);
+        for(UMLClass obj : classes) {
+            obj.setFileSource(projectDir.getAbsolutePath());
+        }
+        return new ArrayList<>(classes);
     }
 
-    private void resolveTypes(List<UMLClass> list) {
+    private void resolveTypes(HashSet<UMLClass> list) {
         for (UMLClass fieldOwner : list) {
             for (Field field : fieldOwner.getFields()) {
                 if (!field.isPrimitiveType()) {
@@ -139,10 +141,12 @@ public class UMLParser {
         return false;
     }
 
-    private void getMethodCalls(List<UMLClass> list, File projectDir) {
+    private void getMethodCalls(HashSet<UMLClass> list, File projectDir) {
         new DirExplorer((level, path, file) -> path.endsWith(".java"), (level, path, file) -> {
             System.out.println(path);
             System.out.println(Strings.repeat("=", path.length()));
+            if(notifyProgress != null)
+                notifyProgress.accept(file.getName());
             try {
                 new VoidVisitorAdapter<UMLClass>() {
                     @Override
@@ -561,6 +565,8 @@ public class UMLParser {
         new DirExplorer((level, path, file) -> path.endsWith(".java"), (level, path, file) -> {
             System.out.println(path);
             System.out.println(Strings.repeat("=", path.length()));
+            if(notifyProgress != null)
+                notifyProgress.accept(file.getName());
             try {
                 new VoidVisitorAdapter<UMLClass>() {
                     @Override
@@ -593,10 +599,12 @@ public class UMLParser {
         }).explore(projectDir);
     }
 
-    private void getObjectsAttrs(List<UMLClass> list, File projectDir) {
+    private void getObjectsAttrs(HashSet<UMLClass> list, File projectDir) {
         new DirExplorer((level, path, file) -> path.endsWith(".java"), (level, path, file) -> {
             System.out.println(path);
             System.out.println(Strings.repeat("=", path.length()));
+            if(notifyProgress != null)
+                notifyProgress.accept(file.getName());
             try {
                 new VoidVisitorAdapter<UMLClass>() {
                     @Override
@@ -682,37 +690,51 @@ public class UMLParser {
 
     private UMLClass getOrCreateObject(ClassOrInterfaceDeclaration n, String filePath) {
         String packageName = getPackageName(n);
+        ArrayList<String> parents = getParents(n);
         String className = n.getName().asString();
-        return getOrCreateObject(packageName, className, n.isInterface(), filePath, n.getBegin().get().line);
+        return getOrCreateObject(packageName, className, parents, n.isInterface(), filePath, n.getBegin().get().line);
     }
 
     private UMLClass getOrCreateEnum(EnumDeclaration n, String filePath) {
         String packageName = getPackageName(n);
+        ArrayList<String> parents = getParents(n);
         String className = n.getName().asString();
-        return getOrCreateEnum(packageName, className, filePath, n.getBegin().get().line);
+        return getOrCreateEnum(packageName, className, parents, filePath, n.getBegin().get().line);
     }
 
 
-    private UMLClass getOrCreateEnum(String packageName, String name, String filePath,
-                                       int line) {
-        UMLClass obj = null;
-        String fullName = packageName + "." + name;
+    private UMLClass getOrCreateEnum(String packageName, String name, ArrayList<String> parents,
+                                     String filePath, int line) {
+        UMLClass obj;
+        String fullName = getFullName(packageName, name, parents);
         if (objects.containsKey(fullName)) {
             obj = objects.get(fullName);
         } else {
             obj = new Enumeration(name);
             objects.put(fullName, obj);
         }
+        obj.setParents(parents);
         obj.setFilePath(filePath);
         obj.setLine(line);
         obj.setPackageName(packageName);
         return obj;
     }
 
-    private UMLClass getOrCreateObject(String packageName, String name, boolean isInterface, String filePath,
-                                       int line) {
-        UMLClass obj = null;
-        String fullName = packageName + "." + name;
+    private String getFullName(String packageName, String name, ArrayList<String> parents) {
+        String fullName = "";
+        String parentsName = parents == null ? "" : String.join(".", parents);
+        if(packageName != null && packageName.length() > 0)
+            fullName = packageName;
+        if(parentsName.length() > 0)
+            fullName += "." + parentsName;
+        fullName += "." + name;
+        return fullName;
+    }
+
+    private UMLClass getOrCreateObject(String packageName, String name, ArrayList<String> parents,
+                                       boolean isInterface, String filePath, int line) {
+        UMLClass obj;
+        String fullName = getFullName(packageName, name, parents);
         if (objects.containsKey(fullName)) {
             obj = objects.get(fullName);
         } else {
@@ -723,6 +745,7 @@ public class UMLParser {
             }
             objects.put(fullName, obj);
         }
+        obj.setParents(parents);
         obj.setFilePath(filePath);
         obj.setLine(line);
         obj.setPackageName(packageName);
@@ -804,6 +827,20 @@ public class UMLParser {
             }
         }
         return packageName;
+    }
+
+
+    private ArrayList<String> getParents(Node node) {
+        ArrayList<String> parents = new ArrayList<>();
+        while (node.hasParentNode()) {
+            node = node.getParentNode().get();
+            if(node instanceof ClassOrInterfaceDeclaration) {
+                // nested inside a class
+                String parentName = ((ClassOrInterfaceDeclaration) node).getNameAsString();
+                parents.add(0,parentName);
+            }
+        }
+        return parents;
     }
 
     private List<Field> parseFields(NodeWithMembers<?> n, UMLClass obj) {
@@ -1065,5 +1102,12 @@ public class UMLParser {
             objConstructors.add(constructor);
         }
         return objConstructors;
+    }
+
+    public void setNotifyProgress(Consumer<String> notifyProgress) {
+        this.notifyProgress = notifyProgress;
+    }
+    public void removeNotifyProgress() {
+        this.notifyProgress = null;
     }
 }

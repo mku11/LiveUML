@@ -124,9 +124,9 @@ public class Formatter {
     }
 
     private String getFormattedMethods(UMLClass object, HashSet<Method> selectedMethods, boolean compact) {
-        StringBuilder fields = new StringBuilder();
-        if (!compact && object.getFields().size() > 0) {
-            fields.append(dividerHtmlTemplate).append("\n");
+        StringBuilder methods = new StringBuilder();
+        if (!compact && object.getMethods().size() > 0) {
+            methods.append(dividerHtmlTemplate).append("\n");
             for (Method method : object.getMethods()) {
                 String property = propertyHtmlTemplate.replaceAll(Pattern.quote("${content}"),
                                 Matcher.quoteReplacement(getMethodSignature(method, true)))
@@ -136,10 +136,10 @@ public class Formatter {
                         .replaceAll(Pattern.quote("${property-background-color}"),
                                 Matcher.quoteReplacement(selectedMethods.contains(method) ?
                                         propertySelectedBackgroundColor : propertyBackgroundColor));
-                fields.append(property).append("\n");
+                methods.append(property).append("\n");
             }
         }
-        return fields.toString();
+        return methods.toString();
     }
 
     private static boolean isClassSelected(UMLClass object, UMLDiagram generator) {

@@ -34,8 +34,8 @@ import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.AttributeType;
 import org.jgrapht.nio.DefaultAttribute;
 import org.jgrapht.nio.graphml.GraphMLExporter;
-import org.jungrapht.visualization.layout.model.Point;
 
+import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
@@ -44,7 +44,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 public class Exporter {
-    public void exportGraph(File file, UMLDiagram generator, Map<UMLClass, Point> vertexPositions) {
+    public void exportGraph(File file, UMLDiagram generator, Map<UMLClass, Point2D.Double> vertexPositions) {
         GraphMLExporter<UMLClass, UMLRelationship> exporter = new GraphMLExporter<>();
 
         exporter.setVertexIdProvider(obj -> obj.getClass().getSimpleName() + ":" + obj);
@@ -183,6 +183,7 @@ public class Exporter {
         exporter.registerAttribute("y", GraphMLExporter.AttributeCategory.NODE, AttributeType.DOUBLE);
         exporter.registerAttribute("line", GraphMLExporter.AttributeCategory.NODE, AttributeType.INT);
         exporter.registerAttribute("filePath", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
+        exporter.registerAttribute("fileSource", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
         exporter.registerAttribute("packageName", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
         exporter.registerAttribute("fields", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
         exporter.registerAttribute("methods", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
@@ -190,15 +191,16 @@ public class Exporter {
         exporter.registerAttribute("compact", GraphMLExporter.AttributeCategory.NODE, AttributeType.BOOLEAN);
     }
 
-    private Map<String, Attribute> getVertexAttrs(UMLClass obj, Map<UMLClass, org.jungrapht.visualization.layout.model.Point> vertexPositions) {
+    private Map<String, Attribute> getVertexAttrs(UMLClass obj, Map<UMLClass, Point2D.Double> vertexPositions) {
         HashMap<String, Attribute> map = new HashMap<>();
-        org.jungrapht.visualization.layout.model.Point point = vertexPositions.getOrDefault(obj, null);
+        Point2D.Double point = vertexPositions.getOrDefault(obj, null);
         if (point != null) {
             map.put("x", new DefaultAttribute<>(point.x, AttributeType.DOUBLE));
             map.put("y", new DefaultAttribute<>(point.y, AttributeType.DOUBLE));
         }
         map.put("line", new DefaultAttribute<>(obj.getLine(), AttributeType.INT));
         map.put("filePath", new DefaultAttribute<>(obj.getFilePath(), AttributeType.STRING));
+        map.put("fileSource", new DefaultAttribute<>(obj.getFileSource(), AttributeType.STRING));
         map.put("packageName", new DefaultAttribute<>(obj.getPackageName(), AttributeType.STRING));
 
         map.put("fields", new DefaultAttribute<>(new Gson().toJson(obj.getFields()), AttributeType.STRING));

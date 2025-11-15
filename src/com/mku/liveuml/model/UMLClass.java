@@ -27,11 +27,13 @@ import com.mku.liveuml.entities.EnumConstant;
 import com.mku.liveuml.entities.Field;
 import com.mku.liveuml.entities.Method;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
 public abstract class UMLClass {
+    private String fileSource;
     private String filePath;
     private String name;
     private String packageName;
@@ -40,6 +42,8 @@ public abstract class UMLClass {
     private List<Field> fields = new LinkedList<>();
     private List<EnumConstant> enumConstants = new LinkedList<>();
     private int line;
+    private ArrayList<String> parents;
+
     public void addMethods(List<Method> methods) {
         this.methods.addAll(methods);
     }
@@ -125,10 +129,25 @@ public abstract class UMLClass {
 
     @Override
     public String toString() {
-        String str = "";
-        if (packageName != null)
-            str += packageName + ".";
-        str += name;
-        return str;
+        String fullName = "";
+        String parentsName = parents == null ? "" : String.join(".", parents);
+        if(packageName != null && packageName.length() > 0)
+            fullName = packageName;
+        if(parentsName.length() > 0)
+            fullName += "." + parentsName;
+        fullName += "." + name;
+        return fullName;
     }
+    public void setParents(ArrayList<String> parents) {
+        this.parents = parents;
+    }
+
+    public String getFileSource() {
+        return fileSource;
+    }
+
+    public void setFileSource(String fileSource) {
+        this.fileSource = fileSource;
+    }
+
 }

@@ -60,6 +60,7 @@ public class GraphPanel extends JPanel {
     private Consumer<Graphics> onImagePainted;
     private UMLDiagram diagram;
     private Function<UMLClass, String> onGetVertexLabel;
+    private VisualizationModel<UMLClass, UMLRelationship> visualizationModel;
 
     /**
      * create an instance of a simple graph with basic controls
@@ -85,24 +86,24 @@ public class GraphPanel extends JPanel {
     }
 
     @SuppressWarnings("unchecked")
-    public void display(UMLDiagram diagram, Map<UMLClass, Point2D.Double> positions) {
+    public void display(UMLDiagram diagram, Map<UMLClass, org.jungrapht.visualization.layout.model.Point> positions) {
         this.diagram = diagram;
-
         Dimension preferredSize = estimateGraphSize(diagram.getGraph());
-        final VisualizationModel<UMLClass, UMLRelationship> visualizationModel =
-                VisualizationModel.builder(diagram.getGraph())
-                        .layoutAlgorithm(layoutAlgorithm)
-                        .layoutSize(preferredSize)
-                        .build();
-
-        if (positions != null)
+        visualizationModel = VisualizationModel.builder(diagram.getGraph())
+                .layoutAlgorithm(layoutAlgorithm)
+                .layoutSize(preferredSize)
+                .build();
+        if (positions != null) {
+            Map<String, org.jungrapht.visualization.layout.model.Point> currentPositions
+                    = convertClassPositionsToFullNamePositions(positions);
             visualizationModel.getLayoutModel().setInitializer(obj -> {
-                if (positions.containsKey(obj)) {
-                    Point2D.Double point = positions.get(obj);
+                if (currentPositions.containsKey(obj.toString())) {
+                    org.jungrapht.visualization.layout.model.Point point = currentPositions.get(obj.toString());
                     return org.jungrapht.visualization.layout.model.Point.of(point.x, point.y);
                 }
-                return null;
+                return org.jungrapht.visualization.layout.model.Point.of(0, 0);
             });
+        }
         visualizationModel.getLayoutModel().setRelaxing(true);
         viewer = VisualizationViewer.builder(visualizationModel)
                 .viewSize(preferredSize)
@@ -116,9 +117,67 @@ public class GraphPanel extends JPanel {
             viewer.setRenderingHints(renderingHints);
         }
 
-        // TODO: dark theme
         viewer.setBackground(Color.WHITE);
 
+        setupVertices();
+        setupEdges();
+        setupConnections();
+
+        addVisualizationPane(viewer);
+        setMouseListener(viewer);
+        refit();
+    }
+
+    private Map<String, org.jungrapht.visualization.layout.model.Point>
+    convertClassPositionsToFullNamePositions(Map<UMLClass, org.jungrapht.visualization.layout.model.Point> positions) {
+        HashMap<String, org.jungrapht.visualization.layout.model.Point> classPositions = new HashMap<>();
+        for (UMLClass object : positions.keySet()) {
+            org.jungrapht.visualization.layout.model.Point position = positions.get(object);
+            classPositions.put(object.toString(), org.jungrapht.visualization.layout.model.Point.of(position.x, position.y));
+        }
+        return classPositions;
+    }
+
+    private void setupConnections() {
+        viewer.getRenderContext().setArrowFillPaintFunction((rel) -> {
+            if (rel.type == UMLRelationshipType.Composition) {
+                if (diagram.getSelectedEdges().contains(rel))
+                    return new Color(109, 113, 242);
+                return Color.BLACK;
+            }
+            return Color.WHITE;
+        });
+        viewer.getRenderContext().setArrowDrawPaintFunction((rel) -> {
+            if (diagram.getSelectedEdges().contains(rel))
+                return new Color(109, 113, 242);
+            return Color.BLACK;
+        });
+    }
+
+    private void setupEdges() {
+        viewer.getRenderContext().setEdgeStrokeFunction(rel -> {
+            if (rel.type == UMLRelationshipType.Dependency || rel.type == UMLRelationshipType.Realization) {
+                // dashed line
+                return new BasicStroke(diagram.getSelectedEdges().contains(rel) ? 3 : 2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{12}, 0);
+            }
+            return new BasicStroke(diagram.getSelectedEdges().contains(rel) ? 3 : 2);
+        });
+        viewer.getRenderContext().setEdgeDrawPaintFunction(relationship -> {
+            if (diagram.getSelectedEdges().contains(relationship))
+                return new Color(109, 113, 242);
+            return Color.BLACK;
+        });
+        // FIXME: workaround: setting custom arrows does not work since the setupArrows()
+        // always overrides, so we inject our shape here:
+        viewer.getRenderContext().setEdgeArrowStrokeFunction((rel) -> {
+            Shape shape = getArrowShape(rel);
+            viewer.getRenderContext().setEdgeArrow(shape);
+            viewer.getRenderContext().setRenderEdgeArrow(true);
+            return new BasicStroke(2f);
+        });
+    }
+
+    private void setupVertices() {
         // VERTICES
         // custom vertex shape for the UML classes
         VertexLabelAsShapeRenderer<UMLClass, UMLRelationship> vlasr = new VertexLabelAsShapeRenderer<>(
@@ -148,6 +207,15 @@ public class GraphPanel extends JPanel {
                     RoundRectangle2D.Double bounds = getObjectBounds(size);
                     this.shapes.put(v, bounds);
                     verticesBounds.put(v, bounds);
+                    if(viewer.getRenderContext().getSelectedVertexState().isSelected(v)) {
+                        renderContext.getRendererPane().setComponentZOrder(component, 0);
+//                        component.requestFocus();
+                    } else {
+//                        renderContext.getRendererPane().setComponentZOrder(component, 1);
+//                        component.setFocusable(false);
+                    }
+                } else {
+                    int b = 1;
                 }
             }
         };
@@ -190,47 +258,6 @@ public class GraphPanel extends JPanel {
             // FIXME: not working?
             return Color.decode(Formatter.classSelectedColor);
         });
-
-        // EDGES
-        viewer.getRenderContext().setEdgeStrokeFunction(rel -> {
-            if (rel.type == UMLRelationshipType.Dependency || rel.type == UMLRelationshipType.Realization) {
-                // dashed line
-                return new BasicStroke(diagram.getSelectedEdges().contains(rel) ? 3 : 2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{12}, 0);
-            }
-            return new BasicStroke(diagram.getSelectedEdges().contains(rel) ? 3 : 2);
-        });
-        viewer.getRenderContext().setEdgeDrawPaintFunction(relationship -> {
-            if (diagram.getSelectedEdges().contains(relationship))
-                return new Color(109, 113, 242);
-            return Color.BLACK;
-        });
-        // FIXME: workaround: setting custom arrows does not work since the setupArrows()
-        // always overrides, so we inject our shape here:
-        viewer.getRenderContext().setEdgeArrowStrokeFunction((rel) -> {
-            Shape shape = getArrowShape(rel);
-            viewer.getRenderContext().setEdgeArrow(shape);
-            viewer.getRenderContext().setRenderEdgeArrow(true);
-            return new BasicStroke(2f);
-        });
-
-        // ARROWS
-        viewer.getRenderContext().setArrowFillPaintFunction((rel) -> {
-            if (rel.type == UMLRelationshipType.Composition) {
-                if (diagram.getSelectedEdges().contains(rel))
-                    return new Color(109, 113, 242);
-                return Color.BLACK;
-            }
-            return Color.WHITE;
-        });
-        viewer.getRenderContext().setArrowDrawPaintFunction((rel) -> {
-            if (diagram.getSelectedEdges().contains(rel))
-                return new Color(109, 113, 242);
-            return Color.BLACK;
-        });
-
-        addVisualizationPane(viewer);
-        setMouseListener(viewer);
-        refit();
     }
 
     private void refit() {
@@ -382,6 +409,8 @@ public class GraphPanel extends JPanel {
     }
 
     public Map<UMLClass, org.jungrapht.visualization.layout.model.Point> getVertexPositions() {
+        if(viewer == null)
+            return null;
         return viewer.getVisualizationModel().getLayoutModel().getLocations();
     }
 
@@ -389,7 +418,7 @@ public class GraphPanel extends JPanel {
         if (visualizationScrollPane != null)
             remove(visualizationScrollPane);
         visualizationScrollPane = null;
-        if(diagram != null)
+        if (diagram != null)
             diagram.clear();
         this.invalidate();
         this.repaint();

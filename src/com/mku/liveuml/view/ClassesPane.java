@@ -59,12 +59,16 @@ public class ClassesPane extends JScrollPane {
                     UMLClass cls = classes.getSelectedValuesList().get(0);
                     if(onMouseRightClick != null)
                         onMouseRightClick.accept(cls, new MousePosition(classes, 5, classes.getCellBounds(
-                                classes.getSelectedIndex() + 1,
+                                classes.getSelectedIndex(),
                                 classes.getSelectedIndex() + 1).y));
                 }
             }
         });
         setViewportView(classes);
+    }
+
+    public void clear() {
+        setClasses(new UMLClass[0]);
     }
 
     public class MousePosition {

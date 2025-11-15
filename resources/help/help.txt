@@ -1,6 +1,6 @@
 Select Source / Import to import java source files.
 Make sure you select root package folders only!
-Multiple source folders are allowed.
+Multiple source folders are supported.
 
 Text Editor / IDE:
 Select Settings / Choose Text Editor to view classes in your Editor / IDE.

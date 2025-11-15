@@ -25,6 +25,7 @@ package com.mku.liveuml.model;
 
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
@@ -38,12 +39,10 @@ import org.jgrapht.graph.builder.GraphTypeBuilder;
 import org.jgrapht.util.SupplierUtil;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class UMLDiagram {
+    private HashSet<String> sources = new HashSet<>();
     private ReflectionTypeSolver reflectionTypeSolver;
     private CombinedTypeSolver combinedSolver;
     private Graph<UMLClass, UMLRelationship> graph;
@@ -54,6 +53,8 @@ public class UMLDiagram {
     private final HashSet<UMLRelationship> selectedEdges = new HashSet<>();
     private final HashSet<Method> selectedMethods = new HashSet<>();
     private final HashSet<Field> selectedFields = new HashSet<>();
+    private final HashSet<EnumConstant> selectedEnumConsts = new HashSet<>();
+    private final HashSet<UMLClass> classes = new HashSet<>();
 
     public HashSet<UMLClass> getSelectedVertices() {
         return selectedVertices;
@@ -74,8 +75,17 @@ public class UMLDiagram {
     public HashSet<EnumConstant> getSelectedEnumConsts() {
         return selectedEnumConsts;
     }
+    public HashSet<String> getSources() {
+        return sources;
+    }
 
-    private final HashSet<EnumConstant> selectedEnumConsts = new HashSet<>();
+    public HashSet<UMLClass> getClasses() {
+        return new HashSet<>(classes);
+    }
+
+    public void setSources(HashSet<String> sources) {
+        this.sources = sources;
+    }
 
     public UMLParser getParser() {
         return parser;
@@ -89,21 +99,27 @@ public class UMLDiagram {
 
     private String filepath;
 
-    public UMLDiagram(String filepath) {
-        this();
+    public UMLDiagram(String filepath, UMLParser parser) {
+        this(parser);
         this.filepath = filepath;
     }
 
-    public UMLDiagram() {
+    public UMLDiagram(UMLParser parser) {
+        this.parser = parser;
         this.finder = new UMLFinder();
-        this.parser = new UMLParser();
         createGraph();
     }
 
-    public void importSourcesDir(File root) {
-        setupFolder(root);
-        List<UMLClass> classes = parser.getClasses(root);
+    public void importSourcesDir(File dir) {
+        sources.add(dir.getAbsolutePath());
+        setupFolder(dir);
+        parseClasses(dir);
+    }
+
+    private void parseClasses(File dir) {
+        List<UMLClass> classes = parser.getClasses(dir);
         addClasses(classes);
+        this.classes.addAll(classes);
     }
 
     private void setupFolder(File sourceFolder) {
@@ -146,7 +162,6 @@ public class UMLDiagram {
 
     public void updateRelationships(List<UMLClass> umlClasses, Graph<UMLClass, UMLRelationship> graph) {
         for (UMLClass obj : umlClasses) {
-            boolean hasValidRelationships = false;
             for (Map.Entry<String, UMLRelationship> rel : obj.relationships.entrySet()) {
                 if (rel.getValue().from == rel.getValue().to)
                     continue;
@@ -155,13 +170,10 @@ public class UMLDiagram {
                 }
                 try {
                     graph.addEdge(rel.getValue().from, rel.getValue().to, rel.getValue());
-                    hasValidRelationships = true;
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
             }
-            if (!hasValidRelationships)
-                graph.removeVertex(obj);
         }
     }
 
@@ -187,12 +199,13 @@ public class UMLDiagram {
 
     public void clear() {
         graph = null;
+        classes.clear();
         reflectionTypeSolver = null;
         parser.clear();
     }
 
     public UMLClass getClassByName(String name) {
-        if(vertices == null)
+        if (vertices == null)
             return null;
         return vertices.getOrDefault(name, null);
     }
@@ -215,5 +228,32 @@ public class UMLDiagram {
 
     public void setFilePath(String filepath) {
         this.filepath = filepath;
+    }
+
+    public void refresh() {
+        HashSet<String> compactClasses = getCompactClasses();
+        clear();
+        for(String source : sources) {
+            File dir = new File(source);
+            setupFolder(dir);
+            parseClasses(dir);
+        }
+        for(UMLClass object : classes) {
+            if(compactClasses.contains(object.toString()))
+                object.setCompact(true);
+        }
+    }
+
+    private HashSet<String> getCompactClasses() {
+        HashSet<String> compactClasses = new HashSet<>();
+        for(UMLClass object : this.classes)
+            if(object.isCompact())
+                compactClasses.add(object.toString());
+        return compactClasses;
+    }
+
+    public void setClasses(Set<UMLClass> vertexSet) {
+        classes.clear();
+        classes.addAll(vertexSet);
     }
 }

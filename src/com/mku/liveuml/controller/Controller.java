@@ -3,10 +3,8 @@ package com.mku.liveuml.controller;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.mku.liveuml.Main;
 import com.mku.liveuml.format.Formatter;
-import com.mku.liveuml.model.UMLDiagram;
-import com.mku.liveuml.model.UMLClass;
+import com.mku.liveuml.model.*;
 import com.mku.liveuml.Config;
-import com.mku.liveuml.model.UMLRelationship;
 import com.mku.liveuml.utils.*;
 import com.mku.liveuml.view.ClassesPane;
 import com.mku.liveuml.view.ContextMenu;
@@ -40,13 +38,22 @@ public class Controller {
     private ExecutorService executor = Executors.newCachedThreadPool();
     private MenuBar menuBar;
     private Preferences prefs;
+    private UMLParser parser;
 
     public void init() throws IOException {
         FlatDarculaLaf.setup();
         prefs = Preferences.userRoot().node(Main.class.getName());
-        diagram = new UMLDiagram();
+        diagram = createDiagram();
         createFormatter();
         createFrame();
+    }
+
+    private UMLDiagram createDiagram() {
+        parser = new UMLParser();
+        parser.setNotifyProgress((progress) -> {
+            status.setText(progress);
+        });
+        return new UMLDiagram(parser);
     }
 
     private void createFormatter() throws IOException {
@@ -82,10 +89,32 @@ public class Controller {
         menuBar.setListener(MenuBar.Action.ToggleExpand, (e) -> toggleExpand());
 
         menuBar.setListener(MenuBar.Action.ImportSource, (e) -> promptImportSource());
+        menuBar.setListener(MenuBar.Action.RefreshSources, (e) -> promptRefreshSources());
+
         menuBar.setListener(MenuBar.Action.ChooseViewer, (e) -> promptChooseViewer());
 
         menuBar.setListener(MenuBar.Action.Help, (e) -> showHelp());
         menuBar.setListener(MenuBar.Action.About, (e) -> showLicense());
+    }
+
+    private void promptRefreshSources() {
+        int response = JOptionPane.showConfirmDialog(null, "This will refresh your diagram and " +
+                        "you might lose positional information, continue?", "Confirm",
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (response == JOptionPane.NO_OPTION)
+            return;
+        refreshSources();
+    }
+
+    private void refreshSources() {
+        executor.submit(()-> {
+            classesScrollPane.clear();
+            diagram.refresh();
+            graphPanel.display(diagram, graphPanel.getVertexPositions());
+            updateErrors(diagram);
+            UMLClass[] classesArr = diagram.getGraph().vertexSet().toArray(new UMLClass[0]);
+            classesScrollPane.setClasses(classesArr);
+        });
     }
 
     private void promptExit() {
@@ -105,10 +134,12 @@ public class Controller {
     }
 
     private void createNewDiagram() {
+        classesScrollPane.clear();
         graphPanel.clear();
         graphPanel.revalidate();
-        diagram = null;
+        diagram = createDiagram();
         setTitle(null);
+        graphPanel.display(diagram);
     }
 
     private void promptExportImage() {
@@ -159,6 +190,7 @@ public class Controller {
     }
 
     private void promptCloseDiagram() {
+        classesScrollPane.clear();
         graphPanel.clear();
         graphPanel.revalidate();
         diagram = null;
@@ -166,7 +198,6 @@ public class Controller {
     }
 
     private void promptImportSource() {
-
         JFileChooser fc = new JFileChooser(prefs.get("LAST_SOURCE_FOLDER",
                 new File(".").getAbsolutePath()));
         fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -177,7 +208,6 @@ public class Controller {
     }
 
     private void promptOpenDiagram() {
-
         JFileChooser fc = new JFileChooser(prefs.get("LAST_GRAPH_FILE",
                 new File(".").getAbsolutePath()));
         fc.setDialogTitle("Choose graph file to load");
@@ -235,13 +265,15 @@ public class Controller {
     private void openDiagram(File file) {
         executor.submit(() -> {
             setStatus("Loading diagram");
-            diagram = new UMLDiagram(file.getPath());
+            diagram = createDiagram();
+            diagram.setFilePath(file.getPath());
             prefs.put("LAST_GRAPH_FILE", file.getPath());
             HashMap<UMLClass, Point2D.Double> verticesPositions = new HashMap<>();
+            classesScrollPane.clear();
             graphPanel.clear();
             new Importer().importGraph(file, diagram, verticesPositions);
             EventQueue.invokeLater(() -> {
-                graphPanel.display(diagram, verticesPositions);
+                graphPanel.display(diagram, convertPointsToPositions(verticesPositions));
                 graphPanel.revalidate();
                 setTitle(FileUtils.getFilenameWithoutExtension(file.getName()));
                 setStatus("Diagram loaded", 3000);
@@ -281,10 +313,8 @@ public class Controller {
         gbc.insets = new Insets(2, 2, 2, 2);
         mainPanel.add(splitPane, gbc);
 
-        errors = new JButton();
-        errors.setBorderPainted(false);
-        errors.setOpaque(false);
-        errors.setBackground(Color.WHITE);
+        errors = new JButton(" ");
+        errors.setVisible(false);
         errors.addActionListener((e) -> {
             SwingUtilities.invokeLater(() -> {
                 JTextArea message = new JTextArea();
@@ -296,14 +326,14 @@ public class Controller {
                 JOptionPane.showMessageDialog(frame, scrollPane, "Unresolved symbols", JOptionPane.PLAIN_MESSAGE);
             });
         });
+        errors.setOpaque(false);
         errors.setHorizontalAlignment(SwingConstants.LEFT);
-        errors.getPreferredSize().height = 50;
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.weightx = 50;
+        gbc.weightx = 0;
         gbc.weighty = 0;
         gbc.insets = new Insets(6, 6, 6, 6);
         mainPanel.add(errors, gbc);
@@ -312,11 +342,11 @@ public class Controller {
         status.setHorizontalAlignment(SwingConstants.RIGHT);
         status.getPreferredSize().height = 50;
         gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+//        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.weightx = 50;
+//        gbc.weightx = 50;
         gbc.weighty = 0;
         gbc.insets = new Insets(6, 6, 6, 6);
         mainPanel.add(status, gbc);
@@ -334,7 +364,10 @@ public class Controller {
         int errorsCount = generator.getParser().getUnresolvedSymbols().size();
         if (errorsCount > 0) {
             msg = "Unresolved symbols: " + "\n" + Formatter.formatUnresolvedSymbols(generator.getParser());
-            errors.setText("<HTML>Unresolved symbols found: <FONT color=\"#000099\"><U>" + errorsCount + "</U></FONT></HTML>");
+            errors.setVisible(true);
+            errors.setText("<HTML>Unresolved symbols found: <U>" + errorsCount + "</U></HTML>");
+        } else {
+            errors.setVisible(false);
         }
     }
 
@@ -343,7 +376,7 @@ public class Controller {
             if (filepath != null) {
                 File file = new File(filepath);
                 setStatus("Saving diagram");
-                new Exporter().exportGraph(file, diagram, graphPanel.getVertexPositions());
+                new Exporter().exportGraph(file, diagram, convertPositionsToPoints(graphPanel.getVertexPositions()));
                 EventQueue.invokeLater((() -> {
                     setTitle(FileUtils.getFilenameWithoutExtension(file.getName()));
                     setStatus("Diagram saved", 3000);
@@ -416,5 +449,26 @@ public class Controller {
             classesScrollPane.clearSelection();
             classesScrollPane.selectClasses(viewer.getSelectedVertices());
         });
+    }
+
+
+    private Map<UMLClass, Point2D.Double> convertPositionsToPoints(Map<UMLClass,
+            org.jungrapht.visualization.layout.model.Point> vertexPositions) {
+        HashMap<UMLClass, Point2D.Double> points = new HashMap<>();
+        for (UMLClass object : vertexPositions.keySet()) {
+            org.jungrapht.visualization.layout.model.Point position = vertexPositions.get(object);
+            points.put(object, new Point2D.Double(position.x, position.y));
+        }
+        return points;
+    }
+
+    private Map<UMLClass, org.jungrapht.visualization.layout.model.Point>
+    convertPointsToPositions(HashMap<UMLClass, Point2D.Double> verticesPoints) {
+        HashMap<UMLClass, org.jungrapht.visualization.layout.model.Point> positions = new HashMap<>();
+        for (UMLClass object : verticesPoints.keySet()) {
+            Point2D.Double position = verticesPoints.get(object);
+            positions.put(object, org.jungrapht.visualization.layout.model.Point.of(position.x, position.y));
+        }
+        return positions;
     }
 }
