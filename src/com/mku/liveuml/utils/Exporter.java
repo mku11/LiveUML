@@ -185,6 +185,7 @@ public class Exporter {
         exporter.registerAttribute("filePath", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
         exporter.registerAttribute("fileSource", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
         exporter.registerAttribute("packageName", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
+        exporter.registerAttribute("parents", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
         exporter.registerAttribute("fields", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
         exporter.registerAttribute("methods", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
         exporter.registerAttribute("enumConstants", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
@@ -202,6 +203,7 @@ public class Exporter {
         map.put("filePath", new DefaultAttribute<>(obj.getFilePath(), AttributeType.STRING));
         map.put("fileSource", new DefaultAttribute<>(obj.getFileSource(), AttributeType.STRING));
         map.put("packageName", new DefaultAttribute<>(obj.getPackageName(), AttributeType.STRING));
+        map.put("parents", new DefaultAttribute<>(new Gson().toJson(obj.getParents()), AttributeType.STRING));
 
         map.put("fields", new DefaultAttribute<>(new Gson().toJson(obj.getFields()), AttributeType.STRING));
         map.put("methods", new DefaultAttribute<>(new Gson().toJson(obj.getMethods()), AttributeType.STRING));

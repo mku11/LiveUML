@@ -98,6 +98,9 @@ public class Importer {
             case "packageName":
                 obj.setPackageName(attribute.getValue());
                 break;
+            case "parents":
+                obj.setParents((List<String>) new Gson().fromJson(attribute.getValue(), List.class));
+                break;
             case "fields":
                 obj.setFields(parseFields((List<StringMap>) new Gson().fromJson(attribute.getValue(), List.class), obj, vertices));
                 break;

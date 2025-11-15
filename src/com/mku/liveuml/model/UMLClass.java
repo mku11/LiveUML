@@ -42,7 +42,7 @@ public abstract class UMLClass {
     private List<Field> fields = new LinkedList<>();
     private List<EnumConstant> enumConstants = new LinkedList<>();
     private int line;
-    private ArrayList<String> parents;
+    private List<String> parents = new ArrayList<>();
 
     public void addMethods(List<Method> methods) {
         this.methods.addAll(methods);
@@ -138,8 +138,9 @@ public abstract class UMLClass {
         fullName += "." + name;
         return fullName;
     }
-    public void setParents(ArrayList<String> parents) {
-        this.parents = parents;
+    public void setParents(List<String> parents) {
+        this.parents.clear();
+        this.parents.addAll(parents);
     }
 
     public String getFileSource() {
@@ -150,4 +151,7 @@ public abstract class UMLClass {
         this.fileSource = fileSource;
     }
 
+    public List<String> getParents() {
+        return parents;
+    }
 }

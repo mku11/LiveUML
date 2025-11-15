@@ -35,7 +35,7 @@ public class Controller {
     private Formatter formatter;
     private JFrame frame;
     private ClassesPane classesScrollPane;
-    private ExecutorService executor = Executors.newCachedThreadPool();
+    private ExecutorService executor = Executors.newSingleThreadExecutor();
     private MenuBar menuBar;
     private Preferences prefs;
     private UMLParser parser;
@@ -107,13 +107,18 @@ public class Controller {
     }
 
     private void refreshSources() {
+        classesScrollPane.clear();
         executor.submit(()-> {
-            classesScrollPane.clear();
+            setStatus("Refreshing sources");
             diagram.refresh();
-            graphPanel.display(diagram, graphPanel.getVertexPositions());
-            updateErrors(diagram);
-            UMLClass[] classesArr = diagram.getGraph().vertexSet().toArray(new UMLClass[0]);
-            classesScrollPane.setClasses(classesArr);
+            EventQueue.invokeLater(() -> {
+                graphPanel.display(diagram, graphPanel.getVertexPositions());
+                graphPanel.revalidate();
+                setStatus("Sources refreshed", 3000);
+                updateErrors(diagram);
+                UMLClass[] classesArr = diagram.getGraph().vertexSet().toArray(new UMLClass[0]);
+                classesScrollPane.setClasses(classesArr);
+            });
         });
     }
 
