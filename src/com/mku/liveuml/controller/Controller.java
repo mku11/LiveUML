@@ -365,10 +365,10 @@ public class Controller {
         return Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/icons/logo.png"));
     }
 
-    private void updateErrors(UMLDiagram generator) {
-        int errorsCount = generator.getParser().getUnresolvedSymbols().size();
+    private void updateErrors(UMLDiagram diagram) {
+        int errorsCount = diagram.getParser().getUnresolvedSymbols().size();
         if (errorsCount > 0) {
-            msg = "Unresolved symbols: " + "\n" + Formatter.formatUnresolvedSymbols(generator.getParser());
+            msg = "Unresolved symbols: " + "\n" + Formatter.formatUnresolvedSymbols(diagram.getParser());
             errors.setVisible(true);
             errors.setText("<HTML>Unresolved symbols found: <U>" + errorsCount + "</U></HTML>");
         } else {

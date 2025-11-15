@@ -112,8 +112,7 @@ public class UMLDiagram {
 
     public void importSourcesDir(File dir) {
         sources.add(dir.getAbsolutePath());
-        setupFolder(dir);
-        parseClasses(dir);
+        refresh();
     }
 
     private void parseClasses(File dir) {
@@ -236,6 +235,9 @@ public class UMLDiagram {
         for(String source : sources) {
             File dir = new File(source);
             setupFolder(dir);
+        }
+        for(String source : sources) {
+            File dir = new File(source);
             parseClasses(dir);
         }
         for(UMLClass object : classes) {
