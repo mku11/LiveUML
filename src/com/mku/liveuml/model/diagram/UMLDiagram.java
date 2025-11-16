@@ -179,22 +179,6 @@ public class UMLDiagram {
         return this.graph;
     }
 
-    public List<HashSet<?>> findMethodReference(UMLClass s, Method m) {
-        return finder.findMethodReference(s, m);
-    }
-
-    public List<HashSet<?>> findClassReference(UMLClass s) {
-        return finder.findClassReference(s);
-    }
-
-    public List<HashSet<?>> findFieldReference(UMLClass s, Field f) {
-        return finder.findFieldReference(s, f);
-    }
-
-    public List<HashSet<?>> findEnumConstReference(UMLClass s, EnumConstant ec) {
-        return finder.findEnumConstReference(s, ec);
-    }
-
     public void clear() {
         graph = null;
         classes.clear();
@@ -256,5 +240,9 @@ public class UMLDiagram {
     public void setClasses(Set<UMLClass> vertexSet) {
         classes.clear();
         classes.addAll(vertexSet);
+    }
+
+    public UMLFinder getFinder() {
+        return finder;
     }
 }

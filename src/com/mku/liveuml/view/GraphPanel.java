@@ -358,8 +358,8 @@ public class GraphPanel extends JPanel {
     }
 
     private void showContextMenu(UMLClass object, MouseEvent event, GraphPanel graphPanel) {
-        ContextMenu contextMenu = new ContextMenu();
-        JPopupMenu menu = contextMenu.getContextMenu(object, diagram, graphPanel);
+        ContextMenu contextMenu = new ContextMenu(object, diagram, graphPanel);
+        JPopupMenu menu = contextMenu.getContextMenu();
         EventQueue.invokeLater(() -> menu.show(event.getComponent(), event.getX(), event.getY()));
     }
 

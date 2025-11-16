@@ -303,8 +303,8 @@ public class Controller {
         classesScrollPane.setPreferredSize(new Dimension(100, 600));
         classesScrollPane.setOnClassSelected((classes) -> graphPanel.selectClasses(classes));
         classesScrollPane.setOnMouseRightClick((object, mousePosition) -> {
-            ContextMenu contextMenu = new ContextMenu();
-            JPopupMenu menu = contextMenu.getContextMenu(object, diagram, graphPanel);
+            ContextMenu contextMenu = new ContextMenu(object, diagram, graphPanel);
+            JPopupMenu menu = contextMenu.getContextMenu();
             menu.show(mousePosition.component, mousePosition.x, mousePosition.y);
         });
 

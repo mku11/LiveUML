@@ -27,6 +27,8 @@ package com.mku.liveuml.view;
 import com.mku.liveuml.format.Formatter;
 import com.mku.liveuml.model.diagram.UMLClass;
 import com.mku.liveuml.model.diagram.UMLDiagram;
+import com.mku.liveuml.model.diagram.UMLRelationship;
+import com.mku.liveuml.model.diagram.UMLRelationshipType;
 import com.mku.liveuml.model.entities.*;
 import com.mku.liveuml.utils.FileUtils;
 
@@ -37,57 +39,71 @@ import java.util.HashSet;
 import java.util.List;
 
 public class ContextMenu {
+    private final UMLClass object;
+    private final UMLDiagram diagram;
+    private final GraphPanel panel;
 
-    public JPopupMenu getContextMenu(UMLClass object, UMLDiagram diagram, GraphPanel panel) {
+    public ContextMenu(UMLClass object, UMLDiagram diagram, GraphPanel panel) {
+        this.object = object;
+        this.diagram = diagram;
+        this.panel = panel;
+    }
+
+    public JPopupMenu getContextMenu() {
         JPopupMenu menu = new JPopupMenu();
         JMenuItem nameItem = new JMenuItem(object.getName());
         nameItem.setEnabled(false);
         menu.add(nameItem);
         menu.addSeparator();
 
+        menu.add(createToggleExpandItem());
+        menu.add(createFindSubMenu());
+        menu.add(createGoToSubMenu());
+        return menu;
+    }
+
+    private Component createToggleExpandItem() {
         JMenuItem item = new JMenuItem(object.isCompact() ? "Collapse" : "Expand");
         item.addActionListener(e -> EventQueue.invokeLater(() -> {
             panel.toggleCompact(object);
             panel.getViewer().repaint();
         }));
-        menu.add(item);
+        return item;
+    }
 
-        // find references
-        JMenu refMenu = new JMenu("Find references");
-        menu.add(refMenu);
+    private Component createFindSubMenu() {
+        JMenu menu = new JMenu("Find references");
+        menu.add(createAllFindRefItem());
+        createRelFindRefSection(menu);
+        createEnumFindRefSection(menu);
+        createFieldsFindRefSection(menu);
+        createConstructorsFindRefSection(menu);
+        createMethodsFindRefSection(menu);
+        return menu;
+    }
 
-        JMenuItem cItem = new JMenuItem("All references");
-        cItem.addActionListener(e -> {
+    private Component createGoToSubMenu() {
+        JMenu menu = new JMenu("View in Text Editor / IDE");
+        createClassGoToSection(menu);
+        createFieldsGoToSection(menu);
+        createConstructorsGoToSection(menu);
+        createMethodsGoToSection(menu);
+        return menu;
+    }
+
+    private JMenuItem createAllFindRefItem() {
+        JMenuItem item = new JMenuItem("All references");
+        item.addActionListener(e -> {
             panel.clearSelections();
-            java.util.List<HashSet<?>> refs = diagram.findClassReference(object);
+            java.util.List<HashSet<?>> refs = diagram.getFinder().findClassReference(object, null);
             panel.updateRefs(refs);
             panel.getViewer().repaint();
         });
-        refMenu.add(cItem);
+        return item;
+    }
 
+    private void createFieldsFindRefSection(JMenu menu) {
         java.util.List<JMenuItem> items = new ArrayList<>();
-        if (object.getEnumConstants().size() > 0) {
-            for (EnumConstant enumConstant : object.getEnumConstants()) {
-                JMenuItem fItem = new JMenuItem(enumConstant.getName());
-                fItem.addActionListener(e -> {
-                    panel.clearSelections();
-                    java.util.List<HashSet<?>> refs = diagram.findEnumConstReference(object, enumConstant);
-                    panel.updateRefs(refs);
-                    panel.getViewer().repaint();
-                });
-                items.add(fItem);
-            }
-        }
-        if (items.size() > 0) {
-            refMenu.addSeparator();
-            JLabel tItem = new JLabel("Enum Constants");
-            tItem.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-            refMenu.add(tItem);
-            for (JMenuItem fItem : items)
-                refMenu.add(fItem);
-        }
-
-        items.clear();
         if (object.getFields().size() > 0) {
             for (Field f : object.getFields()) {
                 if (f.getAccessModifiers().contains(AccessModifier.Private))
@@ -95,23 +111,19 @@ public class ContextMenu {
                 JMenuItem fItem = new JMenuItem(Formatter.getFieldFormatted(f));
                 fItem.addActionListener(e -> {
                     panel.clearSelections();
-                    java.util.List<HashSet<?>> refs = diagram.findFieldReference(object, f);
+                    java.util.List<HashSet<?>> refs = diagram.getFinder().findFieldReference(object, f);
                     panel.updateRefs(refs);
                     panel.getViewer().repaint();
                 });
                 items.add(fItem);
             }
         }
-        if (items.size() > 0) {
-            refMenu.addSeparator();
-            JLabel tItem = new JLabel("Fields");
-            tItem.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-            refMenu.add(tItem);
-            for (JMenuItem fItem : items)
-                refMenu.add(fItem);
-        }
+        if (items.size() > 0)
+            addSection("Fields", menu, items);
+    }
 
-        items.clear();
+    private void createConstructorsFindRefSection(JMenu menu) {
+        java.util.List<JMenuItem> items = new ArrayList<>();
         if (object.getMethods().size() > 0) {
             for (Method m : object.getMethods()) {
                 if (!(m instanceof Constructor))
@@ -122,23 +134,19 @@ public class ContextMenu {
                 JMenuItem mItem = new JMenuItem(methodName);
                 mItem.addActionListener(e -> {
                     panel.clearSelections();
-                    java.util.List<HashSet<?>> refs = diagram.findMethodReference(object, m);
+                    java.util.List<HashSet<?>> refs = diagram.getFinder().findMethodReference(object, m);
                     panel.updateRefs(refs);
                     panel.getViewer().repaint();
                 });
                 items.add(mItem);
             }
         }
-        if (items.size() > 0) {
-            refMenu.addSeparator();
-            JLabel tItem = new JLabel("Constructors");
-            tItem.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-            refMenu.add(tItem);
-            for (JMenuItem fItem : items)
-                refMenu.add(fItem);
-        }
+        if (items.size() > 0)
+            addSection("Constructors", menu, items);
+    }
 
-        items.clear();
+    private void createMethodsFindRefSection(JMenu menu) {
+        java.util.List<JMenuItem> items = new ArrayList<>();
         if (object.getMethods().size() > 0) {
             for (Method m : object.getMethods()) {
                 if (m instanceof Constructor)
@@ -149,34 +157,75 @@ public class ContextMenu {
                 JMenuItem mItem = new JMenuItem(methodName);
                 mItem.addActionListener(e -> {
                     panel.clearSelections();
-                    List<HashSet<?>> refs = diagram.findMethodReference(object, m);
+                    List<HashSet<?>> refs = diagram.getFinder().findMethodReference(object, m);
                     panel.updateRefs(refs);
                     panel.getViewer().repaint();
                 });
                 items.add(mItem);
             }
         }
-        if (items.size() > 0) {
-            refMenu.addSeparator();
-            JLabel tItem = new JLabel("Methods");
-            tItem.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-            refMenu.add(tItem);
-            for (JMenuItem fItem : items)
-                refMenu.add(fItem);
+        if (items.size() > 0)
+            addSection("Methods", menu, items);
+    }
+
+    private void createMethodsGoToSection(JMenu menu) {
+        java.util.List<JMenuItem> items = new ArrayList<>();
+        if (object.getMethods().size() > 0) {
+            for (Method m : object.getMethods()) {
+                if (m instanceof Constructor)
+                    continue;
+                String methodName = Formatter.getMethodSignature(m, true, false);
+                JMenuItem mItem = new JMenuItem(methodName);
+                mItem.addActionListener(e -> {
+                    goToMethodReference(object, m);
+                    panel.getViewer().repaint();
+                });
+                items.add(mItem);
+            }
         }
+        if (items.size() > 0)
+            addSection("Methods", menu, items);
+    }
 
-        // go to
-        JMenu goToMenu = new JMenu("View in Text Editor / IDE");
-        menu.add(goToMenu);
+    private void addSection(String title, JMenu menu, List<JMenuItem> items) {
+        menu.addSeparator();
+        JLabel tItem = new JLabel(title);
+        tItem.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        menu.add(tItem);
+        for (JMenuItem fItem : items)
+            menu.add(fItem);
+    }
 
-        cItem = new JMenuItem("Class " + object.getName());
-        cItem.addActionListener(e -> {
+    private void createRelFindRefSection(JMenu menu) {
+        ArrayList<JMenuItem> items = new ArrayList<>();
+        HashSet<UMLRelationshipType> relTypes = new HashSet<>();
+        for(UMLRelationship rel : object.relationships.values())
+            relTypes.add(rel.type);
+        for(UMLRelationshipType relType : relTypes) {
+            JMenuItem depItem = new JMenuItem(relType+"");
+            depItem.addActionListener(e -> {
+                panel.clearSelections();
+                java.util.List<HashSet<?>> refs = diagram.getFinder().findClassReference(object,
+                        new HashSet<>(List.of(relType)));
+                panel.updateRefs(refs);
+                panel.getViewer().repaint();
+            });
+            items.add(depItem);
+        }
+        addSection("Relationships", menu, items);
+    }
+
+    private void createClassGoToSection(JMenu menu) {
+        JMenuItem item = new JMenuItem("Class " + object.getName());
+        item.addActionListener(e -> {
             goToClassReference(object);
             panel.getViewer().repaint();
         });
-        goToMenu.add(cItem);
+        menu.add(item);
+    }
 
-        items.clear();
+    private void createFieldsGoToSection(JMenu menu) {
+        java.util.List<JMenuItem> items = new ArrayList<>();
         if (object.getFields().size() > 0) {
             for (Field f : object.getFields()) {
                 JMenuItem fItem = new JMenuItem(Formatter.getFieldFormatted(f));
@@ -187,16 +236,12 @@ public class ContextMenu {
                 items.add(fItem);
             }
         }
-        if (items.size() > 0) {
-            goToMenu.addSeparator();
-            JLabel tItem = new JLabel("Fields");
-            tItem.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-            goToMenu.add(tItem);
-            for (JMenuItem fItem : items)
-                goToMenu.add(fItem);
-        }
+        if (items.size() > 0)
+            addSection("Fields", menu, items);
+    }
 
-        items.clear();
+    private void createConstructorsGoToSection(JMenu menu) {
+        java.util.List<JMenuItem> items = new ArrayList<>();
         if (object.getMethods().size() > 0) {
             for (Method m : object.getMethods()) {
                 if (!(m instanceof Constructor))
@@ -210,38 +255,26 @@ public class ContextMenu {
                 items.add(mItem);
             }
         }
-        if (items.size() > 0) {
-            goToMenu.addSeparator();
-            JLabel tItem = new JLabel("Constructors");
-            tItem.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-            goToMenu.add(tItem);
-            for (JMenuItem fItem : items)
-                goToMenu.add(fItem);
-        }
+        if (items.size() > 0)
+            addSection("Constructors", menu, items);
+    }
 
-        items.clear();
-        if (object.getMethods().size() > 0) {
-            for (Method m : object.getMethods()) {
-                if (m instanceof Constructor)
-                    continue;
-                String methodName = Formatter.getMethodSignature(m, true, false);
-                JMenuItem mItem = new JMenuItem(methodName);
-                mItem.addActionListener(e -> {
-                    goToMethodReference(object, m);
+    private void createEnumFindRefSection(JMenu menu) {
+        java.util.List<JMenuItem> items = new ArrayList<>();
+        if (object.getEnumConstants().size() > 0) {
+            for (EnumConstant enumConstant : object.getEnumConstants()) {
+                JMenuItem fItem = new JMenuItem(enumConstant.getName());
+                fItem.addActionListener(e -> {
+                    panel.clearSelections();
+                    java.util.List<HashSet<?>> refs = diagram.getFinder().findEnumConstReference(object, enumConstant);
+                    panel.updateRefs(refs);
                     panel.getViewer().repaint();
                 });
-                items.add(mItem);
+                items.add(fItem);
             }
         }
-        if (items.size() > 0) {
-            goToMenu.addSeparator();
-            JLabel tItem = new JLabel("Methods");
-            tItem.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-            goToMenu.add(tItem);
-            for (JMenuItem fItem : items)
-                goToMenu.add(fItem);
-        }
-        return menu;
+        if (items.size() > 0)
+            addSection("Enum Constants", menu, items);
     }
 
     public void goToClassReference(UMLClass s) {

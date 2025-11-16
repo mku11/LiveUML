@@ -32,6 +32,46 @@ import java.util.HashSet;
 import java.util.List;
 
 public class UMLFinder {
+
+    public List<HashSet<?>> findClassReference(UMLClass s) {
+        return findClassReference(s, null);
+    }
+
+    public List<HashSet<?>> findClassReference(UMLClass s,
+                                               HashSet<UMLRelationshipType> relFilter) {
+        HashSet<Method> methodRefs = new HashSet<>();
+        HashSet<EnumConstant> enumConstRefs = new HashSet<>();
+        HashSet<Field> fieldRefs = new HashSet<>();
+        HashSet<UMLClass> classRefs = new HashSet<>();
+        HashSet<UMLRelationship> relationshipRefs = new HashSet<>();
+
+        List<HashSet<?>> results = new ArrayList<>();
+        results.add(methodRefs);
+        results.add(enumConstRefs);
+        results.add(fieldRefs);
+        results.add(classRefs);
+        results.add(relationshipRefs);
+
+        for (UMLRelationship rel : s.relationships.values()) {
+            if (relFilter == null && s != rel.to)
+                continue;
+            if(relFilter != null && !relFilter.contains(rel.type))
+                continue;
+            methodRefs.addAll(rel.classAccessors);
+            methodRefs.addAll(rel.accessingEnumConsts.keySet());
+            methodRefs.addAll(rel.accessingFields.keySet());
+            methodRefs.addAll(rel.calledBy.keySet());
+            methodRefs.addAll(rel.callTo.keySet());
+            enumConstRefs.addAll(rel.accessedEnumConstsBy.keySet());
+            fieldRefs.addAll(rel.fieldAssociation);
+            fieldRefs.addAll(rel.accessedFieldsBy.keySet());
+            classRefs.add(rel.from);
+            classRefs.add(rel.to);
+            relationshipRefs.add(rel);
+        }
+        return results;
+    }
+
     public List<HashSet<?>> findEnumConstReference(UMLClass s, EnumConstant ec) {
         HashSet<Method> methodRefs = new HashSet<>();
         HashSet<EnumConstant> enumConstRefs = new HashSet<>();
@@ -47,15 +87,15 @@ public class UMLFinder {
         results.add(relationshipRefs);
 
         for (UMLRelationship rel : s.relationships.values()) {
-            if (rel.type == UMLRelationshipType.Dependency) {
-                if (rel.accessedEnumConstsBy.containsKey(ec)) {
-                    Method accessorMethod = rel.accessedEnumConstsBy.get(ec);
-                    methodRefs.add(accessorMethod);
-                    enumConstRefs.add(ec);
-                    classRefs.add(rel.from);
-                    classRefs.add(rel.to);
-                    relationshipRefs.add(rel);
-                }
+            if (s != rel.to)
+                continue;
+            if (rel.accessedEnumConstsBy.containsKey(ec)) {
+                Method accessorMethod = rel.accessedEnumConstsBy.get(ec);
+                methodRefs.add(accessorMethod);
+                enumConstRefs.add(ec);
+                classRefs.add(rel.from);
+                classRefs.add(rel.to);
+                relationshipRefs.add(rel);
             }
         }
         return results;
@@ -74,67 +114,15 @@ public class UMLFinder {
         results.add(relationshipRefs);
 
         for (UMLRelationship rel : s.relationships.values()) {
-            if (rel.type == UMLRelationshipType.Dependency) {
-                if (rel.accessedFieldsBy.containsKey(f)) {
-                    Method accessorMethod = rel.accessedFieldsBy.get(f);
-                    methodRefs.add(accessorMethod);
-                    classRefs.add(rel.from);
-                    classRefs.add(rel.to);
-                    relationshipRefs.add(rel);
-                }
-            }
-        }
-        return results;
-    }
-
-    public List<HashSet<?>> findClassReference(UMLClass s) {
-        HashSet<Method> methodRefs = new HashSet<>();
-        HashSet<EnumConstant> enumConstRefs = new HashSet<>();
-        HashSet<Field> fieldRefs = new HashSet<>();
-        HashSet<UMLClass> classRefs = new HashSet<>();
-        HashSet<UMLRelationship> relationshipRefs = new HashSet<>();
-
-        List<HashSet<?>> results = new ArrayList<>();
-        results.add(methodRefs);
-        results.add(enumConstRefs);
-        results.add(fieldRefs);
-        results.add(classRefs);
-        results.add(relationshipRefs);
-
-        for (UMLRelationship rel : s.relationships.values()) {
-            if (rel.type == UMLRelationshipType.Dependency) {
-                if (s == rel.to) {
-                    methodRefs.addAll(rel.classAccessors);
-                    for (Method method : rel.callTo.keySet()) {
-                        methodRefs.add(method);
-                        methodRefs.add(rel.callTo.get(method));
-                    }
-                    for (Method method : rel.accessingEnumConsts.keySet()) {
-                        methodRefs.add(method);
-                        enumConstRefs.add(rel.accessingEnumConsts.get(method));
-                    }
-
-                    classRefs.add(rel.from);
-                    classRefs.add(rel.to);
-                    relationshipRefs.add(rel);
-                }
-            } else if (rel.type == UMLRelationshipType.Aggregation
-                    || rel.type == UMLRelationshipType.Composition
-                    || rel.type == UMLRelationshipType.Association
-            ) {
-                if (s == rel.to) {
-                    fieldRefs.addAll(rel.fieldAssociation);
-                    classRefs.add(rel.from);
-                    classRefs.add(rel.to);
-                    relationshipRefs.add(rel);
-                }
-            } else if (rel.type == UMLRelationshipType.Realization
-                    || rel.type == UMLRelationshipType.Inheritance) {
-                if (s == rel.to) {
-                    classRefs.add(rel.from);
-                    classRefs.add(rel.to);
-                    relationshipRefs.add(rel);
-                }
+            if (s != rel.to)
+                continue;
+            if (rel.accessedFieldsBy.containsKey(f)) {
+                Method accessorMethod = rel.accessedFieldsBy.get(f);
+                methodRefs.add(accessorMethod);
+                fieldRefs.add(f);
+                classRefs.add(rel.from);
+                classRefs.add(rel.to);
+                relationshipRefs.add(rel);
             }
         }
         return results;
@@ -153,15 +141,15 @@ public class UMLFinder {
         results.add(relationshipRefs);
 
         for (UMLRelationship rel : s.relationships.values()) {
-            if (rel.type == UMLRelationshipType.Dependency) {
-                if (rel.calledBy.containsKey(m)) {
-                    Method callerMethod = rel.calledBy.get(m);
-                    methodRefs.add(callerMethod);
-                    methodRefs.add(m);
-                    classRefs.add(rel.from);
-                    classRefs.add(rel.to);
-                    relationshipRefs.add(rel);
-                }
+            if (s != rel.to)
+                continue;
+            if (rel.calledBy.containsKey(m)) {
+                Method callerMethod = rel.calledBy.get(m);
+                methodRefs.add(callerMethod);
+                methodRefs.add(m);
+                classRefs.add(rel.from);
+                classRefs.add(rel.to);
+                relationshipRefs.add(rel);
             }
         }
         return results;

@@ -25,5 +25,5 @@ package com.mku.liveuml.model.diagram;
 
 // TODO: model the relationship types with a hierarchy instead if/when importer provides an edge factory setter
 public enum UMLRelationshipType {
-    Association, Inheritance, Realization, Dependency, Aggregation, Composition, Self
+    Association, Inheritance, Realization, Dependency, Aggregation, Composition
 }
