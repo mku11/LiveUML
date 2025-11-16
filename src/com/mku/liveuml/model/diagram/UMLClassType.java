@@ -21,37 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package com.mku.liveuml.entities;
+package com.mku.liveuml.model.diagram;
 
-public class EnumConstant {
-    private String name;
-    private int num;
-    private String owner;
-
-    public String getName() {
-        return name;
-    }
-
-    public int getNum() {
-        return num;
-    }
-
-    public String getOwner() {
-        return owner;
-    }
-
-    public void setOwner(String owner) {
-        this.owner = owner;
-    }
-
-    public EnumConstant(String name, int num) {
-        this.name = name;
-        this.num = num;
-    }
-
-    @Override
-    public String toString() {
-        return name;
-    }
-
+public enum UMLClassType {
+    Class, Interface, Enumeration
 }

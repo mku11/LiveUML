@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package com.mku.liveuml.model;
+package com.mku.liveuml.model.diagram;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
@@ -40,11 +40,10 @@ import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclar
 import com.github.javaparser.resolution.types.ResolvedArrayType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.google.common.base.Strings;
-import com.mku.liveuml.entities.Enumeration;
+import com.mku.liveuml.model.entities.*;
 import com.mku.liveuml.file.DirExplorer;
-import com.mku.liveuml.entities.Parameter;
-import com.mku.liveuml.entities.*;
-import com.mku.liveuml.entities.Class;
+import com.mku.liveuml.model.entities.Class;
+import com.mku.liveuml.model.entities.Enumeration;
 
 import java.io.File;
 import java.util.*;
@@ -122,7 +121,7 @@ public class UMLParser {
         for (Method method : fieldOwner.getMethods()) {
             // check public constructor param
             if (method.getName().equals(fieldOwner.getName()) && !method.getAccessModifiers().contains(AccessModifier.Private)) {
-                for (Parameter param : method.getParameters()) {
+                for (com.mku.liveuml.model.entities.Parameter param : method.getParameters()) {
                     if (param.getTypeName() != null && param.getTypeName().equals(fieldType.getName())) {
                         return true;
                     }
@@ -131,7 +130,7 @@ public class UMLParser {
             // check public setter
             if (method.getName().toLowerCase().startsWith(("set" + field.getName()).toLowerCase())
                     && !method.getAccessModifiers().contains(AccessModifier.Private)) {
-                for (Parameter param : method.getParameters()) {
+                for (com.mku.liveuml.model.entities.Parameter param : method.getParameters()) {
                     if (param.getTypeName() != null && param.getTypeName().equals(fieldType.getName())) {
                         return true;
                     }
@@ -706,7 +705,7 @@ public class UMLParser {
     private UMLClass getOrCreateEnum(String packageName, String name, ArrayList<String> parents,
                                      String filePath, int line) {
         UMLClass obj;
-        String fullName = getFullName(packageName, name, parents);
+        String fullName = UMLClass.getFullName(packageName, name, parents);
         if (objects.containsKey(fullName)) {
             obj = objects.get(fullName);
         } else {
@@ -720,21 +719,10 @@ public class UMLParser {
         return obj;
     }
 
-    private String getFullName(String packageName, String name, ArrayList<String> parents) {
-        String fullName = "";
-        String parentsName = parents == null ? "" : String.join(".", parents);
-        if(packageName != null && packageName.length() > 0)
-            fullName = packageName;
-        if(parentsName.length() > 0)
-            fullName += "." + parentsName;
-        fullName += "." + name;
-        return fullName;
-    }
-
     private UMLClass getOrCreateObject(String packageName, String name, ArrayList<String> parents,
                                        boolean isInterface, String filePath, int line) {
         UMLClass obj;
-        String fullName = getFullName(packageName, name, parents);
+        String fullName = UMLClass.getFullName(packageName, name, parents);
         if (objects.containsKey(fullName)) {
             obj = objects.get(fullName);
         } else {
@@ -926,10 +914,10 @@ public class UMLParser {
             } catch (UnsolvedSymbolException ex) {
                 addUnresolvedSymbol(ex.getName(), obj);
             }
-            List<Parameter> parameters = new ArrayList<>();
+            List<com.mku.liveuml.model.entities.Parameter> parameters = new ArrayList<>();
             for (com.github.javaparser.ast.body.Parameter param : params) {
                 String paramName = param.getNameAsString();
-                Parameter parameter = new Parameter(paramName);
+                com.mku.liveuml.model.entities.Parameter parameter = new com.mku.liveuml.model.entities.Parameter(paramName);
                 try {
                     parseParameterType(parameter, param);
                 } catch (UnsolvedSymbolException ex) {
@@ -947,7 +935,7 @@ public class UMLParser {
         return objMethods;
     }
 
-    private void createParameterTypeRelationship(UMLClass obj, Method method, Parameter parameter) {
+    private void createParameterTypeRelationship(UMLClass obj, Method method, com.mku.liveuml.model.entities.Parameter parameter) {
         UMLRelationshipType type = UMLRelationshipType.Dependency;
         UMLClass refClass = objects.getOrDefault(parameter.getTypePackageName() + "." + parameter.getTypeName(), null);
         if (refClass == null || refClass == obj)
@@ -967,7 +955,7 @@ public class UMLParser {
         rel.addClassAccess(method);
     }
 
-    private void parseParameterType(Parameter parameter, com.github.javaparser.ast.body.Parameter param) {
+    private void parseParameterType(com.mku.liveuml.model.entities.Parameter parameter, com.github.javaparser.ast.body.Parameter param) {
         ResolvedType type = param.resolve().getType();
         if (type.isReferenceType()) {
             ResolvedReferenceTypeDeclaration parameterTypeDecl = type.asReferenceType().getTypeDeclaration().get();
@@ -1083,10 +1071,10 @@ public class UMLParser {
             constructor.setModifiers(parseMethodModifiers(decl));
             constructor.setAccessModifiers(parseMethodAccessModifiers(decl));
             NodeList<com.github.javaparser.ast.body.Parameter> params = decl.getParameters();
-            List<Parameter> parameters = new ArrayList<>();
+            List<com.mku.liveuml.model.entities.Parameter> parameters = new ArrayList<>();
             for (com.github.javaparser.ast.body.Parameter param : params) {
                 String paramName = param.getNameAsString();
-                Parameter parameter = new Parameter(paramName);
+                com.mku.liveuml.model.entities.Parameter parameter = new com.mku.liveuml.model.entities.Parameter(paramName);
                 try {
                     parseParameterType(parameter, param);
                 } catch (UnsolvedSymbolException ex) {

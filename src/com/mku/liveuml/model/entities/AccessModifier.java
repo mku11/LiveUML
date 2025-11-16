@@ -21,9 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package com.mku.liveuml.model;
+package com.mku.liveuml.model.entities;
 
-// TODO: model the relationship types with a hierarchy instead if/when importer provides an edge factory setter
-public enum UMLRelationshipType {
-    Association, Inheritance, Realization, Dependency, Aggregation, Composition, Self
+public enum AccessModifier {
+    Default, Public, Private, Protected
 }

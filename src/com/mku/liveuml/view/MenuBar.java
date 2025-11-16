@@ -54,43 +54,43 @@ public class MenuBar extends JMenuBar {
 
         JMenuItem item = new JMenuItem("New");
         item.setIcon(Icons.getIcon("/icons/menu/import_file_small.png"));
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK));
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK));
         menu.add(item);
         items.put(Action.New, item);
 
         item = new JMenuItem("Open");
         item.setIcon(Icons.getIcon("/icons/menu/folder_menu_small.png"));
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
         menu.add(item);
         items.put(Action.Open, item);
 
         item = new JMenuItem("Save");
         item.setIcon(Icons.getIcon("/icons/menu/save_small.png"));
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
         menu.add(item);
         items.put(Action.Save, item);
 
         item = new JMenuItem("Save As");
         item.setIcon(Icons.getIcon("/icons/menu/save_small.png"));
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK | InputEvent.SHIFT_DOWN_MASK));
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
         menu.add(item);
         items.put(Action.SaveAs, item);
 
         item = new JMenuItem("Export Image");
         item.setIcon(Icons.getIcon("/icons/menu/export_file_small.png"));
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK));
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK));
         menu.add(item);
         items.put(Action.ExportImage, item);
 
         item = new JMenuItem("Close");
         item.setIcon(Icons.getIcon("/icons/menu/cancel_small.png"));
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK | InputEvent.SHIFT_DOWN_MASK));
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
         menu.add(item);
         items.put(Action.Close, item);
 
         item = new JMenuItem("Exit");
         item.setIcon(Icons.getIcon("/icons/menu/exit_small.png"));
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK));
         menu.add(item);
         items.put(Action.Exit, item);
 
@@ -99,7 +99,7 @@ public class MenuBar extends JMenuBar {
 
         item = new JMenuItem("Expand All");
         item.setIcon(Icons.getIcon("/icons/menu/sort_small.png"));
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK | InputEvent.SHIFT_DOWN_MASK));
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
         menu.add(item);
         items.put(Action.ToggleExpand, item);
 
@@ -108,19 +108,19 @@ public class MenuBar extends JMenuBar {
 
         item = new JMenuItem("Import Source");
         item.setIcon(Icons.getIcon("/icons/menu/import_folder_small.png"));
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_MASK));
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK));
         menu.add(item);
         items.put(Action.ImportSource, item);
 
         item = new JMenuItem("List Sources");
         item.setIcon(Icons.getIcon("/icons/menu/text_file_small.png"));
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK));
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK));
         menu.add(item);
         items.put(Action.ListSources, item);
 
         item = new JMenuItem("Refresh Sources");
         item.setIcon(Icons.getIcon("/icons/menu/refresh_small.png"));
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK));
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK));
         menu.add(item);
         items.put(Action.RefreshSources, item);
 
@@ -129,7 +129,7 @@ public class MenuBar extends JMenuBar {
 
         item = new JMenuItem("Choose Text Editor / IDE");
         item.setIcon(Icons.getIcon("/icons/menu/settings_small.png"));
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_MASK));
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
         menu.add(item);
         items.put(Action.ChooseViewer, item);
 
@@ -138,7 +138,7 @@ public class MenuBar extends JMenuBar {
 
         item = new JMenuItem("Help");
         item.setIcon(Icons.getIcon("/icons/menu/file_properties_small.png"));
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_MASK));
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK));
         menu.add(item);
         items.put(Action.Help, item);
 

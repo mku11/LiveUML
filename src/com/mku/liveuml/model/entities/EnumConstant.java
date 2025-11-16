@@ -21,33 +21,37 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package com.mku.liveuml.model;
+package com.mku.liveuml.model.entities;
 
-import com.mku.liveuml.entities.Class;
-import com.mku.liveuml.entities.Enumeration;
-import com.mku.liveuml.entities.Interface;
+public class EnumConstant {
+    private String name;
+    private int num;
+    private String owner;
 
-public class UMLClassFactory {
-    public static UMLClass create(String name) {
-        String[] parts = name.split(":");
-        UMLClassType type = UMLClassType.valueOf(parts[0]);
-        String packageName = parts[1].substring(0, parts[1].lastIndexOf("."));
-        String className = parts[1].substring(parts[1].lastIndexOf(".") + 1);
-        UMLClass obj = null;
-        switch (type) {
-            case Class:
-                obj = new Class(className);
-                break;
-            case Interface:
-                obj = new Interface(className);
-                break;
-            case Enumeration:
-                obj = new Enumeration(className);
-                break;
-        }
-        if (obj == null)
-            throw new RuntimeException("Unknown uml type");
-        obj.setPackageName(packageName);
-        return obj;
+    public String getName() {
+        return name;
     }
+
+    public int getNum() {
+        return num;
+    }
+
+    public String getOwner() {
+        return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
+    public EnumConstant(String name, int num) {
+        this.name = name;
+        this.num = num;
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
+
 }

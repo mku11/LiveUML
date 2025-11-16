@@ -21,11 +21,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package com.mku.liveuml.model;
+package com.mku.liveuml.model.diagram;
 
-import com.mku.liveuml.entities.EnumConstant;
-import com.mku.liveuml.entities.Field;
-import com.mku.liveuml.entities.Method;
+import com.mku.liveuml.model.entities.EnumConstant;
+import com.mku.liveuml.model.entities.Field;
+import com.mku.liveuml.model.entities.Method;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -129,15 +129,9 @@ public abstract class UMLClass {
 
     @Override
     public String toString() {
-        String fullName = "";
-        String parentsName = parents == null ? "" : String.join(".", parents);
-        if(packageName != null && packageName.length() > 0)
-            fullName = packageName;
-        if(parentsName.length() > 0)
-            fullName += "." + parentsName;
-        fullName += "." + name;
-        return fullName;
+        return getFullName(this.packageName, this.name, this.parents);
     }
+
     public void setParents(List<String> parents) {
         this.parents.clear();
         this.parents.addAll(parents);
@@ -153,5 +147,17 @@ public abstract class UMLClass {
 
     public List<String> getParents() {
         return parents;
+    }
+
+    public static String getFullName(String packageName, String name, List<String> parents) {
+        String fullName = "";
+        String parentsName = parents == null ? "" : String.join("$", parents);
+        if(packageName != null && packageName.length() > 0)
+            fullName = packageName;
+        if(parentsName.length() > 0)
+            fullName += "." + parentsName + "$" + name;
+        else
+            fullName += "." + name;
+        return fullName;
     }
 }

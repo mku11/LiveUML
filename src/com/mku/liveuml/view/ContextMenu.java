@@ -24,10 +24,10 @@ SOFTWARE.
 
 package com.mku.liveuml.view;
 
-import com.mku.liveuml.entities.*;
 import com.mku.liveuml.format.Formatter;
-import com.mku.liveuml.model.UMLClass;
-import com.mku.liveuml.model.UMLDiagram;
+import com.mku.liveuml.model.diagram.UMLClass;
+import com.mku.liveuml.model.diagram.UMLDiagram;
+import com.mku.liveuml.model.entities.*;
 import com.mku.liveuml.utils.FileUtils;
 
 import javax.swing.*;

@@ -23,11 +23,11 @@ SOFTWARE.
 */
 package com.mku.liveuml.format;
 
-import com.mku.liveuml.entities.*;
-import com.mku.liveuml.model.UMLDiagram;
-import com.mku.liveuml.model.UMLParser;
-import com.mku.liveuml.model.UMLRelationship;
-import com.mku.liveuml.model.UMLClass;
+import com.mku.liveuml.model.diagram.UMLDiagram;
+import com.mku.liveuml.model.diagram.UMLParser;
+import com.mku.liveuml.model.diagram.UMLRelationship;
+import com.mku.liveuml.model.diagram.UMLClass;
+import com.mku.liveuml.model.entities.*;
 
 import java.util.HashSet;
 import java.util.Map;

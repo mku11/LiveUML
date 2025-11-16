@@ -23,7 +23,7 @@ SOFTWARE.
 */
 package com.mku.liveuml.view;
 
-import com.mku.liveuml.model.UMLClass;
+import com.mku.liveuml.model.diagram.UMLClass;
 
 import javax.swing.*;
 import java.awt.*;

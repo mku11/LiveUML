@@ -24,12 +24,12 @@ SOFTWARE.
 package com.mku.liveuml.utils;
 
 import com.google.gson.Gson;
-import com.mku.liveuml.entities.EnumConstant;
-import com.mku.liveuml.entities.Field;
-import com.mku.liveuml.entities.Method;
-import com.mku.liveuml.model.UMLDiagram;
-import com.mku.liveuml.model.UMLClass;
-import com.mku.liveuml.model.UMLRelationship;
+import com.mku.liveuml.model.entities.EnumConstant;
+import com.mku.liveuml.model.entities.Field;
+import com.mku.liveuml.model.entities.Method;
+import com.mku.liveuml.model.diagram.UMLDiagram;
+import com.mku.liveuml.model.diagram.UMLClass;
+import com.mku.liveuml.model.diagram.UMLRelationship;
 import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.AttributeType;
 import org.jgrapht.nio.DefaultAttribute;

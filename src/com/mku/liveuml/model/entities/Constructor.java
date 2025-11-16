@@ -21,13 +21,16 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package com.mku.liveuml.entities;
+package com.mku.liveuml.model.entities;
 
-import com.mku.liveuml.model.UMLClass;
+public class Constructor extends Method {
 
-public class Enumeration extends UMLClass {
-
-    public Enumeration(String name) {
+    public Constructor(String name) {
         super(name);
+    }
+
+    @Override
+    public String toString() {
+        return getName();
     }
 }

@@ -23,12 +23,14 @@ SOFTWARE.
 */
 package com.mku.liveuml.view;
 
-import com.mku.liveuml.entities.*;
 import com.mku.liveuml.format.Formatter;
-import com.mku.liveuml.model.UMLClass;
-import com.mku.liveuml.model.UMLDiagram;
-import com.mku.liveuml.model.UMLRelationship;
-import com.mku.liveuml.model.UMLRelationshipType;
+import com.mku.liveuml.model.diagram.UMLClass;
+import com.mku.liveuml.model.diagram.UMLDiagram;
+import com.mku.liveuml.model.diagram.UMLRelationship;
+import com.mku.liveuml.model.diagram.UMLRelationshipType;
+import com.mku.liveuml.model.entities.EnumConstant;
+import com.mku.liveuml.model.entities.Field;
+import com.mku.liveuml.model.entities.Method;
 import org.jgrapht.Graph;
 import org.jungrapht.visualization.*;
 import org.jungrapht.visualization.control.GraphMouseListener;
@@ -482,6 +484,5 @@ public class GraphPanel extends JPanel {
     public void removeOnGetVertexLabel() {
         this.onGetVertexLabel = null;
     }
-
 
 }

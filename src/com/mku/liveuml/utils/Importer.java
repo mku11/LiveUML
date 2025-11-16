@@ -25,12 +25,12 @@ package com.mku.liveuml.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.internal.StringMap;
-import com.mku.liveuml.entities.*;
-import com.mku.liveuml.model.UMLDiagram;
-import com.mku.liveuml.model.UMLClass;
-import com.mku.liveuml.model.UMLClassFactory;
-import com.mku.liveuml.model.UMLRelationship;
-import com.mku.liveuml.model.UMLRelationshipType;
+import com.mku.liveuml.model.diagram.UMLDiagram;
+import com.mku.liveuml.model.diagram.UMLClass;
+import com.mku.liveuml.model.diagram.UMLClassFactory;
+import com.mku.liveuml.model.diagram.UMLRelationship;
+import com.mku.liveuml.model.diagram.UMLRelationshipType;
+import com.mku.liveuml.model.entities.*;
 import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.graphml.GraphMLImporter;
 
