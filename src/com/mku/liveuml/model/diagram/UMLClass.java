@@ -29,24 +29,30 @@ import com.mku.liveuml.model.entities.Method;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 
 public abstract class UMLClass {
-    private String fileSource;
-    private String filePath;
     private String name;
     private String packageName;
+    private final List<String> parents = new ArrayList<>();
+    private final HashMap<String, Method> methods = new HashMap<>();
+    private final HashMap<String, Field> fields = new HashMap<>();
+    private final HashMap<String, EnumConstant> enumConstants = new HashMap<>();
+    private final HashMap<String, UMLRelationship> relationships = new HashMap<>();
+
     private boolean compact;
-    private List<Method> methods = new LinkedList<>();
-    private List<Field> fields = new LinkedList<>();
-    private List<EnumConstant> enumConstants = new LinkedList<>();
+    private String fileSource;
+    private String filePath;
     private int line;
-    private List<String> parents = new ArrayList<>();
 
     public void addMethods(List<Method> methods) {
-        this.methods.addAll(methods);
+        for (Method method : methods) {
+            if (this.methods.containsKey(method.getSignature()))
+                continue;
+            this.methods.put(method.getSignature(), method);
+        }
     }
+
     public String getFilePath() {
         return filePath;
     }
@@ -76,29 +82,34 @@ public abstract class UMLClass {
     }
 
     public List<Method> getMethods() {
-        return methods;
+        return new ArrayList<>(methods.values());
     }
 
     public void setMethods(List<Method> methods) {
-        this.methods = methods;
+        this.methods.clear();
+        for (Method method : methods) {
+            this.methods.put(method.getSignature(), method);
+        }
     }
 
     public List<Field> getFields() {
-        return fields;
+        return new ArrayList<>(fields.values());
     }
 
     public void setFields(List<Field> fields) {
         this.fields.clear();
-        this.fields.addAll(fields);
+        for (Field field : fields)
+            this.fields.put(field.getName(), field);
     }
 
     public List<EnumConstant> getEnumConstants() {
-        return enumConstants;
+        return new ArrayList<>(enumConstants.values());
     }
 
     public void setEnumConstants(List<EnumConstant> enums) {
         this.enumConstants.clear();
-        this.enumConstants.addAll(enums);
+        for (EnumConstant enumConst : enums)
+            this.enumConstants.put(enumConst.getName(), enumConst);
     }
 
     public int getLine() {
@@ -110,10 +121,10 @@ public abstract class UMLClass {
     }
 
     public void setRelationships(HashMap<String, UMLRelationship> relationships) {
-        this.relationships = relationships;
+        this.relationships.clear();
+        this.relationships.putAll(relationships);
     }
 
-    public HashMap<String, UMLRelationship> relationships = new HashMap<>();
 
     protected UMLClass(String name) {
         this.name = name;
@@ -152,12 +163,34 @@ public abstract class UMLClass {
     public static String getFullName(String packageName, String name, List<String> parents) {
         String fullName = "";
         String parentsName = parents == null ? "" : String.join("$", parents);
-        if(packageName != null && packageName.length() > 0)
+        if (packageName != null && packageName.length() > 0)
             fullName = packageName;
-        if(parentsName.length() > 0)
+        if (parentsName.length() > 0)
             fullName += "." + parentsName + "$" + name;
         else
             fullName += "." + name;
         return fullName;
+    }
+
+    public static String getParentFullName(String packageName, List<String> parents) {
+        if (parents == null || parents.size() == 0)
+            return null;
+        return UMLClass.getFullName(packageName, parents.get(parents.size() - 1), parents.subList(0, parents.size() - 1));
+    }
+
+    public void addEnumConstants(List<EnumConstant> enums) {
+        for (EnumConstant enumConst : enums) {
+            if (this.enumConstants.containsKey(enumConst.getName()))
+                continue;
+            this.enumConstants.put(enumConst.getName(), enumConst);
+        }
+    }
+
+    public void addFields(List<Field> fields) {
+        for (Field field : fields) {
+            if (this.fields.containsKey(field.getName()))
+                continue;
+            this.fields.put(field.getName(), field);
+        }
     }
 }

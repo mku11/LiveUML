@@ -23,6 +23,7 @@ SOFTWARE.
 */
 package com.mku.liveuml.view;
 
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 
 public class Shapes {
@@ -52,6 +53,18 @@ public class Shapes {
             moveTo(0, 0);
             lineTo(-width / 2, -height / 2);
             lineTo(-width / 2, height / 2);
+            closePath();
+        }
+    }
+
+    public static class CircleCross extends Path2D.Double {
+        public CircleCross(double width, double height) {
+            append(new Ellipse2D.Double(-width/2, -height/4, width/2, height/2), true);
+            moveTo(-width/4, -height / 4);
+            lineTo(-width/4, height / 4);
+            closePath();
+            moveTo(-width / 2, 0);
+            lineTo(width / 2, 0);
             closePath();
         }
     }

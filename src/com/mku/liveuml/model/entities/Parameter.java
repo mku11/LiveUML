@@ -23,6 +23,9 @@ SOFTWARE.
 */
 package com.mku.liveuml.model.entities;
 
+import com.mku.liveuml.model.diagram.UMLClass;
+import org.apache.commons.lang3.NotImplementedException;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -33,6 +36,13 @@ public class Parameter {
     private String typeName;
     private String typePackageName;
     private boolean isArray;
+    private boolean typeVariable;
+
+    public void setRefType(UMLClass refType) {
+        this.refType = refType;
+    }
+
+    private UMLClass refType;
 
     public Parameter(String name) {
         this.name = name;
@@ -97,4 +107,16 @@ public class Parameter {
     }
 
     public List<Modifier> modifiers;
+
+    public UMLClass getRefType() {
+        return refType;
+    }
+
+    public void setTypeVariable(boolean value) {
+        this.typeVariable = value;
+    }
+
+    public boolean isTypeVariable() {
+        return typeVariable;
+    }
 }

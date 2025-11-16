@@ -39,6 +39,9 @@ import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.types.ResolvedArrayType;
 import com.github.javaparser.resolution.types.ResolvedType;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserEnumDeclaration;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserInterfaceDeclaration;
 import com.google.common.base.Strings;
 import com.mku.liveuml.model.entities.*;
 import com.mku.liveuml.file.DirExplorer;
@@ -51,9 +54,11 @@ import java.util.function.Consumer;
 
 public class UMLParser {
     public HashMap<String, UMLClass> objects = new HashMap<>();
+
     public HashMap<String, SymbolInformation> getUnresolvedSymbols() {
         return unresolvedSymbols;
     }
+
     private final HashMap<String, SymbolInformation> unresolvedSymbols = new HashMap<>();
     private Consumer<String> notifyProgress;
 
@@ -70,16 +75,19 @@ public class UMLParser {
         return objects.getOrDefault(owner, null);
     }
 
-    public List<UMLClass> getClasses(File projectDir) {
+    public HashSet<UMLClass> getClasses(File projectDir) {
         HashSet<UMLClass> classes = new HashSet<>();
         getObjects(classes, projectDir);
+        return classes;
+    }
+
+    public void getClassesProperties(File projectDir, HashSet<UMLClass> classes) {
         getObjectsAttrs(classes, projectDir);
         getMethodCalls(classes, projectDir);
         resolveTypes(classes);
-        for(UMLClass obj : classes) {
+        for (UMLClass obj : classes) {
             obj.setFileSource(projectDir.getAbsolutePath());
         }
-        return new ArrayList<>(classes);
     }
 
     private void resolveTypes(HashSet<UMLClass> list) {
@@ -103,15 +111,15 @@ public class UMLParser {
             relType = UMLRelationshipType.Composition;
         UMLRelationship rel = new UMLRelationship(fieldOwner, fieldType, relType);
         String key = rel.toString();
-        if (fieldOwner.relationships.containsKey(key)) {
-            rel = fieldOwner.relationships.get(key);
+        if (fieldOwner.getRelationships().containsKey(key)) {
+            rel = fieldOwner.getRelationships().get(key);
         } else {
-            fieldOwner.relationships.put(key, rel);
+            fieldOwner.getRelationships().put(key, rel);
         }
-        if (fieldType.relationships.containsKey(key)) {
-            rel = fieldType.relationships.get(key);
+        if (fieldType.getRelationships().containsKey(key)) {
+            rel = fieldType.getRelationships().get(key);
         } else {
-            fieldType.relationships.put(key, rel);
+            fieldType.getRelationships().put(key, rel);
         }
         rel.addFieldAssociation(field);
     }
@@ -144,7 +152,7 @@ public class UMLParser {
         new DirExplorer((level, path, file) -> path.endsWith(".java"), (level, path, file) -> {
             System.out.println(path);
             System.out.println(Strings.repeat("=", path.length()));
-            if(notifyProgress != null)
+            if (notifyProgress != null)
                 notifyProgress.accept(file.getName());
             try {
                 new VoidVisitorAdapter<UMLClass>() {
@@ -269,15 +277,15 @@ public class UMLParser {
         UMLRelationshipType type = UMLRelationshipType.Dependency;
         UMLRelationship rel = new UMLRelationship(caller, callee, type);
         String key = rel.toString();
-        if (caller.relationships.containsKey(key)) {
-            rel = caller.relationships.get(key);
+        if (caller.getRelationships().containsKey(key)) {
+            rel = caller.getRelationships().get(key);
         } else {
-            caller.relationships.put(key, rel);
+            caller.getRelationships().put(key, rel);
         }
-        if (callee.relationships.containsKey(key)) {
-            rel = callee.relationships.get(key);
+        if (callee.getRelationships().containsKey(key)) {
+            rel = callee.getRelationships().get(key);
         } else {
-            callee.relationships.put(key, rel);
+            callee.getRelationships().put(key, rel);
         }
         rel.addMethodCall(callerMethod, constructor);
     }
@@ -286,15 +294,15 @@ public class UMLParser {
         UMLRelationshipType type = UMLRelationshipType.Dependency;
         UMLRelationship rel = new UMLRelationship(caller, callee, type);
         String key = rel.toString();
-        if (caller.relationships.containsKey(key)) {
-            rel = caller.relationships.get(key);
+        if (caller.getRelationships().containsKey(key)) {
+            rel = caller.getRelationships().get(key);
         } else {
-            caller.relationships.put(key, rel);
+            caller.getRelationships().put(key, rel);
         }
-        if (callee.relationships.containsKey(key)) {
-            rel = callee.relationships.get(key);
+        if (callee.getRelationships().containsKey(key)) {
+            rel = callee.getRelationships().get(key);
         } else {
-            callee.relationships.put(key, rel);
+            callee.getRelationships().put(key, rel);
         }
         rel.addClassAccess(callerMethod);
     }
@@ -424,15 +432,15 @@ public class UMLParser {
         UMLRelationshipType type = UMLRelationshipType.Dependency;
         UMLRelationship rel = new UMLRelationship(caller, callee, type);
         String key = rel.toString();
-        if (caller.relationships.containsKey(key)) {
-            rel = caller.relationships.get(key);
+        if (caller.getRelationships().containsKey(key)) {
+            rel = caller.getRelationships().get(key);
         } else {
-            caller.relationships.put(key, rel);
+            caller.getRelationships().put(key, rel);
         }
-        if (callee.relationships.containsKey(key)) {
-            rel = callee.relationships.get(key);
+        if (callee.getRelationships().containsKey(key)) {
+            rel = callee.getRelationships().get(key);
         } else {
-            callee.relationships.put(key, rel);
+            callee.getRelationships().put(key, rel);
         }
         rel.addMethodCall(callerMethod, calleeMethod);
     }
@@ -528,15 +536,15 @@ public class UMLParser {
         UMLRelationshipType type = UMLRelationshipType.Dependency;
         UMLRelationship rel = new UMLRelationship(accessor, accessed, type);
         String key = rel.toString();
-        if (accessor.relationships.containsKey(key)) {
-            rel = accessor.relationships.get(key);
+        if (accessor.getRelationships().containsKey(key)) {
+            rel = accessor.getRelationships().get(key);
         } else {
-            accessor.relationships.put(key, rel);
+            accessor.getRelationships().put(key, rel);
         }
-        if (accessed.relationships.containsKey(key)) {
-            rel = accessed.relationships.get(key);
+        if (accessed.getRelationships().containsKey(key)) {
+            rel = accessed.getRelationships().get(key);
         } else {
-            accessed.relationships.put(key, rel);
+            accessed.getRelationships().put(key, rel);
         }
         rel.addFieldAccess(accessorMethod, accessedField);
     }
@@ -546,15 +554,15 @@ public class UMLParser {
         UMLRelationshipType type = UMLRelationshipType.Dependency;
         UMLRelationship rel = new UMLRelationship(accessor, accessed, type);
         String key = rel.toString();
-        if (accessor.relationships.containsKey(key)) {
-            rel = accessor.relationships.get(key);
+        if (accessor.getRelationships().containsKey(key)) {
+            rel = accessor.getRelationships().get(key);
         } else {
-            accessor.relationships.put(key, rel);
+            accessor.getRelationships().put(key, rel);
         }
-        if (accessed.relationships.containsKey(key)) {
-            rel = accessed.relationships.get(key);
+        if (accessed.getRelationships().containsKey(key)) {
+            rel = accessed.getRelationships().get(key);
         } else {
-            accessed.relationships.put(key, rel);
+            accessed.getRelationships().put(key, rel);
         }
         rel.addEnumConstAccess(accessorMethod, accessedEnumConst);
     }
@@ -564,7 +572,7 @@ public class UMLParser {
         new DirExplorer((level, path, file) -> path.endsWith(".java"), (level, path, file) -> {
             System.out.println(path);
             System.out.println(Strings.repeat("=", path.length()));
-            if(notifyProgress != null)
+            if (notifyProgress != null)
                 notifyProgress.accept(file.getName());
             try {
                 new VoidVisitorAdapter<UMLClass>() {
@@ -598,11 +606,12 @@ public class UMLParser {
         }).explore(projectDir);
     }
 
+    // TODO: remove is this redundant?
     private void getObjectsAttrs(HashSet<UMLClass> list, File projectDir) {
         new DirExplorer((level, path, file) -> path.endsWith(".java"), (level, path, file) -> {
             System.out.println(path);
             System.out.println(Strings.repeat("=", path.length()));
-            if(notifyProgress != null)
+            if (notifyProgress != null)
                 notifyProgress.accept(file.getName());
             try {
                 new VoidVisitorAdapter<UMLClass>() {
@@ -648,8 +657,8 @@ public class UMLParser {
             }
         }
         obj.setLine(n.getBegin().get().line);
-        obj.setEnumConstants(parseEnums(n, obj));
-        obj.setFields(parseFields(n, obj));
+        obj.addEnumConstants(parseEnums(n, obj));
+        obj.addFields(parseFields(n, obj));
         obj.addMethods(parseConstructors(obj, n));
         obj.addMethods(parseMethods(obj, n));
         objects.put(obj.getPackageName() + "." + obj.getName(), obj);
@@ -668,20 +677,20 @@ public class UMLParser {
 
         if (superClassObj != null) {
             UMLRelationship rel = getSuperClassRel(obj, superClassObj);
-            obj.relationships.put(rel.toString(), rel);
-            superClassObj.relationships.put(rel.toString(), rel);
+            obj.getRelationships().put(rel.toString(), rel);
+            superClassObj.getRelationships().put(rel.toString(), rel);
         }
 
         List<Interface> interfacesImplemented = getImplementedInterfaces(obj, n, filePath);
         if (interfacesImplemented != null) {
             for (Interface interfaceImplementedObj : interfacesImplemented) {
                 UMLRelationship rel = getInterfaceRel(obj, interfaceImplementedObj);
-                obj.relationships.put(rel.toString(), rel);
-                interfaceImplementedObj.relationships.put(rel.toString(), rel);
+                obj.getRelationships().put(rel.toString(), rel);
+                interfaceImplementedObj.getRelationships().put(rel.toString(), rel);
             }
         }
-
-        obj.setFields(parseFields(n, obj));
+        obj.setLine(n.getBegin().get().line);
+        obj.addFields(parseFields(n, obj));
         obj.addMethods(parseConstructors(obj, n));
         obj.addMethods(parseMethods(obj, n));
         return obj;
@@ -717,6 +726,14 @@ public class UMLParser {
         obj.setFilePath(filePath);
         obj.setLine(line);
         obj.setPackageName(packageName);
+
+        String parentFullName = UMLClass.getParentFullName(packageName, parents);
+        if(objects.containsKey(parentFullName)){
+            UMLClass parentClass = objects.get(parentFullName);
+            UMLRelationship rel = getNestedClassRel(obj, parentClass);
+            obj.getRelationships().put(rel.toString(), rel);
+            parentClass.getRelationships().put(rel.toString(), rel);
+        }
         return obj;
     }
 
@@ -741,6 +758,10 @@ public class UMLParser {
         obj.setLine(line);
         obj.setPackageName(packageName);
         return obj;
+    }
+
+    private UMLRelationship getNestedClassRel(UMLClass derivedClass, UMLClass parentClass) {
+        return new UMLRelationship(derivedClass, parentClass, UMLRelationshipType.Nested);
     }
 
     private UMLRelationship getSuperClassRel(UMLClass derivedClass, UMLClass superClass) {
@@ -825,10 +846,10 @@ public class UMLParser {
         ArrayList<String> parents = new ArrayList<>();
         while (node.hasParentNode()) {
             node = node.getParentNode().get();
-            if(node instanceof ClassOrInterfaceDeclaration) {
+            if (node instanceof ClassOrInterfaceDeclaration) {
                 // nested inside a class
                 String parentName = ((ClassOrInterfaceDeclaration) node).getNameAsString();
-                parents.add(0,parentName);
+                parents.add(0, parentName);
             }
         }
         return parents;
@@ -885,7 +906,7 @@ public class UMLParser {
     private List<EnumConstant> parseEnums(EnumDeclaration n, UMLClass obj) {
         List<EnumConstant> enums = new LinkedList<>();
         int num = 0;
-        for(EnumConstantDeclaration constantDeclaration : n.getEntries()) {
+        for (EnumConstantDeclaration constantDeclaration : n.getEntries()) {
             EnumConstant enumConst = new EnumConstant(constantDeclaration.getNameAsString(), num++);
             enumConst.setOwner(obj.toString());
             enums.add(enumConst);
@@ -940,20 +961,20 @@ public class UMLParser {
 
     private void createParameterTypeRelationship(UMLClass obj, Method method, com.mku.liveuml.model.entities.Parameter parameter) {
         UMLRelationshipType type = UMLRelationshipType.Dependency;
-        UMLClass refClass = objects.getOrDefault(parameter.getTypePackageName() + "." + parameter.getTypeName(), null);
+        UMLClass refClass = parameter.getRefType();
         if (refClass == null || refClass == obj)
             return;
         UMLRelationship rel = new UMLRelationship(obj, refClass, type);
         String key = rel.toString();
-        if (obj.relationships.containsKey(key)) {
-            rel = obj.relationships.get(key);
+        if (obj.getRelationships().containsKey(key)) {
+            rel = obj.getRelationships().get(key);
         } else {
-            obj.relationships.put(key, rel);
+            obj.getRelationships().put(key, rel);
         }
-        if (refClass.relationships.containsKey(key)) {
-            rel = refClass.relationships.get(key);
+        if (refClass.getRelationships().containsKey(key)) {
+            rel = refClass.getRelationships().get(key);
         } else {
-            refClass.relationships.put(key, rel);
+            refClass.getRelationships().put(key, rel);
         }
         rel.addClassAccess(method);
     }
@@ -964,6 +985,16 @@ public class UMLParser {
             ResolvedReferenceTypeDeclaration parameterTypeDecl = type.asReferenceType().getTypeDeclaration().get();
             parameter.setTypeName(parameterTypeDecl.getName());
             parameter.setTypePackageName(parameterTypeDecl.getPackageName());
+            ArrayList<String> parents = null;
+            if (parameterTypeDecl instanceof JavaParserInterfaceDeclaration)
+                parents = getParents(((JavaParserInterfaceDeclaration) parameterTypeDecl).getWrappedNode());
+            if (parameterTypeDecl instanceof JavaParserClassDeclaration)
+                parents = getParents(((JavaParserClassDeclaration) parameterTypeDecl).getWrappedNode());
+            if (parameterTypeDecl instanceof JavaParserEnumDeclaration)
+                parents = getParents(((JavaParserEnumDeclaration) parameterTypeDecl).getWrappedNode());
+            String fullName = UMLClass.getFullName(parameterTypeDecl.getPackageName(), parameterTypeDecl.getName(), parents);
+            if (objects.containsKey(fullName))
+                parameter.setRefType(objects.get(fullName));
         } else if (type.isPrimitive()) {
             parameter.setPrimitiveType(type.asPrimitive().name().toLowerCase());
         } else if (type.isArray()) {
@@ -981,6 +1012,9 @@ public class UMLParser {
                 if (type.describe().startsWith(parameter.getTypePackageName()))
                     parameter.setTypeName(parameter.getTypeName().substring(parameter.getTypePackageName().length() + 1));
             }
+        } else if (type.isTypeVariable()) {
+            parameter.setTypeVariable(true);
+            parameter.setTypeName(type.asTypeParameter().getName());
         } else if (!type.isArray() && !type.isVoid() && !type.isTypeVariable()) {
             System.err.println("Could not get param type: " + type);
         }
@@ -1098,6 +1132,7 @@ public class UMLParser {
     public void setNotifyProgress(Consumer<String> notifyProgress) {
         this.notifyProgress = notifyProgress;
     }
+
     public void removeNotifyProgress() {
         this.notifyProgress = null;
     }

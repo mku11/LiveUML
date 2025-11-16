@@ -407,6 +407,8 @@ public class GraphPanel extends JPanel {
             return new Shapes.ClosedArrow(40, 20);
         else if (rel.type == UMLRelationshipType.Association || rel.type == UMLRelationshipType.Dependency)
             return new Shapes.OpenArrow(40, 20);
+        else if (rel.type == UMLRelationshipType.Nested)
+            return new Shapes.CircleCross(40, 40);
         return null;
     }
 

@@ -52,7 +52,7 @@ public class UMLFinder {
         results.add(classRefs);
         results.add(relationshipRefs);
 
-        for (UMLRelationship rel : s.relationships.values()) {
+        for (UMLRelationship rel : s.getRelationships().values()) {
             if (relFilter == null && s != rel.to)
                 continue;
             if(relFilter != null && !relFilter.contains(rel.type))
@@ -86,7 +86,7 @@ public class UMLFinder {
         results.add(classRefs);
         results.add(relationshipRefs);
 
-        for (UMLRelationship rel : s.relationships.values()) {
+        for (UMLRelationship rel : s.getRelationships().values()) {
             if (s != rel.to)
                 continue;
             if (rel.accessedEnumConstsBy.containsKey(ec)) {
@@ -113,7 +113,7 @@ public class UMLFinder {
         results.add(classRefs);
         results.add(relationshipRefs);
 
-        for (UMLRelationship rel : s.relationships.values()) {
+        for (UMLRelationship rel : s.getRelationships().values()) {
             if (s != rel.to)
                 continue;
             if (rel.accessedFieldsBy.containsKey(f)) {
@@ -140,7 +140,7 @@ public class UMLFinder {
         results.add(classRefs);
         results.add(relationshipRefs);
 
-        for (UMLRelationship rel : s.relationships.values()) {
+        for (UMLRelationship rel : s.getRelationships().values()) {
             if (s != rel.to)
                 continue;
             if (rel.calledBy.containsKey(m)) {

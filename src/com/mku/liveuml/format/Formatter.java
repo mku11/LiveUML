@@ -158,7 +158,7 @@ public class Formatter {
     private static boolean isClassSelected(UMLClass object, UMLDiagram diagram) {
         if (diagram.getSelectedVertices().contains(object))
             return true;
-        for (UMLRelationship rel : object.relationships.values()) {
+        for (UMLRelationship rel : object.getRelationships().values()) {
             if (diagram.getSelectedEdges().contains(rel))
                 return true;
         }

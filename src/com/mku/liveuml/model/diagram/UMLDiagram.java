@@ -114,12 +114,6 @@ public class UMLDiagram {
         refresh();
     }
 
-    private void parseClasses(File dir) {
-        List<UMLClass> classes = parser.getClasses(dir);
-        addClasses(classes);
-        this.classes.addAll(classes);
-    }
-
     private void setupFolder(File sourceFolder) {
         if (reflectionTypeSolver == null) {
             reflectionTypeSolver = new ReflectionTypeSolver();
@@ -153,14 +147,14 @@ public class UMLDiagram {
         for (UMLRelationship rel : graph.edgeSet()) {
             UMLClass from = vertices.getOrDefault(rel.from.toString(), null);
             UMLClass to = vertices.getOrDefault(rel.to.toString(), null);
-            from.relationships.put(rel.toString(), rel);
-            to.relationships.put(rel.toString(), rel);
+            from.getRelationships().put(rel.toString(), rel);
+            to.getRelationships().put(rel.toString(), rel);
         }
     }
 
     public void updateRelationships(List<UMLClass> umlClasses, Graph<UMLClass, UMLRelationship> graph) {
         for (UMLClass obj : umlClasses) {
-            for (Map.Entry<String, UMLRelationship> rel : obj.relationships.entrySet()) {
+            for (Map.Entry<String, UMLRelationship> rel : obj.getRelationships().entrySet()) {
                 if (rel.getValue().from == rel.getValue().to)
                     continue;
                 if (!graph.containsVertex(rel.getValue().from) || !graph.containsVertex(rel.getValue().to)) {
@@ -219,10 +213,22 @@ public class UMLDiagram {
             File dir = new File(source);
             setupFolder(dir);
         }
+
+        // we need to do 2 passes to resolve all missing deps
+        HashMap<String, HashSet<UMLClass>> parsedDirClasses = new HashMap<>();
         for(String source : sources) {
             File dir = new File(source);
-            parseClasses(dir);
+            HashSet<UMLClass> parsedClasses = parser.getClasses(dir);
+            parser.getClassesProperties(dir, parsedClasses);
+            parsedDirClasses.put(dir.getAbsolutePath(), parsedClasses);
+            this.classes.addAll(parsedClasses);
         }
+        for(String source : sources) {
+            File dir = new File(source);
+            parser.getClassesProperties(dir, parsedDirClasses.get(dir.getAbsolutePath()));
+        }
+        addClasses(new ArrayList<>(classes));
+
         for(UMLClass object : classes) {
             if(compactClasses.contains(object.toString()))
                 object.setCompact(true);

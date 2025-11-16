@@ -199,7 +199,7 @@ public class ContextMenu {
     private void createRelFindRefSection(JMenu menu) {
         ArrayList<JMenuItem> items = new ArrayList<>();
         HashSet<UMLRelationshipType> relTypes = new HashSet<>();
-        for(UMLRelationship rel : object.relationships.values())
+        for(UMLRelationship rel : object.getRelationships().values())
             relTypes.add(rel.type);
         for(UMLRelationshipType relType : relTypes) {
             JMenuItem depItem = new JMenuItem(relType+"");
