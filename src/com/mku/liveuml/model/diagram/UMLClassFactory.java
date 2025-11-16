@@ -23,6 +23,7 @@ SOFTWARE.
 */
 package com.mku.liveuml.model.diagram;
 
+import com.mku.liveuml.model.entities.Abstract;
 import com.mku.liveuml.model.entities.Class;
 import com.mku.liveuml.model.entities.Enumeration;
 import com.mku.liveuml.model.entities.Interface;
@@ -43,6 +44,9 @@ public class UMLClassFactory {
                 break;
             case Enumeration:
                 obj = new Enumeration(className);
+                break;
+            case Abstract:
+                obj = new Abstract(className);
                 break;
         }
         if (obj == null)

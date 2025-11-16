@@ -21,8 +21,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package com.mku.liveuml.model.diagram;
+package com.mku.liveuml.model.entities;
 
-public enum UMLClassType {
-    Class, Interface, Enumeration, Abstract
+public class Abstract extends Class {
+    public Abstract(String name) {
+        super(name);
+    }
 }

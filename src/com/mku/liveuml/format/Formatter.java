@@ -57,6 +57,7 @@ public class Formatter {
 
     public String getUmlAsHtml(UMLClass object, boolean compact, UMLDiagram diagram) {
         boolean classSelected = isClassSelected(object, diagram);
+        String stereoType = getStereoType(object);
         String formattedHtml = classHtmlTemplate
                 .replaceAll(Pattern.quote("${name}"),
                         Matcher.quoteReplacement(object.getName()))
@@ -66,6 +67,8 @@ public class Formatter {
                 .replaceAll(Pattern.quote("${class-background-color}"),
                         Matcher.quoteReplacement(classSelected ?
                                 classSelectedHeaderBackgroundColor : classHeaderBackgroundColor));
+        formattedHtml = formattedHtml.replaceAll(Pattern.quote("${stereotype}"),
+                Matcher.quoteReplacement(stereoType != null ? "<div>&#10218" + stereoType + "&#10219</div>" : ""));
 
         // get enums
         String formattedEnums = getFormattedEnums(object, diagram.getSelectedEnumConsts(), compact);
@@ -83,6 +86,16 @@ public class Formatter {
                 Matcher.quoteReplacement(formattedMethods));
 
         return formattedHtml;
+    }
+
+    private String getStereoType(UMLClass object) {
+        if (object instanceof Enumeration)
+            return "enumeration";
+        if (object instanceof Interface)
+            return "interface";
+        if (object instanceof Abstract)
+            return "abstract";
+        return null;
     }
 
     private String getFormattedEnums(UMLClass object, HashSet<EnumConstant> selectedEnums, boolean compact) {

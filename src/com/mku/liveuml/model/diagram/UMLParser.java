@@ -691,7 +691,8 @@ public class UMLParser {
         String packageName = getPackageName(n);
         ArrayList<String> parents = getParents(n);
         String className = n.getName().asString();
-        return getOrCreateObject(packageName, className, parents, n.isInterface(), filePath, n.getBegin().get().line);
+        return getOrCreateObject(packageName, className, parents,
+                n.isInterface(), n.isAbstract(), filePath, n.getBegin().get().line);
     }
 
     private UMLClass getOrCreateEnum(EnumDeclaration n, String filePath) {
@@ -720,7 +721,7 @@ public class UMLParser {
     }
 
     private UMLClass getOrCreateObject(String packageName, String name, ArrayList<String> parents,
-                                       boolean isInterface, String filePath, int line) {
+                                       boolean isInterface, boolean isAbstract, String filePath, int line) {
         UMLClass obj;
         String fullName = UMLClass.getFullName(packageName, name, parents);
         if (objects.containsKey(fullName)) {
@@ -728,6 +729,8 @@ public class UMLParser {
         } else {
             if (isInterface) {
                 obj = new Interface(name);
+            } else if (isAbstract) {
+                obj = new Abstract(name);
             } else {
                 obj = new Class(name);
             }
