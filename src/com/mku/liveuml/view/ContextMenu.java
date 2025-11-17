@@ -97,7 +97,6 @@ public class ContextMenu {
             panel.clearSelections();
             java.util.List<HashSet<?>> refs = diagram.getFinder().findClassReference(object, null);
             panel.updateRefs(refs);
-            panel.getViewer().repaint();
         });
         return item;
     }
@@ -113,7 +112,6 @@ public class ContextMenu {
                     panel.clearSelections();
                     java.util.List<HashSet<?>> refs = diagram.getFinder().findFieldReference(object, f);
                     panel.updateRefs(refs);
-                    panel.getViewer().repaint();
                 });
                 items.add(fItem);
             }
@@ -136,7 +134,6 @@ public class ContextMenu {
                     panel.clearSelections();
                     java.util.List<HashSet<?>> refs = diagram.getFinder().findMethodReference(object, m);
                     panel.updateRefs(refs);
-                    panel.getViewer().repaint();
                 });
                 items.add(mItem);
             }
@@ -159,7 +156,6 @@ public class ContextMenu {
                     panel.clearSelections();
                     List<HashSet<?>> refs = diagram.getFinder().findMethodReference(object, m);
                     panel.updateRefs(refs);
-                    panel.getViewer().repaint();
                 });
                 items.add(mItem);
             }
@@ -208,7 +204,6 @@ public class ContextMenu {
                 java.util.List<HashSet<?>> refs = diagram.getFinder().findClassReference(object,
                         new HashSet<>(List.of(relType)));
                 panel.updateRefs(refs);
-                panel.getViewer().repaint();
             });
             items.add(depItem);
         }
@@ -268,7 +263,6 @@ public class ContextMenu {
                     panel.clearSelections();
                     java.util.List<HashSet<?>> refs = diagram.getFinder().findEnumConstReference(object, enumConstant);
                     panel.updateRefs(refs);
-                    panel.getViewer().repaint();
                 });
                 items.add(fItem);
             }

@@ -29,10 +29,13 @@ import com.mku.liveuml.model.diagram.UMLRelationship;
 import com.mku.liveuml.model.diagram.UMLClass;
 import com.mku.liveuml.model.entities.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Formatter {
     private static final int MAX_CHARS = 80;
@@ -49,6 +52,13 @@ public class Formatter {
     public static final String propertySelectedColor = "#6388E6";
     public static final String propertySelectedBackgroundColor = "#C1D1E3";
 
+    /**
+     * Do not use px for styles it causes exceptions within awt
+     *
+     * @param classHtmlTemplate
+     * @param propertyHtmlTemplate
+     * @param dividerHtmlTemplate
+     */
     public Formatter(String classHtmlTemplate, String propertyHtmlTemplate, String dividerHtmlTemplate) {
         this.classHtmlTemplate = classHtmlTemplate;
         this.propertyHtmlTemplate = propertyHtmlTemplate;
@@ -140,7 +150,16 @@ public class Formatter {
         StringBuilder methods = new StringBuilder();
         if (!compact && object.getMethods().size() > 0) {
             methods.append(dividerHtmlTemplate).append("\n");
+            List<Method> mtds = new ArrayList<>();
             for (Method method : object.getMethods()) {
+                if(method instanceof Constructor)
+                    mtds.add(method);
+            }
+            for (Method method : object.getMethods()) {
+                if(!(method instanceof Constructor))
+                    mtds.add(method);
+            }
+            for (Method method : mtds) {
                 String property = propertyHtmlTemplate.replaceAll(Pattern.quote("${content}"),
                                 Matcher.quoteReplacement(getMethodSignature(method, true)))
                         .replaceAll(Pattern.quote("${property-color}"),

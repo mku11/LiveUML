@@ -33,8 +33,32 @@ import java.util.List;
 
 public class UMLFinder {
 
-    public List<HashSet<?>> findClassReference(UMLClass s) {
-        return findClassReference(s, null);
+    public List<HashSet<?>> findRelReference(UMLRelationship rel) {
+        HashSet<Method> methodRefs = new HashSet<>();
+        HashSet<EnumConstant> enumConstRefs = new HashSet<>();
+        HashSet<Field> fieldRefs = new HashSet<>();
+        HashSet<UMLClass> classRefs = new HashSet<>();
+        HashSet<UMLRelationship> relationshipRefs = new HashSet<>();
+
+        List<HashSet<?>> results = new ArrayList<>();
+        results.add(methodRefs);
+        results.add(enumConstRefs);
+        results.add(fieldRefs);
+        results.add(classRefs);
+        results.add(relationshipRefs);
+
+        methodRefs.addAll(rel.classAccessors);
+        methodRefs.addAll(rel.accessingEnumConsts.keySet());
+        methodRefs.addAll(rel.accessingFields.keySet());
+        methodRefs.addAll(rel.calledBy.keySet());
+        methodRefs.addAll(rel.callTo.keySet());
+        enumConstRefs.addAll(rel.accessedEnumConstsBy.keySet());
+        fieldRefs.addAll(rel.fieldAssociation);
+        fieldRefs.addAll(rel.accessedFieldsBy.keySet());
+        classRefs.add(rel.from);
+        classRefs.add(rel.to);
+        relationshipRefs.add(rel);
+        return results;
     }
 
     public List<HashSet<?>> findClassReference(UMLClass s,

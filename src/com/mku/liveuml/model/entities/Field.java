@@ -23,6 +23,8 @@ SOFTWARE.
 */
 package com.mku.liveuml.model.entities;
 
+import com.mku.liveuml.model.diagram.UMLClass;
+
 import java.util.*;
 
 public class Field {
@@ -33,22 +35,14 @@ public class Field {
     private String baseTypeName;
     private String typeName;
     private String typePackageName;
+    private final List<String> typeParents = new ArrayList<>();
     private String primitiveType;
     private String owner;
     private int line;
+    private boolean typeVariable;
 
     public Field(String name) {
         this.name = name;
-    }
-
-    public String getTypeFullName() {
-        String fullName = typePackageName + "." + typeName;
-        if (isArray) {
-            int index = fullName.indexOf("[");
-            if (index >= 0)
-                fullName = fullName.substring(0, index);
-        }
-        return fullName;
     }
 
     public String getName() {
@@ -141,4 +135,20 @@ public class Field {
         return name;
     }
 
+    public void setTypeVariable(boolean value) {
+        this.typeVariable = value;
+    }
+
+    public boolean isTypeVariable() {
+        return typeVariable;
+    }
+
+    public String getTypeFullName() {
+        return UMLClass.getFullName(typePackageName, typeName, typeParents);
+    }
+    public void setTypeParents(List<String> parents) {
+        this.typeParents.clear();
+        if(parents!=null)
+            this.typeParents.addAll(parents);
+    }
 }

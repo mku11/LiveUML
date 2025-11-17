@@ -145,7 +145,8 @@ public abstract class UMLClass {
 
     public void setParents(List<String> parents) {
         this.parents.clear();
-        this.parents.addAll(parents);
+        if(parents != null)
+            this.parents.addAll(parents);
     }
 
     public String getFileSource() {
@@ -164,11 +165,11 @@ public abstract class UMLClass {
         String fullName = "";
         String parentsName = parents == null ? "" : String.join("$", parents);
         if (packageName != null && packageName.length() > 0)
-            fullName = packageName;
+            fullName = packageName + ".";
         if (parentsName.length() > 0)
-            fullName += "." + parentsName + "$" + name;
+            fullName += parentsName + "$" + name;
         else
-            fullName += "." + name;
+            fullName += name;
         return fullName;
     }
 
@@ -192,5 +193,9 @@ public abstract class UMLClass {
                 continue;
             this.fields.put(field.getName(), field);
         }
+    }
+
+    public String getFullName() {
+        return UMLClass.getFullName(packageName, name, parents);
     }
 }

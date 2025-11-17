@@ -54,6 +54,7 @@ import java.util.function.Consumer;
 
 public class UMLParser {
     public HashMap<String, UMLClass> objects = new HashMap<>();
+    public HashMap<String, Method> methods = new HashMap<>();
 
     public HashMap<String, SymbolInformation> getUnresolvedSymbols() {
         return unresolvedSymbols;
@@ -69,6 +70,7 @@ public class UMLParser {
     public void clear() {
         unresolvedSymbols.clear();
         objects.clear();
+        methods.clear();
     }
 
     public UMLClass getClassByName(String owner) {
@@ -265,10 +267,9 @@ public class UMLParser {
         }
         if (methodDeclaration == null)
             return null;
-        for (Method m : caller.getMethods()) {
-            if (m.getSignature().equals(methodDeclaration.getSignature().toString())) {
-                return m;
-            }
+        String methodSignature = caller.getFullName() + "." + methodDeclaration.getSignature().toString();
+        if (methods.containsKey(methodSignature)) {
+            return methods.get(methodSignature);
         }
         return null;
     }
@@ -329,19 +330,12 @@ public class UMLParser {
     }
 
     private UMLClass getMethodCallerObject(ObjectCreationExpr n) {
-        String packageName = null;
-        String name = null;
-        Node node = n;
-        while (node.hasParentNode()) {
-            node = node.getParentNode().get();
-            if (node instanceof ClassOrInterfaceDeclaration) {
-                name = ((ClassOrInterfaceDeclaration) node).getNameAsString();
-            } else if (node instanceof CompilationUnit) {
-                packageName = ((CompilationUnit) node).getPackageDeclaration().get().getName().asString();
-                break;
-            }
-        }
-        String fullName = packageName + "." + name;
+        String packageName = getPackageName(n);
+        String name = getName(n);
+        List<String> parents = getParents(n);
+        if (parents.size() > 0)
+            parents = parents.subList(0, parents.size() - 1);
+        String fullName = UMLClass.getFullName(packageName, name, parents);
         if (objects.containsKey(fullName)) {
             return objects.get(fullName);
         }
@@ -350,7 +344,10 @@ public class UMLParser {
 
     private UMLClass getMethodCalleeObject(ObjectCreationExpr n) {
         ResolvedReferenceTypeDeclaration decl = n.calculateResolvedType().asReferenceType().getTypeDeclaration().get();
-        String fullName = decl.getPackageName() + "." + decl.getClassName();
+        String packageName = decl.getPackageName();
+        String name = decl.getName();
+        List<String> parents = getParents(getNode(decl));
+        String fullName = UMLClass.getFullName(packageName, name, parents);
         if (objects.containsKey(fullName)) {
             return objects.get(fullName);
         }
@@ -364,14 +361,16 @@ public class UMLParser {
         String fullName = null;
         if (type.isReferenceType()) {
             ResolvedReferenceTypeDeclaration decl = type.asReferenceType().getTypeDeclaration().get();
-            fullName = decl.getPackageName() + "." + decl.getClassName();
+            String packageName = decl.getPackageName();
+            String name = decl.getName();
+            List<String> parents = getParents(getNode(decl));
+            fullName = UMLClass.getFullName(packageName, name, parents);
         }
         if (objects.containsKey(fullName)) {
             return objects.get(fullName);
         }
         return null;
     }
-
 
     private Method getMethodCalleeMethod(UMLClass callee, MethodCallExpr n) {
         String methodName = n.getNameAsString();
@@ -384,22 +383,23 @@ public class UMLParser {
     }
 
     private UMLClass getMethodCallerObject(MethodCallExpr n) {
-        String packageName = null;
-        String name = null;
+        String packageName = getPackageName(n);
+        String name = getName(n);
+        List<String> parents = getParents(n);
+        String fullName = UMLClass.getFullName(packageName, name, parents.subList(0, parents.size() - 1));
+        if (objects.containsKey(fullName)) {
+            return objects.get(fullName);
+        }
+        return null;
+    }
+
+    private String getName(Node n) {
         Node node = n;
         while (node.hasParentNode()) {
             node = node.getParentNode().get();
             if (node instanceof ClassOrInterfaceDeclaration) {
-                name = ((ClassOrInterfaceDeclaration) node).getNameAsString();
-            } else if (node instanceof CompilationUnit) {
-                packageName = ((CompilationUnit) node).getPackageDeclaration().get().getName().asString();
-                break;
+                return ((ClassOrInterfaceDeclaration) node).getNameAsString();
             }
-        }
-
-        String fullName = packageName + "." + name;
-        if (objects.containsKey(fullName)) {
-            return objects.get(fullName);
         }
         return null;
     }
@@ -420,10 +420,9 @@ public class UMLParser {
         if (methodDeclaration == null)
             return null;
 
-        for (Method m : caller.getMethods()) {
-            if (m.getSignature().equals(methodDeclaration.getSignature().toString())) {
-                return m;
-            }
+        String methodSignature = caller.getFullName() + "." + methodDeclaration.getSignature().toString();
+        if (methods.containsKey(methodSignature)) {
+            return methods.get(methodSignature);
         }
         return null;
     }
@@ -447,19 +446,12 @@ public class UMLParser {
 
     // fields accessors
     private UMLClass getFieldAccessorObject(FieldAccessExpr n) {
-        String packageName = null;
-        String name = null;
-        Node node = n;
-        while (node.hasParentNode()) {
-            node = node.getParentNode().get();
-            if (node instanceof ClassOrInterfaceDeclaration) {
-                name = ((ClassOrInterfaceDeclaration) node).getNameAsString();
-            } else if (node instanceof CompilationUnit) {
-                packageName = ((CompilationUnit) node).getPackageDeclaration().get().getName().asString();
-                break;
-            }
-        }
-        String fullName = packageName + "." + name;
+        String packageName = getPackageName(n);
+        String name = getName(n);
+        List<String> parents = getParents(n);
+        if (parents.size() > 0)
+            parents = parents.subList(0, parents.size() - 1);
+        String fullName = UMLClass.getFullName(packageName, name, parents);
         if (objects.containsKey(fullName)) {
             return objects.get(fullName);
         }
@@ -484,10 +476,9 @@ public class UMLParser {
             return null;
 
         try {
-            for (Method m : callee.getMethods()) {
-                if (m.getSignature().equals(methodDeclaration.getSignature().toString())) {
-                    return m;
-                }
+            String methodSignature = callee.getFullName() + "." + methodDeclaration.getSignature().toString();
+            if (methods.containsKey(methodSignature)) {
+                return methods.get(methodSignature);
             }
         } catch (UnsolvedSymbolException ex) {
             addUnresolvedSymbol(ex.getName(), callee);
@@ -506,9 +497,12 @@ public class UMLParser {
         String fullName = null;
         if (type.isReferenceType()) {
             ResolvedReferenceTypeDeclaration decl = type.asReferenceType().getTypeDeclaration().get();
-            fullName = decl.getPackageName() + "." + decl.getClassName();
+            String packageName = decl.getPackageName();
+            String name = decl.getName();
+            List<String> parents = getParents(getNode(decl));
+            fullName = UMLClass.getFullName(packageName, name, parents);
         }
-        if (fullName != null && objects.containsKey(fullName)) {
+        if (objects.containsKey(fullName)) {
             return objects.get(fullName);
         }
         return null;
@@ -595,7 +589,7 @@ public class UMLParser {
                     public void visit(EnumDeclaration n, UMLClass arg) {
                         super.visit(n, arg);
                         System.out.println("Enum: " + n.getName());
-                        UMLClass obj = parseEnumConsts(n, file.getPath());
+                        UMLClass obj = getOrCreateEnum(n, file.getPath());
                         list.add(obj);
                     }
                 }.visit(StaticJavaParser.parse(file), null);
@@ -647,21 +641,7 @@ public class UMLParser {
 
     private UMLClass parseEnumConsts(EnumDeclaration n, String filePath) {
         UMLClass obj = getOrCreateEnum(n, filePath);
-        obj.setFilePath(filePath);
-        Node node = n;
-        while (node.hasParentNode()) {
-            node = node.getParentNode().get();
-            if (node instanceof CompilationUnit) {
-                obj.setPackageName(((CompilationUnit) node).getPackageDeclaration().get().getName().asString());
-                break;
-            }
-        }
-        obj.setLine(n.getBegin().get().line);
         obj.addEnumConstants(parseEnums(n, obj));
-        obj.addFields(parseFields(n, obj));
-        obj.addMethods(parseConstructors(obj, n));
-        obj.addMethods(parseMethods(obj, n));
-        objects.put(obj.getPackageName() + "." + obj.getName(), obj);
         return obj;
     }
 
@@ -728,7 +708,7 @@ public class UMLParser {
         obj.setPackageName(packageName);
 
         String parentFullName = UMLClass.getParentFullName(packageName, parents);
-        if(objects.containsKey(parentFullName)){
+        if (objects.containsKey(parentFullName)) {
             UMLClass parentClass = objects.get(parentFullName);
             UMLRelationship rel = getNestedClassRel(obj, parentClass);
             obj.getRelationships().put(rel.toString(), rel);
@@ -757,6 +737,14 @@ public class UMLParser {
         obj.setFilePath(filePath);
         obj.setLine(line);
         obj.setPackageName(packageName);
+
+        String parentFullName = UMLClass.getParentFullName(packageName, parents);
+        if (objects.containsKey(parentFullName)) {
+            UMLClass parentClass = objects.get(parentFullName);
+            UMLRelationship rel = getNestedClassRel(obj, parentClass);
+            obj.getRelationships().put(rel.toString(), rel);
+            parentClass.getRelationships().put(rel.toString(), rel);
+        }
         return obj;
     }
 
@@ -777,7 +765,9 @@ public class UMLParser {
                 ResolvedReferenceTypeDeclaration typeDecl = decl.asReferenceType().getTypeDeclaration().get();
                 String superClassPackageName = typeDecl.getPackageName();
                 String superClassName = typeDecl.getName();
-                String superClassFullName = superClassPackageName + "." + superClassName;
+                List<String> superParents = getParents(getNode(typeDecl));
+                String superClassFullName = UMLClass.getFullName(superClassPackageName,
+                        superClassName, superParents);
                 if (objects.containsKey(superClassFullName)) {
                     superClassObj = (Class) objects.get(superClassFullName);
                 } else {
@@ -808,7 +798,9 @@ public class UMLParser {
                         ResolvedReferenceTypeDeclaration typeDecl = decl.asReferenceType().getTypeDeclaration().get();
                         String interfacePackageName = typeDecl.getPackageName();
                         String interfaceName = typeDecl.getName();
-                        String interfaceFullName = interfacePackageName + "." + interfaceName;
+                        List<String> interfaceParents = getParents(getNode(typeDecl));
+                        String interfaceFullName = UMLClass.getFullName(interfacePackageName,
+                                interfaceName, interfaceParents);
                         Interface interfaceObj;
                         if (objects.containsKey(interfaceFullName)) {
                             interfaceObj = (Interface) objects.get(interfaceFullName);
@@ -831,6 +823,8 @@ public class UMLParser {
 
     private String getPackageName(Node node) {
         String packageName = null;
+        if (node == null)
+            return null;
         while (node.hasParentNode()) {
             node = node.getParentNode().get();
             if (node instanceof CompilationUnit) {
@@ -844,6 +838,8 @@ public class UMLParser {
 
     private ArrayList<String> getParents(Node node) {
         ArrayList<String> parents = new ArrayList<>();
+        if (node == null)
+            return parents;
         while (node.hasParentNode()) {
             node = node.getParentNode().get();
             if (node instanceof ClassOrInterfaceDeclaration) {
@@ -888,6 +884,9 @@ public class UMLParser {
                             if (variableType.describe().startsWith(field.getTypePackageName()))
                                 field.setTypeName(field.getTypeName().substring(field.getTypePackageName().length() + 1));
                         }
+                    } else if (variableType.isTypeVariable()) {
+                        field.setTypeVariable(true);
+                        field.setTypeName(variableType.asTypeParameter().getName());
                     } else if (!variableType.isArray()) {
                         System.err.println("Could not get type: " + variableType);
                     }
@@ -955,13 +954,14 @@ public class UMLParser {
             method.setParameters(parameters);
             method.setLine(decl.getBegin().get().line);
             objMethods.add(method);
+            this.methods.put(obj.getFullName() + "." + decl.getSignature(), method);
         }
         return objMethods;
     }
 
     private void createParameterTypeRelationship(UMLClass obj, Method method, com.mku.liveuml.model.entities.Parameter parameter) {
         UMLRelationshipType type = UMLRelationshipType.Dependency;
-        UMLClass refClass = parameter.getRefType();
+        UMLClass refClass = objects.get(parameter.getTypeFullName());
         if (refClass == null || refClass == obj)
             return;
         UMLRelationship rel = new UMLRelationship(obj, refClass, type);
@@ -985,16 +985,7 @@ public class UMLParser {
             ResolvedReferenceTypeDeclaration parameterTypeDecl = type.asReferenceType().getTypeDeclaration().get();
             parameter.setTypeName(parameterTypeDecl.getName());
             parameter.setTypePackageName(parameterTypeDecl.getPackageName());
-            ArrayList<String> parents = null;
-            if (parameterTypeDecl instanceof JavaParserInterfaceDeclaration)
-                parents = getParents(((JavaParserInterfaceDeclaration) parameterTypeDecl).getWrappedNode());
-            if (parameterTypeDecl instanceof JavaParserClassDeclaration)
-                parents = getParents(((JavaParserClassDeclaration) parameterTypeDecl).getWrappedNode());
-            if (parameterTypeDecl instanceof JavaParserEnumDeclaration)
-                parents = getParents(((JavaParserEnumDeclaration) parameterTypeDecl).getWrappedNode());
-            String fullName = UMLClass.getFullName(parameterTypeDecl.getPackageName(), parameterTypeDecl.getName(), parents);
-            if (objects.containsKey(fullName))
-                parameter.setRefType(objects.get(fullName));
+            parameter.setTypeParents(getParents(getNode(parameterTypeDecl)));
         } else if (type.isPrimitive()) {
             parameter.setPrimitiveType(type.asPrimitive().name().toLowerCase());
         } else if (type.isArray()) {
@@ -1009,6 +1000,7 @@ public class UMLParser {
                 ResolvedReferenceTypeDeclaration parameterTypeDecl = baseType.asReferenceType().getTypeDeclaration().get();
                 parameter.setTypePackageName(parameterTypeDecl.getPackageName());
                 parameter.setTypeName(type.describe());
+                parameter.setTypeParents(getParents(getNode(parameterTypeDecl)));
                 if (type.describe().startsWith(parameter.getTypePackageName()))
                     parameter.setTypeName(parameter.getTypeName().substring(parameter.getTypePackageName().length() + 1));
             }
@@ -1018,6 +1010,16 @@ public class UMLParser {
         } else if (!type.isArray() && !type.isVoid() && !type.isTypeVariable()) {
             System.err.println("Could not get param type: " + type);
         }
+    }
+
+    private Node getNode(ResolvedReferenceTypeDeclaration parameterTypeDecl) {
+        if (parameterTypeDecl instanceof JavaParserInterfaceDeclaration)
+            return ((JavaParserInterfaceDeclaration) parameterTypeDecl).getWrappedNode();
+        if (parameterTypeDecl instanceof JavaParserClassDeclaration)
+            return ((JavaParserClassDeclaration) parameterTypeDecl).getWrappedNode();
+        if (parameterTypeDecl instanceof JavaParserEnumDeclaration)
+            return ((JavaParserEnumDeclaration) parameterTypeDecl).getWrappedNode();
+        return null;
     }
 
     private List<Modifier> parseMethodModifiers(CallableDeclaration<?> methodDecl) {

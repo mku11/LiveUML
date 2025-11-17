@@ -28,12 +28,20 @@ import com.mku.liveuml.model.entities.Class;
 import com.mku.liveuml.model.entities.Enumeration;
 import com.mku.liveuml.model.entities.Interface;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Pattern;
+
 public class UMLClassFactory {
     public static UMLClass create(String name) {
         String[] parts = name.split(":");
         UMLClassType type = UMLClassType.valueOf(parts[0]);
         String packageName = parts[1].substring(0, parts[1].lastIndexOf("."));
         String className = parts[1].substring(parts[1].lastIndexOf(".") + 1);
+        String[] classParts = className.split(Pattern.quote("$"));
+        List<String> parents = new ArrayList<>(Arrays.asList(classParts).subList(0, classParts.length - 1));
+        className = classParts[classParts.length - 1];
         UMLClass obj = null;
         switch (type) {
             case Class:
@@ -50,8 +58,9 @@ public class UMLClassFactory {
                 break;
         }
         if (obj == null)
-            throw new RuntimeException("Unknown uml type");
+            throw new RuntimeException("Unknown UML class type");
         obj.setPackageName(packageName);
+        obj.setParents(parents);
         return obj;
     }
 }

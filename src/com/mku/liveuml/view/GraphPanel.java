@@ -143,16 +143,30 @@ public class GraphPanel extends JPanel {
     private void setupConnections() {
         viewer.getRenderContext().setArrowFillPaintFunction((rel) -> {
             if (rel.type == UMLRelationshipType.Composition) {
-                if (diagram.getSelectedEdges().contains(rel))
-                    return new Color(109, 113, 242);
+                if (diagram.getSelectedEdges().contains(rel)
+                        || viewer.getSelectedEdges().contains(rel))
+                    return Color.decode(Formatter.classSelectedColor);
                 return Color.BLACK;
             }
             return Color.WHITE;
         });
         viewer.getRenderContext().setArrowDrawPaintFunction((rel) -> {
-            if (diagram.getSelectedEdges().contains(rel))
-                return new Color(109, 113, 242);
+            if (diagram.getSelectedEdges().contains(rel)
+                    || viewer.getSelectedEdges().contains(rel))
+                return Color.decode(Formatter.classSelectedColor);
             return Color.BLACK;
+        });
+
+        // FIXME: workaround: setting custom arrows does not work since the setupArrows()
+        // always overrides, so we inject our shape here:
+        viewer.getRenderContext().setEdgeArrowStrokeFunction((rel) -> {
+            Shape shape = getArrowShape(rel);
+            viewer.getRenderContext().setEdgeArrow(shape);
+            viewer.getRenderContext().setRenderEdgeArrow(true);
+            if (diagram.getSelectedEdges().contains(rel)
+                    || viewer.getSelectedEdges().contains(rel))
+                return new BasicStroke(4f);
+            return new BasicStroke(2f);
         });
     }
 
@@ -160,23 +174,26 @@ public class GraphPanel extends JPanel {
         viewer.getRenderContext().setEdgeStrokeFunction(rel -> {
             if (rel.type == UMLRelationshipType.Dependency || rel.type == UMLRelationshipType.Realization) {
                 // dashed line
-                return new BasicStroke(diagram.getSelectedEdges().contains(rel) ? 3 : 2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{12}, 0);
+                return new BasicStroke(diagram.getSelectedEdges().contains(rel)
+                        || viewer.getSelectedEdges().contains(rel) ? 4 : 2,
+                        BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL,
+                        0, new float[]{12}, 0);
             }
-            return new BasicStroke(diagram.getSelectedEdges().contains(rel) ? 3 : 2);
+            return new BasicStroke(diagram.getSelectedEdges().contains(rel)
+                    || viewer.getSelectedEdges().contains(rel)
+                    ? 4 : 2);
         });
         viewer.getRenderContext().setEdgeDrawPaintFunction(relationship -> {
-            if (diagram.getSelectedEdges().contains(relationship))
-                return new Color(109, 113, 242);
+            if (diagram.getSelectedEdges().contains(relationship)
+                    || viewer.getSelectedEdges().contains(relationship))
+                return Color.decode(Formatter.classSelectedColor);
             return Color.BLACK;
         });
-        // FIXME: workaround: setting custom arrows does not work since the setupArrows()
-        // always overrides, so we inject our shape here:
-        viewer.getRenderContext().setEdgeArrowStrokeFunction((rel) -> {
-            Shape shape = getArrowShape(rel);
-            viewer.getRenderContext().setEdgeArrow(shape);
-            viewer.getRenderContext().setRenderEdgeArrow(true);
-            return new BasicStroke(2f);
+
+        viewer.getRenderContext().setSelectedEdgeDrawPaintFunction(relationship -> {
+            return Color.decode(Formatter.classSelectedColor);
         });
+
     }
 
     private void setupVertices() {
@@ -209,13 +226,6 @@ public class GraphPanel extends JPanel {
                     RoundRectangle2D.Double bounds = getObjectBounds(size);
                     this.shapes.put(v, bounds);
                     verticesBounds.put(v, bounds);
-                    if(viewer.getRenderContext().getSelectedVertexState().isSelected(v)) {
-                        renderContext.getRendererPane().setComponentZOrder(component, 0);
-//                        component.requestFocus();
-                    } else {
-//                        renderContext.getRendererPane().setComponentZOrder(component, 1);
-//                        component.setFocusable(false);
-                    }
                 } else {
                     int b = 1;
                 }
@@ -392,6 +402,7 @@ public class GraphPanel extends JPanel {
             }
         }
         selectClasses(new ArrayList<>(classes));
+        getViewer().repaint();
     }
 
     public void clearSelections() {
@@ -413,7 +424,7 @@ public class GraphPanel extends JPanel {
     }
 
     public Map<UMLClass, org.jungrapht.visualization.layout.model.Point> getVertexPositions() {
-        if(viewer == null)
+        if (viewer == null)
             return null;
         return viewer.getVisualizationModel().getLayoutModel().getLocations();
     }

@@ -23,6 +23,9 @@ SOFTWARE.
 */
 package com.mku.liveuml.model.entities;
 
+import com.mku.liveuml.model.diagram.UMLClass;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,6 +35,7 @@ public class Method {
     private String returnTypeName;
     private String returnTypePackageName;
     private String returnPrimitiveType;
+    private final List<String> returnTypeParents = new ArrayList<>();
     private String owner;
     private int line;
     private List<Modifier> modifiers = new LinkedList<>();
@@ -104,7 +108,7 @@ public class Method {
     public List<Parameter> getParameters() {
         return Collections.unmodifiableList(parameters);
     }
-    
+
     public void setParameters(List<Parameter> parameters) {
         this.parameters.clear();
         this.parameters.addAll(parameters);
@@ -144,4 +148,19 @@ public class Method {
         signature += ")";
         return signature;
     }
+
+    public List<String> getReturnTypeParents() {
+        return returnTypeParents;
+    }
+
+    public String getReturnTypeFullName() {
+        return UMLClass.getFullName(returnTypePackageName, returnTypeName, returnTypeParents);
+    }
+
+    public void setReturnTypeParents(List<String> parents) {
+        this.returnTypeParents.clear();
+        if (parents != null)
+            this.returnTypeParents.addAll(parents);
+    }
+
 }

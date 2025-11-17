@@ -25,6 +25,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.prefs.Preferences;
@@ -117,6 +118,7 @@ public class Controller {
             EventQueue.invokeLater(() -> {
                 graphPanel.display(diagram, graphPanel.getVertexPositions());
                 graphPanel.revalidate();
+                addClassListener();
                 setStatus("Sources refreshed", 3000);
                 updateErrors(diagram);
                 UMLClass[] classesArr = diagram.getGraph().vertexSet().toArray(new UMLClass[0]);
@@ -300,7 +302,7 @@ public class Controller {
         graphPanel.setOnGetVertexLabel((object) -> formatter.getUmlAsHtml(object, !object.isCompact(), diagram));
 
         classesScrollPane = new ClassesPane();
-        classesScrollPane.setPreferredSize(new Dimension(100, 600));
+        classesScrollPane.setPreferredSize(new Dimension(100, 550));
         classesScrollPane.setOnClassSelected((classes) -> graphPanel.selectClasses(classes));
         classesScrollPane.setOnMouseRightClick((object, mousePosition) -> {
             ContextMenu contextMenu = new ContextMenu(object, diagram, graphPanel);
@@ -310,7 +312,7 @@ public class Controller {
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, graphPanel, classesScrollPane);
         splitPane.setBorder(new EmptyBorder(8, 8, 8, 8));
-        splitPane.setResizeWeight(0.9);
+        splitPane.setResizeWeight(0.85);
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.gridy = 0;
@@ -456,6 +458,14 @@ public class Controller {
         viewer.getSelectedVertexState().addItemListener((l) -> {
             classesScrollPane.clearSelection();
             classesScrollPane.selectClasses(viewer.getSelectedVertices());
+        });
+
+        viewer.getSelectedEdgeState().addItemListener((l) -> {
+            for(UMLRelationship rel : viewer.getSelectedEdges()) {
+                List<HashSet<?>> refs = diagram.getFinder().findRelReference(rel);
+                graphPanel.clearSelections();
+                graphPanel.updateRefs(refs);
+            }
         });
     }
 

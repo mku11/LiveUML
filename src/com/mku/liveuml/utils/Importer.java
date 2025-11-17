@@ -417,6 +417,7 @@ public class Importer {
                 field.setPrimitiveType((String) fmap.getOrDefault("primitiveType", null));
                 field.setTypeName((String) fmap.getOrDefault("typeName", null));
                 field.setTypePackageName((String) fmap.getOrDefault("typePackageName", null));
+                field.setTypeParents((List<String>) fmap.getOrDefault("typeParents", null));
                 field.setLine(((Double) fmap.getOrDefault("line", 0)).intValue());
                 List<String> mods = (List<String>) fmap.getOrDefault("modifiers", null);
                 List<Modifier> modifiers = new ArrayList<>();
@@ -512,6 +513,7 @@ public class Importer {
                 method.setReturnPrimitiveType((String) mmap.getOrDefault("returnPrimitiveType", null));
                 method.setReturnTypeName((String) mmap.getOrDefault("returnTypeName", null));
                 method.setReturnTypePackageName((String) mmap.getOrDefault("returnTypePackageName", null));
+                method.setReturnTypeParents((List<String>) mmap.getOrDefault("returnTypeParents", null));
                 List<String> mods = (List<String>) mmap.getOrDefault("modifiers", null);
                 List<Modifier> modifiers = new ArrayList<>();
                 if (mods != null) {
@@ -550,6 +552,7 @@ public class Importer {
         parameter.setPrimitiveType((String) map.getOrDefault("primitiveType", null));
         parameter.setTypeName((String) map.getOrDefault("typeName", null));
         parameter.setTypePackageName((String) map.getOrDefault("typePackageName", null));
+        parameter.setTypeParents((List<String>) map.getOrDefault("typeParents", null));
         List<String> modifiers = (List<String>) map.getOrDefault("modifiers", null);
         if (modifiers != null) {
             for (String modifier : modifiers) {
