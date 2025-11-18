@@ -47,6 +47,7 @@ import com.mku.liveuml.model.entities.*;
 import com.mku.liveuml.file.DirExplorer;
 import com.mku.liveuml.model.entities.Class;
 import com.mku.liveuml.model.entities.Enumeration;
+import com.mku.liveuml.model.entities.Package;
 
 import java.io.File;
 import java.util.*;
@@ -56,8 +57,8 @@ public class UMLParser {
     public HashMap<String, UMLClass> objects = new HashMap<>();
     public HashMap<String, Method> methods = new HashMap<>();
 
-    public HashMap<String, SymbolInformation> getUnresolvedSymbols() {
-        return unresolvedSymbols;
+    public Map<String, SymbolInformation> getUnresolvedSymbols() {
+        return Collections.unmodifiableMap(unresolvedSymbols);
     }
 
     private final HashMap<String, SymbolInformation> unresolvedSymbols = new HashMap<>();
@@ -83,16 +84,7 @@ public class UMLParser {
         return classes;
     }
 
-    public void getClassesProperties(File projectDir, HashSet<UMLClass> classes) {
-        getObjectsAttrs(classes, projectDir);
-        getMethodCalls(classes, projectDir);
-        resolveTypes(classes);
-        for (UMLClass obj : classes) {
-            obj.setFileSource(projectDir.getAbsolutePath());
-        }
-    }
-
-    private void resolveTypes(HashSet<UMLClass> list) {
+    public void resolveDependencies(HashSet<UMLClass> list) {
         for (UMLClass fieldOwner : list) {
             for (Field field : fieldOwner.getFields()) {
                 if (!field.isPrimitiveType()) {
@@ -150,7 +142,7 @@ public class UMLParser {
         return false;
     }
 
-    private void getMethodCalls(HashSet<UMLClass> list, File projectDir) {
+    public void parseDependencies(File projectDir) {
         new DirExplorer((level, path, file) -> path.endsWith(".java"), (level, path, file) -> {
             System.out.println(path);
             System.out.println(Strings.repeat("=", path.length()));
@@ -335,7 +327,7 @@ public class UMLParser {
         List<String> parents = getParents(n);
         if (parents.size() > 0)
             parents = parents.subList(0, parents.size() - 1);
-        String fullName = UMLClass.getFullName(packageName, name, parents);
+        String fullName = Package.getFullName(packageName, name, parents);
         if (objects.containsKey(fullName)) {
             return objects.get(fullName);
         }
@@ -347,7 +339,7 @@ public class UMLParser {
         String packageName = decl.getPackageName();
         String name = decl.getName();
         List<String> parents = getParents(getNode(decl));
-        String fullName = UMLClass.getFullName(packageName, name, parents);
+        String fullName = Package.getFullName(packageName, name, parents);
         if (objects.containsKey(fullName)) {
             return objects.get(fullName);
         }
@@ -364,7 +356,7 @@ public class UMLParser {
             String packageName = decl.getPackageName();
             String name = decl.getName();
             List<String> parents = getParents(getNode(decl));
-            fullName = UMLClass.getFullName(packageName, name, parents);
+            fullName = Package.getFullName(packageName, name, parents);
         }
         if (objects.containsKey(fullName)) {
             return objects.get(fullName);
@@ -386,7 +378,7 @@ public class UMLParser {
         String packageName = getPackageName(n);
         String name = getName(n);
         List<String> parents = getParents(n);
-        String fullName = UMLClass.getFullName(packageName, name, parents.subList(0, parents.size() - 1));
+        String fullName = Package.getFullName(packageName, name, parents.subList(0, parents.size() - 1));
         if (objects.containsKey(fullName)) {
             return objects.get(fullName);
         }
@@ -451,7 +443,7 @@ public class UMLParser {
         List<String> parents = getParents(n);
         if (parents.size() > 0)
             parents = parents.subList(0, parents.size() - 1);
-        String fullName = UMLClass.getFullName(packageName, name, parents);
+        String fullName = Package.getFullName(packageName, name, parents);
         if (objects.containsKey(fullName)) {
             return objects.get(fullName);
         }
@@ -500,7 +492,7 @@ public class UMLParser {
             String packageName = decl.getPackageName();
             String name = decl.getName();
             List<String> parents = getParents(getNode(decl));
-            fullName = UMLClass.getFullName(packageName, name, parents);
+            fullName = Package.getFullName(packageName, name, parents);
         }
         if (objects.containsKey(fullName)) {
             return objects.get(fullName);
@@ -600,8 +592,8 @@ public class UMLParser {
         }).explore(projectDir);
     }
 
-    // TODO: remove is this redundant?
-    private void getObjectsAttrs(HashSet<UMLClass> list, File projectDir) {
+
+    public void getObjectsAttrs(HashSet<UMLClass> list, File projectDir) {
         new DirExplorer((level, path, file) -> path.endsWith(".java"), (level, path, file) -> {
             System.out.println(path);
             System.out.println(Strings.repeat("=", path.length()));
@@ -695,7 +687,7 @@ public class UMLParser {
     private UMLClass getOrCreateEnum(String packageName, String name, ArrayList<String> parents,
                                      String filePath, int line) {
         UMLClass obj;
-        String fullName = UMLClass.getFullName(packageName, name, parents);
+        String fullName = Package.getFullName(packageName, name, parents);
         if (objects.containsKey(fullName)) {
             obj = objects.get(fullName);
         } else {
@@ -720,7 +712,7 @@ public class UMLParser {
     private UMLClass getOrCreateObject(String packageName, String name, ArrayList<String> parents,
                                        boolean isInterface, boolean isAbstract, String filePath, int line) {
         UMLClass obj;
-        String fullName = UMLClass.getFullName(packageName, name, parents);
+        String fullName = Package.getFullName(packageName, name, parents);
         if (objects.containsKey(fullName)) {
             obj = objects.get(fullName);
         } else {
@@ -766,7 +758,7 @@ public class UMLParser {
                 String superClassPackageName = typeDecl.getPackageName();
                 String superClassName = typeDecl.getName();
                 List<String> superParents = getParents(getNode(typeDecl));
-                String superClassFullName = UMLClass.getFullName(superClassPackageName,
+                String superClassFullName = Package.getFullName(superClassPackageName,
                         superClassName, superParents);
                 if (objects.containsKey(superClassFullName)) {
                     superClassObj = (Class) objects.get(superClassFullName);
@@ -799,7 +791,7 @@ public class UMLParser {
                         String interfacePackageName = typeDecl.getPackageName();
                         String interfaceName = typeDecl.getName();
                         List<String> interfaceParents = getParents(getNode(typeDecl));
-                        String interfaceFullName = UMLClass.getFullName(interfacePackageName,
+                        String interfaceFullName = Package.getFullName(interfacePackageName,
                                 interfaceName, interfaceParents);
                         Interface interfaceObj;
                         if (objects.containsKey(interfaceFullName)) {
@@ -861,14 +853,19 @@ public class UMLParser {
 
                 Field field = new Field(variableDeclarator.getNameAsString());
                 field.setOwner(obj.toString());
+                if (variableDeclarator.getType().isClassOrInterfaceType())
+                    field.setTypeName(variableDeclarator.getType().asClassOrInterfaceType().getNameAsString());
                 try {
                     ResolvedType variableType = variableDeclarator.resolve().getType();
                     if (variableType.isPrimitive()) {
-                        field.setPrimitiveType(variableType.asPrimitive().name().toLowerCase());
+                        field.setPrimitiveType(variableType.describe());
+                        field.setTypeName(variableType.asPrimitive().name().toLowerCase());
                     } else if (variableType.isReferenceType()) {
                         ResolvedReferenceTypeDeclaration typeDecl = variableType.asReferenceType().getTypeDeclaration().get();
                         field.setTypeName(typeDecl.getName());
                         field.setTypePackageName(typeDecl.getPackageName());
+                        List<String> parents = getParents(getNode(typeDecl));
+                        field.setTypeParents(parents);
                     } else if (variableType.isArray()) {
                         field.setArray(true);
                         ResolvedType baseType = ((ResolvedArrayType) variableType).getComponentType();
@@ -876,13 +873,14 @@ public class UMLParser {
                             baseType = ((ResolvedArrayType) baseType).getComponentType();
                         }
                         if (baseType.isPrimitive()) {
-                            field.setPrimitiveType(variableType.describe());
+                            field.setPrimitiveType(baseType.describe());
+                            field.setTypeName(baseType.asPrimitive().name().toLowerCase());
                         } else if (baseType.isReferenceType()) {
                             ResolvedReferenceTypeDeclaration parameterTypeDecl = baseType.asReferenceType().getTypeDeclaration().get();
                             field.setTypePackageName(parameterTypeDecl.getPackageName());
-                            field.setTypeName(variableType.describe());
-                            if (variableType.describe().startsWith(field.getTypePackageName()))
-                                field.setTypeName(field.getTypeName().substring(field.getTypePackageName().length() + 1));
+                            field.setTypeName(parameterTypeDecl.getName());
+                            List<String> parents = getParents(getNode(parameterTypeDecl));
+                            field.setTypeParents(parents);
                         }
                     } else if (variableType.isTypeVariable()) {
                         field.setTypeVariable(true);
@@ -917,6 +915,8 @@ public class UMLParser {
         List<Method> objMethods = new LinkedList<>();
         List<MethodDeclaration> methods = n.getMethods();
         for (MethodDeclaration decl : methods) {
+            if (this.methods.containsKey(obj.getFullName() + "." + decl.getSignature()))
+                continue;
             Method method = new Method(decl.getName().asString());
             method.setOwner(obj.toString());
             NodeList<com.github.javaparser.ast.body.Parameter> params = decl.getParameters();
@@ -980,6 +980,8 @@ public class UMLParser {
     }
 
     private void parseParameterType(com.mku.liveuml.model.entities.Parameter parameter, com.github.javaparser.ast.body.Parameter param) {
+        if (param.getType().isClassOrInterfaceType())
+            parameter.setTypeName(param.getType().asClassOrInterfaceType().getNameAsString());
         ResolvedType type = param.resolve().getType();
         if (type.isReferenceType()) {
             ResolvedReferenceTypeDeclaration parameterTypeDecl = type.asReferenceType().getTypeDeclaration().get();
@@ -987,7 +989,8 @@ public class UMLParser {
             parameter.setTypePackageName(parameterTypeDecl.getPackageName());
             parameter.setTypeParents(getParents(getNode(parameterTypeDecl)));
         } else if (type.isPrimitive()) {
-            parameter.setPrimitiveType(type.asPrimitive().name().toLowerCase());
+            parameter.setPrimitiveType(type.describe());
+            parameter.setTypeName(type.asPrimitive().name().toLowerCase());
         } else if (type.isArray()) {
             parameter.setArray(true);
             ResolvedType baseType = ((ResolvedArrayType) type).getComponentType();
@@ -995,14 +998,13 @@ public class UMLParser {
                 baseType = ((ResolvedArrayType) baseType).getComponentType();
             }
             if (baseType.isPrimitive()) {
-                parameter.setPrimitiveType(type.describe());
+                parameter.setPrimitiveType(baseType.describe());
+                parameter.setTypeName(baseType.asPrimitive().name().toLowerCase());
             } else if (baseType.isReferenceType()) {
                 ResolvedReferenceTypeDeclaration parameterTypeDecl = baseType.asReferenceType().getTypeDeclaration().get();
                 parameter.setTypePackageName(parameterTypeDecl.getPackageName());
-                parameter.setTypeName(type.describe());
+                parameter.setTypeName(parameterTypeDecl.getName());
                 parameter.setTypeParents(getParents(getNode(parameterTypeDecl)));
-                if (type.describe().startsWith(parameter.getTypePackageName()))
-                    parameter.setTypeName(parameter.getTypeName().substring(parameter.getTypePackageName().length() + 1));
             }
         } else if (type.isTypeVariable()) {
             parameter.setTypeVariable(true);
@@ -1138,4 +1140,5 @@ public class UMLParser {
     public void removeNotifyProgress() {
         this.notifyProgress = null;
     }
+
 }

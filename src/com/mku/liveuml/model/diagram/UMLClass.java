@@ -26,6 +26,7 @@ package com.mku.liveuml.model.diagram;
 import com.mku.liveuml.model.entities.EnumConstant;
 import com.mku.liveuml.model.entities.Field;
 import com.mku.liveuml.model.entities.Method;
+import com.mku.liveuml.model.entities.Package;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,6 +41,7 @@ public abstract class UMLClass {
     private final HashMap<String, EnumConstant> enumConstants = new HashMap<>();
     private final HashMap<String, UMLRelationship> relationships = new HashMap<>();
 
+    // TODO: move compact to view model layer
     private boolean compact;
     private String fileSource;
     private String filePath;
@@ -140,7 +142,7 @@ public abstract class UMLClass {
 
     @Override
     public String toString() {
-        return getFullName(this.packageName, this.name, this.parents);
+        return getFullName();
     }
 
     public void setParents(List<String> parents) {
@@ -161,22 +163,10 @@ public abstract class UMLClass {
         return parents;
     }
 
-    public static String getFullName(String packageName, String name, List<String> parents) {
-        String fullName = "";
-        String parentsName = parents == null ? "" : String.join("$", parents);
-        if (packageName != null && packageName.length() > 0)
-            fullName = packageName + ".";
-        if (parentsName.length() > 0)
-            fullName += parentsName + "$" + name;
-        else
-            fullName += name;
-        return fullName;
-    }
-
     public static String getParentFullName(String packageName, List<String> parents) {
         if (parents == null || parents.size() == 0)
             return null;
-        return UMLClass.getFullName(packageName, parents.get(parents.size() - 1), parents.subList(0, parents.size() - 1));
+        return Package.getFullName(packageName, parents.get(parents.size() - 1), parents.subList(0, parents.size() - 1));
     }
 
     public void addEnumConstants(List<EnumConstant> enums) {
@@ -196,6 +186,6 @@ public abstract class UMLClass {
     }
 
     public String getFullName() {
-        return UMLClass.getFullName(packageName, name, parents);
+        return Package.getFullName(packageName, name, parents);
     }
 }

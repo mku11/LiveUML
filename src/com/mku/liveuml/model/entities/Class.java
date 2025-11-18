@@ -29,5 +29,4 @@ public class Class extends UMLClass {
     public Class(String name) {
         super(name);
     }
-
 }

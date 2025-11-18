@@ -42,6 +42,7 @@ public class ClassesPane extends JScrollPane {
     private ArrayList<UMLClass> classesList;
     private BiConsumer<UMLClass,MousePosition> onMouseRightClick;
     private Consumer<List<UMLClass>> onClassSelected;
+    private Consumer<UMLClass> onClassDoubleClick;
 
     public ClassesPane() {
         super(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -50,8 +51,10 @@ public class ClassesPane extends JScrollPane {
         classes.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    // reselect the class
-                    if(onClassSelected != null)
+                    if(e.getClickCount() == 2) {
+                        if(onClassDoubleClick != null)
+                            onClassDoubleClick.accept(classes.getSelectedValuesList().get(0));
+                    } else if(onClassSelected != null)
                         onClassSelected.accept(classes.getSelectedValuesList());
                 } else if (e.getButton() == MouseEvent.BUTTON3) {
                     if (classes.getSelectedValuesList().size() == 0)
@@ -94,6 +97,9 @@ public class ClassesPane extends JScrollPane {
         this.onClassSelected = listener;
     }
 
+    public void setOnClassDoubleClick(Consumer<UMLClass> listener) {
+        this.onClassDoubleClick = listener;
+    }
     public void removeOnClassSelected() {
         this.onClassSelected = null;
     }

@@ -23,8 +23,6 @@ SOFTWARE.
 */
 package com.mku.liveuml.model.entities;
 
-import com.mku.liveuml.model.diagram.UMLClass;
-
 import java.util.*;
 
 public class Field {
@@ -32,7 +30,6 @@ public class Field {
     private List<Modifier> modifiers = new LinkedList<>();
     private List<AccessModifier> accessModifiers = new LinkedList<>();
     private boolean isArray;
-    private String baseTypeName;
     private String typeName;
     private String typePackageName;
     private final List<String> typeParents = new ArrayList<>();
@@ -77,15 +74,6 @@ public class Field {
     public void setArray(boolean array) {
         isArray = array;
     }
-
-    public String getBaseTypeName() {
-        return baseTypeName;
-    }
-
-    public void setBaseTypeName(String baseTypeName) {
-        this.baseTypeName = baseTypeName;
-    }
-
     public void setTypeName(String typeName) {
         this.typeName = typeName;
     }
@@ -127,7 +115,7 @@ public class Field {
     }
 
     public String getTypeName() {
-        return isPrimitiveType() ? primitiveType : typeName;
+        return typeName;
     }
 
     @Override
@@ -144,7 +132,7 @@ public class Field {
     }
 
     public String getTypeFullName() {
-        return UMLClass.getFullName(typePackageName, typeName, typeParents);
+        return Package.getFullName(typePackageName, typeName, typeParents);
     }
     public void setTypeParents(List<String> parents) {
         this.typeParents.clear();

@@ -35,10 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class Formatter {
-    private static final int MAX_CHARS = 80;
     private final String classHtmlTemplate;
     private final String propertyHtmlTemplate;
     private final String dividerHtmlTemplate;
@@ -51,6 +49,7 @@ public class Formatter {
     public static final String propertyBackgroundColor = "white";
     public static final String propertySelectedColor = "#6388E6";
     public static final String propertySelectedBackgroundColor = "#C1D1E3";
+    public static final String unresolvedSymbolColor = "#E83F83";
 
     /**
      * Do not use px for styles it causes exceptions within awt
@@ -133,7 +132,7 @@ public class Formatter {
             fields.append(dividerHtmlTemplate).append("\n");
             for (Field field : object.getFields()) {
                 String property = propertyHtmlTemplate.replaceAll(Pattern.quote("${content}"),
-                                Matcher.quoteReplacement(getFieldFormatted(field)))
+                                Matcher.quoteReplacement(getFieldFormatted(field, true)))
                         .replaceAll(Pattern.quote("${property-color}"),
                                 Matcher.quoteReplacement(selectedFields.contains(field) ?
                                         propertySelectedColor : propertyColor))
@@ -152,11 +151,11 @@ public class Formatter {
             methods.append(dividerHtmlTemplate).append("\n");
             List<Method> mtds = new ArrayList<>();
             for (Method method : object.getMethods()) {
-                if(method instanceof Constructor)
+                if (method instanceof Constructor)
                     mtds.add(method);
             }
             for (Method method : object.getMethods()) {
-                if(!(method instanceof Constructor))
+                if (!(method instanceof Constructor))
                     mtds.add(method);
             }
             for (Method method : mtds) {
@@ -192,31 +191,54 @@ public class Formatter {
         return false;
     }
 
-    public static String getFieldFormatted(Field field) {
-        return getFieldQualifier(field) + " " + field.getName() + " : " + field.getTypeName();
+    public static String getFieldFormatted(Field field, boolean isHtml) {
+        String formattedField = getFieldQualifier(field) + " " + field.getName();
+        if(isHtml)
+            formattedField += "&#10240:&#10240";
+        else
+            formattedField += " : ";
+        formattedField += field.getTypeName();
+        if (field.isArray())
+            formattedField += "[]";
+        return formattedField;
     }
 
     public static String getMethodSignature(Method method, boolean usePrefix) {
         return getMethodSignature(method, usePrefix, true);
     }
 
-    public static String getMethodSignature(Method method, boolean usePrefix, boolean truncate) {
+    public static String getMethodSignature(Method method, boolean usePrefix, boolean isHtml) {
         String signature = "";
         if (usePrefix)
             signature += getMethodQualifier(method) + " ";
         signature += method.getName() + " (";
         StringBuilder params = new StringBuilder();
         for (Parameter parameter : method.getParameters()) {
-            if (params.length() > 0)
-                params.append(", ");
-            params.append(parameter.getName()).append(" : ").append(parameter.getTypeName());
+            if (params.length() > 0) {
+                if (isHtml)
+                    params.append(",&#10240");
+                else
+                    params.append(", ");
+            }
+            params.append(parameter.getName());
+            if (isHtml)
+                params.append("&#10240:&#10240");
+            else
+                params.append(" : ");
+            params.append(parameter.getTypeName());
+            if (parameter.isArray())
+                params.append("[]");
         }
         signature += params;
         signature += ")";
-        if (!method.isReturnTypeVoid())
-            signature += " : " + method.getReturnTypeName();
-        if (truncate && signature.length() > MAX_CHARS)
-            signature = signature.substring(0, MAX_CHARS) + "...";
+        if (!method.isReturnTypeVoid()) {
+            if (isHtml) {
+                signature += "&#10240:&#10240";
+            } else {
+                signature += " : ";
+            }
+            signature += method.getReturnTypeName();
+        }
         return signature;
     }
 
@@ -227,7 +249,7 @@ public class Formatter {
             return "-";
         else if (method.getAccessModifiers().contains(AccessModifier.Public))
             return "+";
-        return "";
+        return "~";
     }
 
     public static String getFieldQualifier(Field field) {
@@ -237,7 +259,7 @@ public class Formatter {
             return "-";
         else if (field.getAccessModifiers().contains(AccessModifier.Public))
             return "+";
-        return "";
+        return "~";
     }
 
     public static String formatUnresolvedSymbols(UMLParser parser) {

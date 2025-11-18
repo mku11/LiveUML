@@ -39,9 +39,7 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 public class Exporter {
     public void exportGraph(File file, UMLDiagram diagram, Map<UMLClass, Point2D.Double> vertexPositions) {
@@ -66,102 +64,108 @@ public class Exporter {
         exporter.registerAttribute("type", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
         exporter.registerAttribute("from", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
         exporter.registerAttribute("to", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
-        exporter.registerAttribute("fieldAssociation", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
-        exporter.registerAttribute("classAccessors", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
-        exporter.registerAttribute("accessedBy", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
-        exporter.registerAttribute("accessing", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
-        exporter.registerAttribute("accessedEnumConstsBy", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
-        exporter.registerAttribute("accessingEnumConsts", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
-        exporter.registerAttribute("calledBy", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
-        exporter.registerAttribute("callTo", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
+        exporter.registerAttribute("fieldsAccessingClass", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
+        exporter.registerAttribute("methodsAccessingClass", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
+        exporter.registerAttribute("fieldsAccessedByMethods", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
+        exporter.registerAttribute("methodsAccessingFields", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
+        exporter.registerAttribute("enumsAccessedByMethods", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
+        exporter.registerAttribute("methodsAccessingEnums", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
+        exporter.registerAttribute("methodsAccessedByMethods", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
+        exporter.registerAttribute("methodsAccesingMethods", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
     }
 
     private Map<String, Attribute> getEdgeAttrs(UMLRelationship UMLRelationship) {
         HashMap<String, Attribute> map = new HashMap<>();
-        map.put("type", new DefaultAttribute<>(UMLRelationship.type.name(), AttributeType.STRING));
-        map.put("from", new DefaultAttribute<>(UMLRelationship.from.toString(), AttributeType.STRING));
-        map.put("to", new DefaultAttribute<>(UMLRelationship.to.toString(), AttributeType.STRING));
-        map.put("fieldAssociation", new DefaultAttribute<>(new Gson().toJson(getFieldsOwnerMap(UMLRelationship.fieldAssociation)), AttributeType.STRING));
-        map.put("classAccessors", new DefaultAttribute<>(new Gson().toJson(getMethodOwnerMap(UMLRelationship.classAccessors)), AttributeType.STRING));
-        map.put("accessedBy", new DefaultAttribute<>(new Gson().toJson(getFieldMethodOwnerMap(UMLRelationship.accessedFieldsBy)), AttributeType.STRING));
-        map.put("accessing", new DefaultAttribute<>(new Gson().toJson(getMethodFieldOwnerMap(UMLRelationship.accessingFields)), AttributeType.STRING));
-        map.put("accessedEnumConstsBy", new DefaultAttribute<>(new Gson().toJson(getEnumConstMethodOwnerMap(UMLRelationship.accessedEnumConstsBy)), AttributeType.STRING));
-        map.put("accessingEnumConsts", new DefaultAttribute<>(new Gson().toJson(getMethodEnumConstOwnerMap(UMLRelationship.accessingEnumConsts)), AttributeType.STRING));
-        map.put("calledBy", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(UMLRelationship.calledBy)), AttributeType.STRING));
-        map.put("callTo", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(UMLRelationship.callTo)), AttributeType.STRING));
+        map.put("type", new DefaultAttribute<>(UMLRelationship.getType().name(), AttributeType.STRING));
+        map.put("from", new DefaultAttribute<>(UMLRelationship.getFrom().toString(), AttributeType.STRING));
+        map.put("to", new DefaultAttribute<>(UMLRelationship.getTo().toString(), AttributeType.STRING));
+        map.put("fieldsAccessingClass", new DefaultAttribute<>(new Gson().toJson(getFieldsOwnerMap(UMLRelationship.getFieldsAccessingClass())), AttributeType.STRING));
+        map.put("methodsAccessingClass", new DefaultAttribute<>(new Gson().toJson(getMethodOwnerMap(UMLRelationship.getMethodsAccessingClass())), AttributeType.STRING));
+        map.put("fieldsAccessedByMethods", new DefaultAttribute<>(new Gson().toJson(getFieldMethodOwnerMap(UMLRelationship.getFieldsAccessedByMethods())), AttributeType.STRING));
+        map.put("methodsAccessingFields", new DefaultAttribute<>(new Gson().toJson(getMethodFieldOwnerMap(UMLRelationship.getMethodsAccessingFields())), AttributeType.STRING));
+        map.put("enumsAccessedByMethods", new DefaultAttribute<>(new Gson().toJson(getEnumConstMethodOwnerMap(UMLRelationship.getEnumsAccessedByMethods())), AttributeType.STRING));
+        map.put("methodsAccessingEnums", new DefaultAttribute<>(new Gson().toJson(getMethodEnumConstOwnerMap(UMLRelationship.getMethodsAccessingEnums())), AttributeType.STRING));
+        map.put("methodsAccessedByMethods", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(UMLRelationship.getMethodsAccessedByMethods())), AttributeType.STRING));
+        map.put("methodsAccesingMethods", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(UMLRelationship.getMethodsAccesingMethods())), AttributeType.STRING));
         return map;
     }
 
-    private HashMap<String, HashMap<String, String>> getFieldMethodOwnerMap(HashMap<Field, Method> fieldMethodMap) {
+    private HashMap<String, HashMap<String, String>> getFieldMethodOwnerMap(Map<Field, HashSet<Method>> fieldMethodMap) {
         HashMap<String, HashMap<String, String>> fieldMethodOwnerMap = new HashMap<>();
         for (Field f : fieldMethodMap.keySet()) {
-            Method m = fieldMethodMap.get(f);
-            HashMap<String, String> ownerMap = new HashMap<>();
-            fieldMethodOwnerMap.put(f.getName(), ownerMap);
-            ownerMap.put("fieldOwner", f.getOwner());
-            ownerMap.put("methodName", m == null ? null : m.getSignature());
-            ownerMap.put("methodOwner", m == null ? null : m.getOwner());
+            for(Method m : fieldMethodMap.get(f)) {
+                HashMap<String, String> ownerMap = new HashMap<>();
+                fieldMethodOwnerMap.put(f.getName(), ownerMap);
+                ownerMap.put("fieldOwner", f.getOwner());
+                ownerMap.put("methodName", m == null ? null : m.getSignature());
+                ownerMap.put("methodOwner", m == null ? null : m.getOwner());
+            }
         }
         return fieldMethodOwnerMap;
     }
 
-    private HashMap<String, HashMap<String, String>> getMethodFieldOwnerMap(HashMap<Method, Field> fieldMethodMap) {
+    private HashMap<String, HashMap<String, String>> getMethodFieldOwnerMap(Map<Method, HashSet<Field>> fieldMethodMap) {
         HashMap<String, HashMap<String, String>> fieldMethodOwnerMap = new HashMap<>();
         for (Method m : fieldMethodMap.keySet()) {
-            Field f = fieldMethodMap.get(m);
-            HashMap<String, String> ownerMap = new HashMap<>();
-            fieldMethodOwnerMap.put(m.getSignature(), ownerMap);
-            ownerMap.put("methodName", m.getName());
-            ownerMap.put("methodOwner", m.getOwner());
-            ownerMap.put("fieldName", f == null ? null : f.getName());
-            ownerMap.put("fieldOwner", f == null ? null : f.getOwner());
+            for(Field f : fieldMethodMap.get(m)) {
+                HashMap<String, String> ownerMap = new HashMap<>();
+                fieldMethodOwnerMap.put(m.getSignature(), ownerMap);
+                ownerMap.put("methodName", m.getName());
+                ownerMap.put("methodOwner", m.getOwner());
+                ownerMap.put("fieldName", f == null ? null : f.getName());
+                ownerMap.put("fieldOwner", f == null ? null : f.getOwner());
+            }
         }
         return fieldMethodOwnerMap;
     }
 
 
-    private HashMap<String, HashMap<String, String>> getEnumConstMethodOwnerMap(HashMap<EnumConstant, Method> enumConstantMethodHashMap) {
+    private HashMap<String, HashMap<String, String>> getEnumConstMethodOwnerMap(Map<EnumConstant, HashSet<Method>> enumConstantMethodHashMap) {
         HashMap<String, HashMap<String, String>> enumConstMethodOwnerMap = new HashMap<>();
         for (EnumConstant ec : enumConstantMethodHashMap.keySet()) {
-            Method m = enumConstantMethodHashMap.get(ec);
-            HashMap<String, String> ownerMap = new HashMap<>();
-            enumConstMethodOwnerMap.put(ec.getName(), ownerMap);
-            ownerMap.put("enumConstOwner", ec.getOwner());
-            ownerMap.put("methodName", m == null ? null : m.getSignature());
-            ownerMap.put("methodOwner", m == null ? null : m.getOwner());
+            for(Method m : enumConstantMethodHashMap.get(ec)) {
+                HashMap<String, String> ownerMap = new HashMap<>();
+                enumConstMethodOwnerMap.put(ec.getName(), ownerMap);
+                ownerMap.put("enumConstOwner", ec.getOwner());
+                ownerMap.put("methodName", m == null ? null : m.getSignature());
+                ownerMap.put("methodOwner", m == null ? null : m.getOwner());
+            }
         }
         return enumConstMethodOwnerMap;
     }
 
-    private HashMap<String, HashMap<String, String>> getMethodEnumConstOwnerMap(HashMap<Method, EnumConstant> enumConstMethodMap) {
+    private HashMap<String, HashMap<String, String>> getMethodEnumConstOwnerMap(Map<Method, HashSet<EnumConstant>> enumConstMethodMap) {
         HashMap<String, HashMap<String, String>> enumConstMethodOwnerMap = new HashMap<>();
         for (Method m : enumConstMethodMap.keySet()) {
-            EnumConstant ec = enumConstMethodMap.get(m);
-            HashMap<String, String> ownerMap = new HashMap<>();
-            enumConstMethodOwnerMap.put(m.getSignature(), ownerMap);
-            ownerMap.put("methodName", m.getName());
-            ownerMap.put("methodOwner", m.getOwner());
-            ownerMap.put("enumConstName", ec == null ? null : ec.getName());
-            ownerMap.put("enumConstOwner", ec == null ? null : ec.getOwner());
+            for (EnumConstant ec : enumConstMethodMap.get(m)) {
+                HashMap<String, String> ownerMap = new HashMap<>();
+                enumConstMethodOwnerMap.put(m.getSignature(), ownerMap);
+                ownerMap.put("methodName", m.getName());
+                ownerMap.put("methodOwner", m.getOwner());
+                ownerMap.put("enumConstName", ec == null ? null : ec.getName());
+                ownerMap.put("enumConstOwner", ec == null ? null : ec.getOwner());
+            }
         }
         return enumConstMethodOwnerMap;
     }
 
-    private HashMap<String, HashMap<String, String>> getMethodMethodOwnerMap(HashMap<Method, Method> fieldMethodMap) {
+    private HashMap<String, HashMap<String, String>> getMethodMethodOwnerMap(Map<Method, HashSet<Method>> fieldMethodMap) {
         HashMap<String, HashMap<String, String>> methodMethodOwnerMap = new HashMap<>();
         for (Method m : fieldMethodMap.keySet()) {
-            Method mv = fieldMethodMap.get(m);
-            HashMap<String, String> ownerMap = new HashMap<>();
-            methodMethodOwnerMap.put(m.getSignature(), ownerMap);
-            ownerMap.put("methodName", m.getName());
-            ownerMap.put("methodOwner", m.getOwner());
-            ownerMap.put("methodName2", mv == null ? null : mv.getSignature());
-            ownerMap.put("methodOwner2", mv == null ? null : mv.getOwner());
+            for (Method mv : fieldMethodMap.get(m)) {
+                // FIXME:
+                HashMap<String, String> ownerMap = new HashMap<>();
+                methodMethodOwnerMap.put(m.getSignature(), ownerMap);
+                ownerMap.put("methodName", m.getName());
+                ownerMap.put("methodOwner", m.getOwner());
+                ownerMap.put("methodName2", mv == null ? null : mv.getSignature());
+                ownerMap.put("methodOwner2", mv == null ? null : mv.getOwner());
+            }
         }
         return methodMethodOwnerMap;
     }
 
-    private HashMap<String, String> getFieldsOwnerMap(HashSet<Field> fields) {
+    private HashMap<String, String> getFieldsOwnerMap(Set<Field> fields) {
         HashMap<String, String> fieldOwnerMap = new HashMap<>();
         for (Field f : fields) {
             fieldOwnerMap.put(f.getName(), f.getOwner());
@@ -169,7 +173,7 @@ public class Exporter {
         return fieldOwnerMap;
     }
 
-    private HashMap<String, String> getMethodOwnerMap(HashSet<Method> methods) {
+    private HashMap<String, String> getMethodOwnerMap(Set<Method> methods) {
         HashMap<String, String> methodOwnerMap = new HashMap<>();
         for (Method m : methods) {
             methodOwnerMap.put(m.getSignature(), m.getOwner());

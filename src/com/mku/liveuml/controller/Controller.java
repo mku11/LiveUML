@@ -304,6 +304,10 @@ public class Controller {
         classesScrollPane = new ClassesPane();
         classesScrollPane.setPreferredSize(new Dimension(100, 550));
         classesScrollPane.setOnClassSelected((classes) -> graphPanel.selectClasses(classes));
+        classesScrollPane.setOnClassDoubleClick((object) -> {
+            graphPanel.toggleCompact(object);
+            graphPanel.getViewer().repaint();
+        });
         classesScrollPane.setOnMouseRightClick((object, mousePosition) -> {
             ContextMenu contextMenu = new ContextMenu(object, diagram, graphPanel);
             JPopupMenu menu = contextMenu.getContextMenu();
@@ -331,6 +335,7 @@ public class Controller {
                 message.setText(msg);
                 message.setEditable(false);
                 message.setWrapStyleWord(true);
+                message.setCaretPosition(0);
                 JScrollPane scrollPane = new JScrollPane(message, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
                 scrollPane.setPreferredSize(new Dimension(400, 200));
                 JOptionPane.showMessageDialog(frame, scrollPane, "Unresolved symbols", JOptionPane.PLAIN_MESSAGE);
@@ -373,7 +378,7 @@ public class Controller {
     private void updateErrors(UMLDiagram diagram) {
         int errorsCount = diagram.getParser().getUnresolvedSymbols().size();
         if (errorsCount > 0) {
-            msg = "Unresolved symbols: " + "\n" + Formatter.formatUnresolvedSymbols(diagram.getParser());
+            msg = "Unresolved symbols: " + "\n\n" + Formatter.formatUnresolvedSymbols(diagram.getParser());
             errors.setVisible(true);
             errors.setText("<HTML>Unresolved symbols found: <U>" + errorsCount + "</U></HTML>");
         } else {

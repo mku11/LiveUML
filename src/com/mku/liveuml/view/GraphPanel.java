@@ -142,7 +142,7 @@ public class GraphPanel extends JPanel {
 
     private void setupConnections() {
         viewer.getRenderContext().setArrowFillPaintFunction((rel) -> {
-            if (rel.type == UMLRelationshipType.Composition) {
+            if (rel.getType() == UMLRelationshipType.Composition) {
                 if (diagram.getSelectedEdges().contains(rel)
                         || viewer.getSelectedEdges().contains(rel))
                     return Color.decode(Formatter.classSelectedColor);
@@ -172,7 +172,7 @@ public class GraphPanel extends JPanel {
 
     private void setupEdges() {
         viewer.getRenderContext().setEdgeStrokeFunction(rel -> {
-            if (rel.type == UMLRelationshipType.Dependency || rel.type == UMLRelationshipType.Realization) {
+            if (rel.getType() == UMLRelationshipType.Dependency || rel.getType() == UMLRelationshipType.Realization) {
                 // dashed line
                 return new BasicStroke(diagram.getSelectedEdges().contains(rel)
                         || viewer.getSelectedEdges().contains(rel) ? 4 : 2,
@@ -226,8 +226,6 @@ public class GraphPanel extends JPanel {
                     RoundRectangle2D.Double bounds = getObjectBounds(size);
                     this.shapes.put(v, bounds);
                     verticesBounds.put(v, bounds);
-                } else {
-                    int b = 1;
                 }
             }
         };
@@ -382,7 +380,7 @@ public class GraphPanel extends JPanel {
                     classes.add((UMLClass) obj);
                 } else if (obj instanceof UMLRelationship) {
                     diagram.getSelectedEdges().add((UMLRelationship) obj);
-                    classes.add(((UMLRelationship) obj).from);
+                    classes.add(((UMLRelationship) obj).getFrom());
                 } else if (obj instanceof Field) {
                     diagram.getSelectedFields().add((Field) obj);
                     String owner = ((Field) obj).getOwner();
@@ -412,13 +410,13 @@ public class GraphPanel extends JPanel {
     }
 
     private Shape getArrowShape(UMLRelationship rel) {
-        if (rel.type == UMLRelationshipType.Aggregation || rel.type == UMLRelationshipType.Composition)
+        if (rel.getType() == UMLRelationshipType.Aggregation || rel.getType() == UMLRelationshipType.Composition)
             return new Shapes.Diamond(40, 20);
-        else if (rel.type == UMLRelationshipType.Inheritance || rel.type == UMLRelationshipType.Realization)
+        else if (rel.getType() == UMLRelationshipType.Inheritance || rel.getType() == UMLRelationshipType.Realization)
             return new Shapes.ClosedArrow(40, 20);
-        else if (rel.type == UMLRelationshipType.Association || rel.type == UMLRelationshipType.Dependency)
+        else if (rel.getType() == UMLRelationshipType.Association || rel.getType() == UMLRelationshipType.Dependency)
             return new Shapes.OpenArrow(40, 20);
-        else if (rel.type == UMLRelationshipType.Nested)
+        else if (rel.getType() == UMLRelationshipType.Nested)
             return new Shapes.CircleCross(40, 40);
         return null;
     }

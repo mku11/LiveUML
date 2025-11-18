@@ -23,9 +23,6 @@ SOFTWARE.
 */
 package com.mku.liveuml.model.entities;
 
-import com.mku.liveuml.model.diagram.UMLClass;
-import org.apache.commons.lang3.NotImplementedException;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -90,7 +87,7 @@ public class Parameter {
     }
 
     public String getTypeName() {
-        return isPrimitiveType() ? primitiveType : typeName;
+        return typeName;
     }
 
     public boolean isPrimitiveType() {
@@ -116,7 +113,7 @@ public class Parameter {
         return typeParents;
     }
     public String getTypeFullName() {
-        return UMLClass.getFullName(typePackageName, typeName, typeParents);
+        return Package.getFullName(typePackageName, typeName, typeParents);
     }
 
     public void setTypeParents(List<String> parents) {

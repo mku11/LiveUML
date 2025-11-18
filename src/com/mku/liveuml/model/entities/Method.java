@@ -23,8 +23,6 @@ SOFTWARE.
 */
 package com.mku.liveuml.model.entities;
 
-import com.mku.liveuml.model.diagram.UMLClass;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -143,6 +141,8 @@ public class Method {
             if (params.length() > 0)
                 params += ", ";
             params += parameter.getTypeName();
+            if(parameter.isArray())
+                params += "[]";
         }
         signature += params;
         signature += ")";
@@ -154,7 +154,7 @@ public class Method {
     }
 
     public String getReturnTypeFullName() {
-        return UMLClass.getFullName(returnTypePackageName, returnTypeName, returnTypeParents);
+        return Package.getFullName(returnTypePackageName, returnTypeName, returnTypeParents);
     }
 
     public void setReturnTypeParents(List<String> parents) {

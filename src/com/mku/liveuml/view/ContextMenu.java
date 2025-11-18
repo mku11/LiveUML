@@ -25,10 +25,7 @@ SOFTWARE.
 package com.mku.liveuml.view;
 
 import com.mku.liveuml.format.Formatter;
-import com.mku.liveuml.model.diagram.UMLClass;
-import com.mku.liveuml.model.diagram.UMLDiagram;
-import com.mku.liveuml.model.diagram.UMLRelationship;
-import com.mku.liveuml.model.diagram.UMLRelationshipType;
+import com.mku.liveuml.model.diagram.*;
 import com.mku.liveuml.model.entities.*;
 import com.mku.liveuml.utils.FileUtils;
 
@@ -57,7 +54,8 @@ public class ContextMenu {
         menu.addSeparator();
 
         menu.add(createToggleExpandItem());
-        menu.add(createFindSubMenu());
+        menu.add(createFindSubMenu("Referenced", UMLFinder.ReferenceType.From));
+        menu.add(createFindSubMenu("Referencing", UMLFinder.ReferenceType.To));
         menu.add(createGoToSubMenu());
         return menu;
     }
@@ -71,14 +69,16 @@ public class ContextMenu {
         return item;
     }
 
-    private Component createFindSubMenu() {
-        JMenu menu = new JMenu("Find references");
-        menu.add(createAllFindRefItem());
-        createRelFindRefSection(menu);
-        createEnumFindRefSection(menu);
-        createFieldsFindRefSection(menu);
-        createConstructorsFindRefSection(menu);
-        createMethodsFindRefSection(menu);
+    private Component createFindSubMenu(String title, UMLFinder.ReferenceType type) {
+        JMenu menu = new JMenu(title);
+        menu.add(createAllFindRefItem(type));
+        createRelFindRefSection(menu, type);
+        if(type != UMLFinder.ReferenceType.To) {
+            createEnumFindRefSection(menu, type);
+            createFieldsFindRefSection(menu, type);
+        }
+        createConstructorsFindRefSection(menu, type);
+        createMethodsFindRefSection(menu, type);
         return menu;
     }
 
@@ -91,26 +91,29 @@ public class ContextMenu {
         return menu;
     }
 
-    private JMenuItem createAllFindRefItem() {
+    private JMenuItem createAllFindRefItem(UMLFinder.ReferenceType type) {
         JMenuItem item = new JMenuItem("All references");
         item.addActionListener(e -> {
             panel.clearSelections();
-            java.util.List<HashSet<?>> refs = diagram.getFinder().findClassReference(object, null);
+            java.util.List<HashSet<?>> refs = diagram.getFinder().findClassReference(object, null, type);
             panel.updateRefs(refs);
         });
         return item;
     }
 
-    private void createFieldsFindRefSection(JMenu menu) {
+    private void createFieldsFindRefSection(JMenu menu, UMLFinder.ReferenceType type) {
         java.util.List<JMenuItem> items = new ArrayList<>();
         if (object.getFields().size() > 0) {
             for (Field f : object.getFields()) {
-                if (f.getAccessModifiers().contains(AccessModifier.Private))
+                if (type == UMLFinder.ReferenceType.From
+                        && f.getAccessModifiers().contains(AccessModifier.Private))
                     continue;
-                JMenuItem fItem = new JMenuItem(Formatter.getFieldFormatted(f));
+                if(!fieldHasRelationship(f, type))
+                    continue;
+                JMenuItem fItem = new JMenuItem(Formatter.getFieldFormatted(f, false));
                 fItem.addActionListener(e -> {
                     panel.clearSelections();
-                    java.util.List<HashSet<?>> refs = diagram.getFinder().findFieldReference(object, f);
+                    java.util.List<HashSet<?>> refs = diagram.getFinder().findFieldReference(object, f, type);
                     panel.updateRefs(refs);
                 });
                 items.add(fItem);
@@ -120,19 +123,22 @@ public class ContextMenu {
             addSection("Fields", menu, items);
     }
 
-    private void createConstructorsFindRefSection(JMenu menu) {
+    private void createConstructorsFindRefSection(JMenu menu, UMLFinder.ReferenceType type) {
         java.util.List<JMenuItem> items = new ArrayList<>();
         if (object.getMethods().size() > 0) {
             for (Method m : object.getMethods()) {
                 if (!(m instanceof Constructor))
                     continue;
-                if (m.getAccessModifiers().contains(AccessModifier.Private))
+                if (type == UMLFinder.ReferenceType.From
+                        && m.getAccessModifiers().contains(AccessModifier.Private))
+                    continue;
+                if(!methodHasRelationship(m, type))
                     continue;
                 String methodName = Formatter.getMethodSignature(m, true, false);
                 JMenuItem mItem = new JMenuItem(methodName);
                 mItem.addActionListener(e -> {
                     panel.clearSelections();
-                    java.util.List<HashSet<?>> refs = diagram.getFinder().findMethodReference(object, m);
+                    java.util.List<HashSet<?>> refs = diagram.getFinder().findMethodReference(object, m, type);
                     panel.updateRefs(refs);
                 });
                 items.add(mItem);
@@ -142,19 +148,22 @@ public class ContextMenu {
             addSection("Constructors", menu, items);
     }
 
-    private void createMethodsFindRefSection(JMenu menu) {
+    private void createMethodsFindRefSection(JMenu menu, UMLFinder.ReferenceType type) {
         java.util.List<JMenuItem> items = new ArrayList<>();
         if (object.getMethods().size() > 0) {
             for (Method m : object.getMethods()) {
                 if (m instanceof Constructor)
                     continue;
-                if (m.getAccessModifiers().contains(AccessModifier.Private))
+                if (type == UMLFinder.ReferenceType.From
+                        && m.getAccessModifiers().contains(AccessModifier.Private))
+                    continue;
+                if(!methodHasRelationship(m, type))
                     continue;
                 String methodName = Formatter.getMethodSignature(m, true, false);
                 JMenuItem mItem = new JMenuItem(methodName);
                 mItem.addActionListener(e -> {
                     panel.clearSelections();
-                    List<HashSet<?>> refs = diagram.getFinder().findMethodReference(object, m);
+                    List<HashSet<?>> refs = diagram.getFinder().findMethodReference(object, m, type);
                     panel.updateRefs(refs);
                 });
                 items.add(mItem);
@@ -192,17 +201,22 @@ public class ContextMenu {
             menu.add(fItem);
     }
 
-    private void createRelFindRefSection(JMenu menu) {
+    private void createRelFindRefSection(JMenu menu, UMLFinder.ReferenceType type) {
         ArrayList<JMenuItem> items = new ArrayList<>();
         HashSet<UMLRelationshipType> relTypes = new HashSet<>();
-        for(UMLRelationship rel : object.getRelationships().values())
-            relTypes.add(rel.type);
-        for(UMLRelationshipType relType : relTypes) {
-            JMenuItem depItem = new JMenuItem(relType+"");
+        for (UMLRelationship rel : object.getRelationships().values()) {
+            if(type == UMLFinder.ReferenceType.From && object == rel.getFrom())
+                continue;
+            if(type == UMLFinder.ReferenceType.To && object == rel.getTo())
+                continue;
+            relTypes.add(rel.getType());
+        }
+        for (UMLRelationshipType relType : relTypes) {
+            JMenuItem depItem = new JMenuItem(relType + "");
             depItem.addActionListener(e -> {
                 panel.clearSelections();
                 java.util.List<HashSet<?>> refs = diagram.getFinder().findClassReference(object,
-                        new HashSet<>(List.of(relType)));
+                        new HashSet<>(List.of(relType)), type);
                 panel.updateRefs(refs);
             });
             items.add(depItem);
@@ -223,7 +237,7 @@ public class ContextMenu {
         java.util.List<JMenuItem> items = new ArrayList<>();
         if (object.getFields().size() > 0) {
             for (Field f : object.getFields()) {
-                JMenuItem fItem = new JMenuItem(Formatter.getFieldFormatted(f));
+                JMenuItem fItem = new JMenuItem(Formatter.getFieldFormatted(f, false));
                 fItem.addActionListener(e -> {
                     goToFieldReference(object, f);
                     panel.getViewer().repaint();
@@ -254,14 +268,17 @@ public class ContextMenu {
             addSection("Constructors", menu, items);
     }
 
-    private void createEnumFindRefSection(JMenu menu) {
+    private void createEnumFindRefSection(JMenu menu, UMLFinder.ReferenceType type) {
         java.util.List<JMenuItem> items = new ArrayList<>();
         if (object.getEnumConstants().size() > 0) {
             for (EnumConstant enumConstant : object.getEnumConstants()) {
+                if(!enumHasRelationship(enumConstant, type))
+                    continue;
                 JMenuItem fItem = new JMenuItem(enumConstant.getName());
                 fItem.addActionListener(e -> {
                     panel.clearSelections();
-                    java.util.List<HashSet<?>> refs = diagram.getFinder().findEnumConstReference(object, enumConstant);
+                    java.util.List<HashSet<?>> refs = diagram.getFinder()
+                            .findEnumConstReference(object, enumConstant, type);
                     panel.updateRefs(refs);
                 });
                 items.add(fItem);
@@ -269,6 +286,50 @@ public class ContextMenu {
         }
         if (items.size() > 0)
             addSection("Enum Constants", menu, items);
+    }
+
+    private boolean enumHasRelationship(EnumConstant enumConstant, UMLFinder.ReferenceType type) {
+        for(UMLRelationship rel : object.getRelationships().values()) {
+            if(type == UMLFinder.ReferenceType.From && object == rel.getFrom())
+                continue;
+            if(type == UMLFinder.ReferenceType.To && object == rel.getTo())
+                continue;
+            if(rel.getEnumsAccessedByMethods().containsKey(enumConstant))
+                return true;
+        }
+        return false;
+    }
+
+    private boolean methodHasRelationship(Method m, UMLFinder.ReferenceType type) {
+        for(UMLRelationship rel : object.getRelationships().values()) {
+            if(type == UMLFinder.ReferenceType.From && object == rel.getFrom())
+                continue;
+            if(type == UMLFinder.ReferenceType.To && object == rel.getTo())
+                continue;
+            if(type == UMLFinder.ReferenceType.From && rel.getMethodsAccessedByMethods().containsKey(m))
+                return true;
+            if(type == UMLFinder.ReferenceType.To && rel.getMethodsAccesingMethods().containsKey(m))
+                return true;
+            if(type == UMLFinder.ReferenceType.To && rel.getMethodsAccessingEnums().containsKey(m))
+                return true;
+            if(type == UMLFinder.ReferenceType.To && rel.getMethodsAccessingFields().containsKey(m))
+                return true;
+            if(type == UMLFinder.ReferenceType.To && rel.getMethodsAccessingClass().contains(m))
+                return true;
+        }
+        return false;
+    }
+
+    private boolean fieldHasRelationship(Field f, UMLFinder.ReferenceType type) {
+        for(UMLRelationship rel : object.getRelationships().values()) {
+            if(type == UMLFinder.ReferenceType.From && object == rel.getFrom())
+                continue;
+            if(type == UMLFinder.ReferenceType.To && object == rel.getTo())
+                continue;
+            if(type == UMLFinder.ReferenceType.From && rel.getFieldsAccessedByMethods().containsKey(f))
+                return true;
+        }
+        return false;
     }
 
     public void goToClassReference(UMLClass s) {

@@ -145,8 +145,8 @@ public class UMLDiagram {
     public void updateVertices(HashMap<String, UMLClass> vertices) {
         this.vertices = vertices;
         for (UMLRelationship rel : graph.edgeSet()) {
-            UMLClass from = vertices.getOrDefault(rel.from.toString(), null);
-            UMLClass to = vertices.getOrDefault(rel.to.toString(), null);
+            UMLClass from = vertices.getOrDefault(rel.getFrom().toString(), null);
+            UMLClass to = vertices.getOrDefault(rel.getTo().toString(), null);
             from.getRelationships().put(rel.toString(), rel);
             to.getRelationships().put(rel.toString(), rel);
         }
@@ -155,13 +155,13 @@ public class UMLDiagram {
     public void updateRelationships(List<UMLClass> umlClasses, Graph<UMLClass, UMLRelationship> graph) {
         for (UMLClass obj : umlClasses) {
             for (Map.Entry<String, UMLRelationship> rel : obj.getRelationships().entrySet()) {
-                if (rel.getValue().from == rel.getValue().to)
+                if (rel.getValue().getFrom() == rel.getValue().getTo())
                     continue;
-                if (!graph.containsVertex(rel.getValue().from) || !graph.containsVertex(rel.getValue().to)) {
+                if (!graph.containsVertex(rel.getValue().getFrom()) || !graph.containsVertex(rel.getValue().getTo())) {
                     continue;
                 }
                 try {
-                    graph.addEdge(rel.getValue().from, rel.getValue().to, rel.getValue());
+                    graph.addEdge(rel.getValue().getFrom(), rel.getValue().getTo(), rel.getValue());
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -219,14 +219,21 @@ public class UMLDiagram {
         for(String source : sources) {
             File dir = new File(source);
             HashSet<UMLClass> parsedClasses = parser.getClasses(dir);
-            parser.getClassesProperties(dir, parsedClasses);
+            for (UMLClass obj : parsedClasses) {
+                obj.setFileSource(dir.getAbsolutePath());
+            }
             parsedDirClasses.put(dir.getAbsolutePath(), parsedClasses);
             this.classes.addAll(parsedClasses);
         }
         for(String source : sources) {
             File dir = new File(source);
-            parser.getClassesProperties(dir, parsedDirClasses.get(dir.getAbsolutePath()));
+            parser.getObjectsAttrs(parsedDirClasses.get(dir.getAbsolutePath()), dir);
         }
+        for(String source : sources) {
+            File dir = new File(source);
+            parser.parseDependencies(dir);
+        }
+        parser.resolveDependencies(classes);
         addClasses(new ArrayList<>(classes));
 
         for(UMLClass object : classes) {

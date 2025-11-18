@@ -121,58 +121,60 @@ public class Importer {
             return;
         switch (key) {
             case "type":
-                relationship.type = UMLRelationshipType.valueOf(attribute.getValue());
+                relationship.setType(UMLRelationshipType.valueOf(attribute.getValue()));
                 break;
             case "from":
                 if (vertices.containsKey(attribute.getValue()))
-                    relationship.from = vertices.get(attribute.getValue());
+                    relationship.setFrom(vertices.get(attribute.getValue()));
                 break;
             case "to":
                 if (vertices.containsKey(attribute.getValue()))
-                    relationship.to = vertices.get(attribute.getValue());
+                    relationship.setTo(vertices.get(attribute.getValue()));
                 break;
-            case "fieldAssociation":
+            case "fieldsAccessingClass":
                 HashMap<String, String> fieldOwnerMap = (HashMap<String, String>) new Gson().fromJson(attribute.getValue(), HashMap.class);
-                relationship.fieldAssociation = new HashSet<>(getFields(fieldOwnerMap, vertices));
+                relationship.setFieldsAccessingClass(new HashSet<>(getFields(fieldOwnerMap, vertices)));
                 break;
-            case "classAccessors":
+            case "methodsAccessingClass":
                 HashMap<String, String> classOwnerMap = (HashMap<String, String>) new Gson().fromJson(attribute.getValue(), HashMap.class);
-                relationship.classAccessors = new HashSet<>(getMethods(classOwnerMap, vertices));
+                relationship.setMethodsAccessingClass(new HashSet<>(getMethods(classOwnerMap, vertices)));
                 break;
 
-            case "accessedBy":
+            case "fieldsAccessedByMethods":
                 HashMap<String, StringMap> accessedBy = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
-                relationship.accessedFieldsBy = getFieldMethodMap(accessedBy, vertices);
+                relationship.setFieldsAccessedByMethods(getFieldMethodMap(accessedBy, vertices));
                 break;
-            case "accessing":
+            case "methodsAccessingFields":
                 HashMap<String, StringMap> accessing = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
-                relationship.accessingFields = getMethodFieldMap(accessing, vertices);
+                relationship.setMethodsAccessingFields(getMethodFieldMap(accessing, vertices));
                 break;
 
-            case "accessedEnumConstsBy":
+            case "enumsAccessedByMethods":
                 HashMap<String, StringMap> accessedEnumConstsBy = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
-                relationship.accessedEnumConstsBy = getEnumConstMethodMap(accessedEnumConstsBy, vertices);
+                relationship.setEnumsAccessedByMethods(getEnumConstMethodMap(accessedEnumConstsBy, vertices));
                 break;
-            case "accessingEnumConsts":
+            case "methodsAccessingEnums":
                 HashMap<String, StringMap> accessingEnumConsts = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
-                relationship.accessingEnumConsts = getMethodEnumConstMap(accessingEnumConsts, vertices);
+                relationship.setMethodsAccessingEnums(getMethodEnumConstMap(accessingEnumConsts, vertices));
                 break;
 
-            case "calledBy":
+            case "methodsAccessedByMethods":
                 HashMap<String, StringMap> calledBy = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
-                relationship.calledBy = getMethodMethodMap(calledBy, vertices);
+                relationship.setMethodsAccessedByMethods(getMethodMethodMap(calledBy, vertices));
                 break;
-            case "callTo":
+            case "methodsAccesingMethods":
                 HashMap<String, StringMap> callTo = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
-                relationship.callTo = getMethodMethodMap(callTo, vertices);
+                relationship.setMethodsAccesingMethods(getMethodMethodMap(callTo, vertices));
                 break;
         }
     }
 
 
-    private static HashMap<Field, Method> getFieldMethodMap(HashMap<String, StringMap> accessedBy, HashMap<String, UMLClass> vertices) {
-        HashMap<Field, Method> fieldMethodHashMap = new HashMap<>();
+    private static HashMap<Field, HashSet<Method>> getFieldMethodMap(HashMap<String, StringMap> accessedBy, HashMap<String, UMLClass> vertices) {
+        HashMap<Field, HashSet<Method>> fieldMethodHashMap = new HashMap<>();
         for (String fieldName : accessedBy.keySet()) {
+            HashSet<Method> methods = new HashSet<>();
+
             StringMap ownerMap = accessedBy.get(fieldName);
             String fieldOwner = (String) ownerMap.get("fieldOwner");
             String methodName = (String) ownerMap.getOrDefault("methodName", null);
@@ -205,15 +207,17 @@ public class Importer {
                     }
                 }
             }
-            fieldMethodHashMap.put(field, method);
+            fieldMethodHashMap.put(field, methods);
         }
         return fieldMethodHashMap;
     }
 
 
-    private static HashMap<Method, Field> getMethodFieldMap(HashMap<String, StringMap> map, HashMap<String, UMLClass> vertices) {
-        HashMap<Method, Field> methodFieldHashMap = new HashMap<>();
+    private static HashMap<Method, HashSet<Field>> getMethodFieldMap(HashMap<String, StringMap> map, HashMap<String, UMLClass> vertices) {
+        HashMap<Method, HashSet<Field>> methodFieldHashMap = new HashMap<>();
         for (String methodName : map.keySet()) {
+            HashSet<Field> fields = new HashSet<>();
+
             StringMap ownerMap = map.get(methodName);
             String methodOwner = (String) ownerMap.get("methodOwner");
             String fieldName = (String) ownerMap.getOrDefault("fieldName", null);
@@ -246,15 +250,17 @@ public class Importer {
                     }
                 }
             }
-            methodFieldHashMap.put(method, field);
+            methodFieldHashMap.put(method, fields);
         }
         return methodFieldHashMap;
     }
 
 
-    private static HashMap<EnumConstant, Method> getEnumConstMethodMap(HashMap<String, StringMap> accessedBy, HashMap<String, UMLClass> vertices) {
-        HashMap<EnumConstant, Method> enumConstMethodHashMap = new HashMap<>();
+    private static HashMap<EnumConstant, HashSet<Method>> getEnumConstMethodMap(HashMap<String, StringMap> accessedBy, HashMap<String, UMLClass> vertices) {
+        HashMap<EnumConstant, HashSet<Method>> enumConstMethodHashMap = new HashMap<>();
         for (String enumConstName : accessedBy.keySet()) {
+            HashSet<Method> methods = new HashSet<>();
+
             StringMap ownerMap = accessedBy.get(enumConstName);
             String enumConstOwner = (String) ownerMap.get("enumConstOwner");
             String methodName = (String) ownerMap.getOrDefault("methodName", null);
@@ -287,14 +293,16 @@ public class Importer {
                     }
                 }
             }
-            enumConstMethodHashMap.put(enumConstant, method);
+            enumConstMethodHashMap.put(enumConstant, methods);
         }
         return enumConstMethodHashMap;
     }
 
-    private static HashMap<Method, EnumConstant> getMethodEnumConstMap(HashMap<String, StringMap> map, HashMap<String, UMLClass> vertices) {
-        HashMap<Method, EnumConstant> methodFieldHashMap = new HashMap<>();
+    private static HashMap<Method, HashSet<EnumConstant>> getMethodEnumConstMap(HashMap<String, StringMap> map, HashMap<String, UMLClass> vertices) {
+        HashMap<Method, HashSet<EnumConstant>> methodFieldHashMap = new HashMap<>();
         for (String methodName : map.keySet()) {
+            HashSet<EnumConstant> enumConstants = new HashSet<>();
+
             StringMap ownerMap = map.get(methodName);
             String methodOwner = (String) ownerMap.get("methodOwner");
             String enumConstName = (String) ownerMap.getOrDefault("enumConstName", null);
@@ -327,14 +335,16 @@ public class Importer {
                     }
                 }
             }
-            methodFieldHashMap.put(method, enumConst);
+            methodFieldHashMap.put(method, enumConstants);
         }
         return methodFieldHashMap;
     }
 
-    private static HashMap<Method, Method> getMethodMethodMap(HashMap<String, StringMap> map, HashMap<String, UMLClass> vertices) {
-        HashMap<Method, Method> methodMethodHashMap = new HashMap<>();
+    private static HashMap<Method, HashSet<Method>> getMethodMethodMap(HashMap<String, StringMap> map, HashMap<String, UMLClass> vertices) {
+        HashMap<Method, HashSet<Method>> methodMethodHashMap = new HashMap<>();
         for (String methodName : map.keySet()) {
+            HashSet<Method> methods = new HashSet<>();
+
             StringMap ownerMap = map.get(methodName);
             String methodOwner = (String) ownerMap.get("methodOwner");
             String methodName2 = (String) ownerMap.getOrDefault("methodName2", null);
@@ -367,7 +377,7 @@ public class Importer {
                     }
                 }
             }
-            methodMethodHashMap.put(method, method2);
+            methodMethodHashMap.put(method, methods);
         }
         return methodMethodHashMap;
     }
@@ -413,7 +423,6 @@ public class Importer {
                 field = new Field(name);
                 field.setName(name);
                 field.setOwner(obj.toString());
-                field.setBaseTypeName((String) fmap.getOrDefault("baseTypeName", null));
                 field.setPrimitiveType((String) fmap.getOrDefault("primitiveType", null));
                 field.setTypeName((String) fmap.getOrDefault("typeName", null));
                 field.setTypePackageName((String) fmap.getOrDefault("typePackageName", null));
