@@ -28,7 +28,7 @@ import java.util.*;
 public class Field {
     private String name;
     private List<Modifier> modifiers = new LinkedList<>();
-    private List<AccessModifier> accessModifiers = new LinkedList<>();
+    private final List<AccessModifier> accessModifiers = new LinkedList<>();
     private boolean isArray;
     private String typeName;
     private String typePackageName;

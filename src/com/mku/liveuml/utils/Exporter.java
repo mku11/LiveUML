@@ -90,12 +90,14 @@ public class Exporter {
         return map;
     }
 
-    private HashMap<String, HashMap<String, String>> getFieldMethodOwnerMap(Map<Field, HashSet<Method>> fieldMethodMap) {
-        HashMap<String, HashMap<String, String>> fieldMethodOwnerMap = new HashMap<>();
+    private HashMap<String, List<HashMap<String, String>>> getFieldMethodOwnerMap(Map<Field, HashSet<Method>> fieldMethodMap) {
+        HashMap<String, List<HashMap<String, String>>> fieldMethodOwnerMap = new HashMap<>();
         for (Field f : fieldMethodMap.keySet()) {
+            List<HashMap<String, String>> flist = new ArrayList<>();
+            fieldMethodOwnerMap.put(f.getName(), flist);
             for(Method m : fieldMethodMap.get(f)) {
                 HashMap<String, String> ownerMap = new HashMap<>();
-                fieldMethodOwnerMap.put(f.getName(), ownerMap);
+                flist.add(ownerMap);
                 ownerMap.put("fieldOwner", f.getOwner());
                 ownerMap.put("methodName", m == null ? null : m.getSignature());
                 ownerMap.put("methodOwner", m == null ? null : m.getOwner());
@@ -104,12 +106,14 @@ public class Exporter {
         return fieldMethodOwnerMap;
     }
 
-    private HashMap<String, HashMap<String, String>> getMethodFieldOwnerMap(Map<Method, HashSet<Field>> fieldMethodMap) {
-        HashMap<String, HashMap<String, String>> fieldMethodOwnerMap = new HashMap<>();
+    private HashMap<String, List<HashMap<String, String>>> getMethodFieldOwnerMap(Map<Method, HashSet<Field>> fieldMethodMap) {
+        HashMap<String, List<HashMap<String, String>>> fieldMethodOwnerMap = new HashMap<>();
         for (Method m : fieldMethodMap.keySet()) {
+            List<HashMap<String, String>> flist = new ArrayList<>();
+            fieldMethodOwnerMap.put(m.getSignature(), flist);
             for(Field f : fieldMethodMap.get(m)) {
                 HashMap<String, String> ownerMap = new HashMap<>();
-                fieldMethodOwnerMap.put(m.getSignature(), ownerMap);
+                flist.add(ownerMap);
                 ownerMap.put("methodName", m.getName());
                 ownerMap.put("methodOwner", m.getOwner());
                 ownerMap.put("fieldName", f == null ? null : f.getName());
@@ -120,12 +124,14 @@ public class Exporter {
     }
 
 
-    private HashMap<String, HashMap<String, String>> getEnumConstMethodOwnerMap(Map<EnumConstant, HashSet<Method>> enumConstantMethodHashMap) {
-        HashMap<String, HashMap<String, String>> enumConstMethodOwnerMap = new HashMap<>();
+    private HashMap<String, List<HashMap<String, String>>> getEnumConstMethodOwnerMap(Map<EnumConstant, HashSet<Method>> enumConstantMethodHashMap) {
+        HashMap<String, List<HashMap<String, String>>> enumConstMethodOwnerMap = new HashMap<>();
         for (EnumConstant ec : enumConstantMethodHashMap.keySet()) {
+            List<HashMap<String, String>> mlist = new ArrayList<>();
+            enumConstMethodOwnerMap.put(ec.getName(), mlist);
             for(Method m : enumConstantMethodHashMap.get(ec)) {
                 HashMap<String, String> ownerMap = new HashMap<>();
-                enumConstMethodOwnerMap.put(ec.getName(), ownerMap);
+                mlist.add(ownerMap);
                 ownerMap.put("enumConstOwner", ec.getOwner());
                 ownerMap.put("methodName", m == null ? null : m.getSignature());
                 ownerMap.put("methodOwner", m == null ? null : m.getOwner());
@@ -134,12 +140,14 @@ public class Exporter {
         return enumConstMethodOwnerMap;
     }
 
-    private HashMap<String, HashMap<String, String>> getMethodEnumConstOwnerMap(Map<Method, HashSet<EnumConstant>> enumConstMethodMap) {
-        HashMap<String, HashMap<String, String>> enumConstMethodOwnerMap = new HashMap<>();
+    private HashMap<String, List<HashMap<String, String>>> getMethodEnumConstOwnerMap(Map<Method, HashSet<EnumConstant>> enumConstMethodMap) {
+        HashMap<String, List<HashMap<String, String>>> enumConstMethodOwnerMap = new HashMap<>();
         for (Method m : enumConstMethodMap.keySet()) {
+            List<HashMap<String, String>> elist = new ArrayList<>();
+            enumConstMethodOwnerMap.put(m.getSignature(), elist);
             for (EnumConstant ec : enumConstMethodMap.get(m)) {
                 HashMap<String, String> ownerMap = new HashMap<>();
-                enumConstMethodOwnerMap.put(m.getSignature(), ownerMap);
+                elist.add(ownerMap);
                 ownerMap.put("methodName", m.getName());
                 ownerMap.put("methodOwner", m.getOwner());
                 ownerMap.put("enumConstName", ec == null ? null : ec.getName());
@@ -149,13 +157,14 @@ public class Exporter {
         return enumConstMethodOwnerMap;
     }
 
-    private HashMap<String, HashMap<String, String>> getMethodMethodOwnerMap(Map<Method, HashSet<Method>> fieldMethodMap) {
-        HashMap<String, HashMap<String, String>> methodMethodOwnerMap = new HashMap<>();
+    private HashMap<String, List<HashMap<String, String>>> getMethodMethodOwnerMap(Map<Method, HashSet<Method>> fieldMethodMap) {
+        HashMap<String, List<HashMap<String, String>>> methodMethodOwnerMap = new HashMap<>();
         for (Method m : fieldMethodMap.keySet()) {
+            List<HashMap<String, String>> mlist = new ArrayList<>();
+            methodMethodOwnerMap.put(m.getSignature(), mlist);
             for (Method mv : fieldMethodMap.get(m)) {
-                // FIXME:
                 HashMap<String, String> ownerMap = new HashMap<>();
-                methodMethodOwnerMap.put(m.getSignature(), ownerMap);
+                mlist.add(ownerMap);
                 ownerMap.put("methodName", m.getName());
                 ownerMap.put("methodOwner", m.getOwner());
                 ownerMap.put("methodName2", mv == null ? null : mv.getSignature());

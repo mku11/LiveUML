@@ -36,8 +36,8 @@ public class Method {
     private final List<String> returnTypeParents = new ArrayList<>();
     private String owner;
     private int line;
-    private List<Modifier> modifiers = new LinkedList<>();
-    private List<AccessModifier> accessModifiers = new LinkedList<>();
+    private final List<Modifier> modifiers = new LinkedList<>();
+    private final List<AccessModifier> accessModifiers = new LinkedList<>();
 
     private List<Parameter> parameters = new LinkedList<>();
 

@@ -23,14 +23,12 @@ SOFTWARE.
 */
 package com.mku.liveuml.model.diagram;
 
-import com.mku.liveuml.model.entities.EnumConstant;
-import com.mku.liveuml.model.entities.Field;
-import com.mku.liveuml.model.entities.Method;
+import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.NodeList;
+import com.mku.liveuml.model.entities.*;
 import com.mku.liveuml.model.entities.Package;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public abstract class UMLClass {
     private String name;
@@ -41,11 +39,15 @@ public abstract class UMLClass {
     private final HashMap<String, EnumConstant> enumConstants = new HashMap<>();
     private final HashMap<String, UMLRelationship> relationships = new HashMap<>();
 
+    private final List<AccessModifier> accessModifiers = new LinkedList<>();
+    private final List<Modifier> modifiers = new LinkedList<>();
+
     // TODO: move compact to view model layer
     private boolean compact;
     private String fileSource;
     private String filePath;
     private int line;
+    private final List<Parameter> typeParameters = new ArrayList<>();
 
     public void addMethods(List<Method> methods) {
         for (Method method : methods) {
@@ -187,5 +189,34 @@ public abstract class UMLClass {
 
     public String getFullName() {
         return Package.getFullName(packageName, name, parents);
+    }
+
+    public List<AccessModifier> getAccessModifiers() {
+        return Collections.unmodifiableList(this.accessModifiers);
+    }
+
+    public void setAccessModifiers(List<AccessModifier> accessModifiers) {
+        this.accessModifiers.clear();
+        this.accessModifiers.addAll(accessModifiers);
+    }
+
+
+    public List<Modifier> getModifiers() {
+        return Collections.unmodifiableList(this.modifiers);
+    }
+
+    public void setModifiers(List<Modifier> modifiers) {
+        this.modifiers.clear();
+        this.modifiers.addAll(modifiers);
+    }
+
+
+    public List<Parameter> getTypeParameters() {
+        return Collections.unmodifiableList(this.typeParameters);
+    }
+
+    public void setTypeParameters(List<Parameter> params) {
+        this.typeParameters.clear();
+        this.typeParameters.addAll(params);
     }
 }

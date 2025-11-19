@@ -155,7 +155,7 @@ public class UMLFinder {
                 continue;
             if (type == ReferenceType.To && s == rel.getTo())
                 continue;
-            if (rel.getFieldsAccessedByMethods().containsKey(f)) {
+            if (type == ReferenceType.From && rel.getFieldsAccessedByMethods().containsKey(f)) {
                 for (Method accessorMethod : rel.getFieldsAccessedByMethods().get(f)) {
                     methodRefs.add(accessorMethod);
                     fieldRefs.add(f);
@@ -163,6 +163,12 @@ public class UMLFinder {
                     classRefs.add(rel.getTo());
                     relationshipRefs.add(rel);
                 }
+            }
+            if (type == ReferenceType.To && rel.getFieldsAccessingClass().contains(f)) {
+                fieldRefs.add(f);
+                classRefs.add(rel.getFrom());
+                classRefs.add(rel.getTo());
+                relationshipRefs.add(rel);
             }
         }
         return results;

@@ -75,8 +75,8 @@ public class ContextMenu {
         createRelFindRefSection(menu, type);
         if(type != UMLFinder.ReferenceType.To) {
             createEnumFindRefSection(menu, type);
-            createFieldsFindRefSection(menu, type);
         }
+        createFieldsFindRefSection(menu, type);
         createConstructorsFindRefSection(menu, type);
         createMethodsFindRefSection(menu, type);
         return menu;
@@ -221,7 +221,8 @@ public class ContextMenu {
             });
             items.add(depItem);
         }
-        addSection("Relationships", menu, items);
+        if(items.size() > 0)
+            addSection("Relationships", menu, items);
     }
 
     private void createClassGoToSection(JMenu menu) {
@@ -324,9 +325,11 @@ public class ContextMenu {
         for(UMLRelationship rel : object.getRelationships().values()) {
             if(type == UMLFinder.ReferenceType.From && object == rel.getFrom())
                 continue;
+            if(type == UMLFinder.ReferenceType.From && rel.getFieldsAccessedByMethods().containsKey(f))
+                return true;
             if(type == UMLFinder.ReferenceType.To && object == rel.getTo())
                 continue;
-            if(type == UMLFinder.ReferenceType.From && rel.getFieldsAccessedByMethods().containsKey(f))
+            if(type == UMLFinder.ReferenceType.To && rel.getFieldsAccessingClass().contains(f))
                 return true;
         }
         return false;

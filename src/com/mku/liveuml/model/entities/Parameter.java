@@ -36,6 +36,11 @@ public class Parameter {
     private final List<String> typeParents = new ArrayList<>();
     private boolean isArray;
     private boolean typeVariable;
+    private boolean generic;
+    private boolean upperBound;
+    private boolean lowerBound;
+    private final List<String> bounds = new ArrayList<>();
+    private final List<String> boundsFullNames = new ArrayList<>();
 
     public Parameter(String name) {
         this.name = name;
@@ -120,5 +125,48 @@ public class Parameter {
         this.typeParents.clear();
         if(parents!=null)
             this.typeParents.addAll(parents);
+    }
+
+    public void setGeneric(boolean value) {
+        this.generic = value;
+    }
+
+    public boolean isGeneric() {
+        return generic;
+    }
+
+
+    public boolean isUpperBound() {
+        return upperBound;
+    }
+
+    public void setUpperBound(boolean upperBound) {
+        this.upperBound = upperBound;
+    }
+
+    public boolean isLowerBound() {
+        return lowerBound;
+    }
+
+    public void setLowerBound(boolean lowerBound) {
+        this.lowerBound = lowerBound;
+    }
+
+    public List<String> getBounds() {
+        return Collections.unmodifiableList(this.bounds);
+    }
+
+    public void setBounds(List<String> bounds) {
+        this.bounds.clear();
+        this.bounds.addAll(bounds);
+    }
+
+    public List<String> getBoundsFullNames() {
+        return boundsFullNames;
+    }
+
+    public void setBoundsFullNames(List<String> bounds) {
+        this.boundsFullNames.clear();
+        this.boundsFullNames.addAll(bounds);
     }
 }

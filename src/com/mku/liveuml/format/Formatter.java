@@ -50,6 +50,9 @@ public class Formatter {
     public static final String propertySelectedColor = "#6388E6";
     public static final String propertySelectedBackgroundColor = "#C1D1E3";
     public static final String unresolvedSymbolColor = "#E83F83";
+    private static String rightArrowQuote = "&#10219";
+    private static String leftArrowQuote = "&#10218";
+    private static String space = "&#10240";
 
     /**
      * Do not use px for styles it causes exceptions within awt
@@ -66,7 +69,8 @@ public class Formatter {
 
     public String getUmlAsHtml(UMLClass object, boolean compact, UMLDiagram diagram) {
         boolean classSelected = isClassSelected(object, diagram);
-        String stereoType = getStereoType(object);
+        String stereotype = getFormattedStereoTypes(object);
+        String typeParams = getFormattedTypeParameters(object);
         String formattedHtml = classHtmlTemplate
                 .replaceAll(Pattern.quote("${name}"),
                         Matcher.quoteReplacement(object.getName()))
@@ -77,7 +81,9 @@ public class Formatter {
                         Matcher.quoteReplacement(classSelected ?
                                 classSelectedHeaderBackgroundColor : classHeaderBackgroundColor));
         formattedHtml = formattedHtml.replaceAll(Pattern.quote("${stereotype}"),
-                Matcher.quoteReplacement(stereoType != null ? "<div>&#10218" + stereoType + "&#10219</div>" : ""));
+                Matcher.quoteReplacement(stereotype.length() > 0 ? "<div>" + stereotype + "</div>" : ""));
+        formattedHtml = formattedHtml.replaceAll(Pattern.quote("${type-params}"),
+                Matcher.quoteReplacement(typeParams.length() > 0 ? "<div>" + typeParams + "</div>" : ""));
 
         // get enums
         String formattedEnums = getFormattedEnums(object, diagram.getSelectedEnumConsts(), compact);
@@ -97,14 +103,43 @@ public class Formatter {
         return formattedHtml;
     }
 
-    private String getStereoType(UMLClass object) {
+    private String getFormattedStereoTypes(UMLClass object) {
+        List<String> stereoTypes = getStereoTypes(object);
+        StringBuilder stereotype = new StringBuilder();
+        for (String st : stereoTypes)
+            stereotype.append(leftArrowQuote).append(st).append(rightArrowQuote);
+        return stereotype.toString();
+    }
+
+    private String getFormattedTypeParameters(UMLClass object) {
+        StringBuilder typeParam = new StringBuilder();
+        for (Parameter param : object.getTypeParameters()) {
+            if (typeParam.length() > 0)
+                typeParam.append(",").append(space);
+            String descr = "";
+            String bounds = String.join(" ", param.getBounds());
+            if(param.isLowerBound())
+                descr = "super" + space + bounds;
+            else if(param.isUpperBound())
+                descr = "extends" + space + bounds;
+            typeParam.append(param.getName() + space + descr);
+        }
+        return typeParam.toString();
+    }
+
+    private List<String> getStereoTypes(UMLClass object) {
+        List<String> stereotypes = new ArrayList<>();
         if (object instanceof Enumeration)
-            return "enumeration";
+            stereotypes.add("enumeration");
         if (object instanceof Interface)
-            return "interface";
+            stereotypes.add("interface");
         if (object instanceof Abstract)
-            return "abstract";
-        return null;
+            stereotypes.add("abstract");
+        if (object.getModifiers().contains(Modifier.Final))
+            stereotypes.add("final");
+        if (object.getModifiers().contains(Modifier.Static))
+            stereotypes.add("static");
+        return stereotypes;
     }
 
     private String getFormattedEnums(UMLClass object, HashSet<EnumConstant> selectedEnums, boolean compact) {
@@ -139,6 +174,24 @@ public class Formatter {
                         .replaceAll(Pattern.quote("${property-background-color}"),
                                 Matcher.quoteReplacement(selectedFields.contains(field) ?
                                         propertySelectedBackgroundColor : propertyBackgroundColor));
+
+                String stereotypes = "";
+                if (field.getModifiers().contains(Modifier.Transient))
+                    stereotypes += leftArrowQuote + "transient" + rightArrowQuote;
+                if (field.getModifiers().contains(Modifier.Final)) {
+                    stereotypes += leftArrowQuote + "final" + rightArrowQuote;
+                }
+                if (field.getModifiers().contains(Modifier.Static)) {
+                    stereotypes += leftArrowQuote + "static" + rightArrowQuote;
+                }
+                if (field.getModifiers().contains(Modifier.Native)) {
+                    stereotypes += leftArrowQuote + "native" + rightArrowQuote;
+                }
+                if (field.getModifiers().contains(Modifier.Volatile)) {
+                    stereotypes += leftArrowQuote + "volatile" + rightArrowQuote;
+                }
+                property = property.replaceAll(Pattern.quote("${stereotypes}"),
+                        Matcher.quoteReplacement(stereotypes));
                 fields.append(property).append("\n");
             }
         }
@@ -160,13 +213,25 @@ public class Formatter {
             }
             for (Method method : mtds) {
                 String property = propertyHtmlTemplate.replaceAll(Pattern.quote("${content}"),
-                                Matcher.quoteReplacement(getMethodSignature(method, true)))
+                                Matcher.quoteReplacement(getMethodSignature(method, true, true)))
                         .replaceAll(Pattern.quote("${property-color}"),
                                 Matcher.quoteReplacement(selectedMethods.contains(method) ?
                                         propertySelectedColor : propertyColor))
                         .replaceAll(Pattern.quote("${property-background-color}"),
                                 Matcher.quoteReplacement(selectedMethods.contains(method) ?
                                         propertySelectedBackgroundColor : propertyBackgroundColor));
+                String stereotypes = "";
+                if (method.getModifiers().contains(Modifier.Abstract)) {
+                    stereotypes += leftArrowQuote + "abstract" + rightArrowQuote;
+                }
+                if (method.getModifiers().contains(Modifier.Static)) {
+                    stereotypes += leftArrowQuote + "static" + rightArrowQuote;
+                }
+                if (method.getModifiers().contains(Modifier.Final)) {
+                    stereotypes += leftArrowQuote + "final" + rightArrowQuote;
+                }
+                property = property.replaceAll(Pattern.quote("${stereotypes}"),
+                        Matcher.quoteReplacement(stereotypes));
                 methods.append(property).append("\n");
             }
         }
@@ -192,9 +257,26 @@ public class Formatter {
     }
 
     public static String getFieldFormatted(Field field, boolean isHtml) {
-        String formattedField = getFieldQualifier(field) + " " + field.getName();
-        if(isHtml)
-            formattedField += "&#10240:&#10240";
+        String formattedField = getFieldQualifier(field) + " ";
+        if (isHtml) {
+            String textdecoration = "none";
+            String fontStyle = "normal";
+            if (field.getModifiers().contains(Modifier.Abstract)) {
+                fontStyle = "italics";
+            }
+            if (field.getModifiers().contains(Modifier.Static)) {
+                textdecoration = "underline";
+            }
+            formattedField += "<font style='text-decoration: " + textdecoration + "';";
+            formattedField += "fontStyle: ";
+            formattedField += fontStyle + ";'>";
+        }
+        formattedField += field.getName();
+        if (isHtml) {
+            formattedField += "</font>";
+        }
+        if (isHtml)
+            formattedField += space + ":" + space;
         else
             formattedField += " : ";
         formattedField += field.getTypeName();
@@ -203,26 +285,40 @@ public class Formatter {
         return formattedField;
     }
 
-    public static String getMethodSignature(Method method, boolean usePrefix) {
-        return getMethodSignature(method, usePrefix, true);
-    }
-
     public static String getMethodSignature(Method method, boolean usePrefix, boolean isHtml) {
         String signature = "";
         if (usePrefix)
             signature += getMethodQualifier(method) + " ";
-        signature += method.getName() + " (";
+        if (isHtml) {
+            String textdecoration = "none";
+            String fontStyle = "normal";
+            if (method.getModifiers().contains(Modifier.Abstract)) {
+                fontStyle = "italics";
+            }
+            if (method.getModifiers().contains(Modifier.Static)) {
+                textdecoration = "underline";
+            }
+            signature += "<font style='text-decoration: " + textdecoration + "';";
+            signature += "fontStyle: ";
+            signature += fontStyle + ";'>";
+        }
+        signature += method.getName();
+        if (isHtml) {
+            signature += "</font>";
+        }
+        signature += " (";
         StringBuilder params = new StringBuilder();
         for (Parameter parameter : method.getParameters()) {
             if (params.length() > 0) {
                 if (isHtml)
-                    params.append(",&#10240");
+                    params.append("," + space);
                 else
                     params.append(", ");
             }
+
             params.append(parameter.getName());
             if (isHtml)
-                params.append("&#10240:&#10240");
+                params.append(space + ":" + space);
             else
                 params.append(" : ");
             params.append(parameter.getTypeName());
@@ -233,7 +329,7 @@ public class Formatter {
         signature += ")";
         if (!method.isReturnTypeVoid()) {
             if (isHtml) {
-                signature += "&#10240:&#10240";
+                signature += space + ":" + space;
             } else {
                 signature += " : ";
             }
