@@ -27,6 +27,7 @@ Generate UML Class Diagrams from java source code.
 - [JavaParser](https://github.com/javaparser/javaparser)  
 - [JGraphT](https://github.com/jgrapht/jgrapht)  
 - [JUNGRAPHT-VISUALIZATION](https://github.com/tomnelson/jungrapht-visualization)  
+- [FlatLaf](https://www.formdev.com/flatlaf/)  
 - [Gson](https://github.com/google/gson)  
 
 # License
