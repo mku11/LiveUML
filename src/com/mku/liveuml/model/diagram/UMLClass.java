@@ -23,8 +23,6 @@ SOFTWARE.
 */
 package com.mku.liveuml.model.diagram;
 
-import com.github.javaparser.ast.Node;
-import com.github.javaparser.ast.NodeList;
 import com.mku.liveuml.model.entities.*;
 import com.mku.liveuml.model.entities.Package;
 
@@ -38,25 +36,17 @@ public abstract class UMLClass {
     private final HashMap<String, Field> fields = new HashMap<>();
     private final HashMap<String, EnumConstant> enumConstants = new HashMap<>();
     private final HashMap<String, UMLRelationship> relationships = new HashMap<>();
-
     private final List<AccessModifier> accessModifiers = new LinkedList<>();
     private final List<Modifier> modifiers = new LinkedList<>();
-
-    // TODO: move compact to view model layer
-    private boolean compact;
+    private boolean compact; // TODO: move to view model layer
     private String fileSource;
     private String filePath;
     private int line;
     private final List<Parameter> typeParameters = new ArrayList<>();
 
-    public void addMethods(List<Method> methods) {
-        for (Method method : methods) {
-            if (this.methods.containsKey(method.getSignature()))
-                continue;
-            this.methods.put(method.getSignature(), method);
-        }
+    protected UMLClass(String name) {
+        this.name = name;
     }
-
     public String getFilePath() {
         return filePath;
     }
@@ -127,11 +117,6 @@ public abstract class UMLClass {
     public void setRelationships(HashMap<String, UMLRelationship> relationships) {
         this.relationships.clear();
         this.relationships.putAll(relationships);
-    }
-
-
-    protected UMLClass(String name) {
-        this.name = name;
     }
 
     public void setFilePath(String filePath) {
@@ -219,4 +204,13 @@ public abstract class UMLClass {
         this.typeParameters.clear();
         this.typeParameters.addAll(params);
     }
+
+    public void addMethods(List<Method> methods) {
+        for (Method method : methods) {
+            if (this.methods.containsKey(method.getSignature()))
+                continue;
+            this.methods.put(method.getSignature(), method);
+        }
+    }
+
 }

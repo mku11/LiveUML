@@ -44,20 +44,16 @@ public class UMLRelationship {
     private HashMap<Method, HashSet<EnumConstant>> methodsAccessingEnums = new HashMap<>();
 
     private HashSet<Method> methodsAccessingClass = new HashSet<>();
-
     private HashSet<Field> fieldsAccessingClass = new HashSet<>();
 
     // DO NOT REMOVE needed by importer
-    public UMLRelationship() {
-
-    }
+    public UMLRelationship() {}
 
     public UMLRelationship(UMLClass from, UMLClass to, UMLRelationshipType type) {
         this.from = from;
         this.to = to;
         this.type = type;
     }
-
 
     public UMLRelationshipType getType() {
         return type;

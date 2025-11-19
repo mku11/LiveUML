@@ -64,14 +64,14 @@ public class Exporter {
         exporter.registerAttribute("type", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
         exporter.registerAttribute("from", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
         exporter.registerAttribute("to", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
-        exporter.registerAttribute("fieldsAccessingClass", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
-        exporter.registerAttribute("methodsAccessingClass", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
+        exporter.registerAttribute("methodsAccessedByMethods", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
+        exporter.registerAttribute("methodsAccesingMethods", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
         exporter.registerAttribute("fieldsAccessedByMethods", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
         exporter.registerAttribute("methodsAccessingFields", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
         exporter.registerAttribute("enumsAccessedByMethods", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
         exporter.registerAttribute("methodsAccessingEnums", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
-        exporter.registerAttribute("methodsAccessedByMethods", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
-        exporter.registerAttribute("methodsAccesingMethods", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
+        exporter.registerAttribute("fieldsAccessingClass", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
+        exporter.registerAttribute("methodsAccessingClass", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
     }
 
     private Map<String, Attribute> getEdgeAttrs(UMLRelationship UMLRelationship) {
@@ -203,6 +203,9 @@ public class Exporter {
         exporter.registerAttribute("methods", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
         exporter.registerAttribute("enumConstants", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
         exporter.registerAttribute("compact", GraphMLExporter.AttributeCategory.NODE, AttributeType.BOOLEAN);
+        exporter.registerAttribute("accessModifiers", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
+        exporter.registerAttribute("modifiers", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
+        exporter.registerAttribute("typeParameters", GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING);
     }
 
     private Map<String, Attribute> getVertexAttrs(UMLClass obj, Map<UMLClass, Point2D.Double> vertexPositions) {
@@ -222,6 +225,10 @@ public class Exporter {
         map.put("methods", new DefaultAttribute<>(new Gson().toJson(obj.getMethods()), AttributeType.STRING));
         map.put("enumConstants", new DefaultAttribute<>(new Gson().toJson(obj.getEnumConstants()), AttributeType.STRING));
         map.put("compact", new DefaultAttribute<>(obj.isCompact(), AttributeType.BOOLEAN));
+
+        map.put("modifiers", new DefaultAttribute<>(new Gson().toJson(obj.getModifiers()), AttributeType.STRING));
+        map.put("accessModifiers", new DefaultAttribute<>(new Gson().toJson(obj.getAccessModifiers()), AttributeType.STRING));
+        map.put("typeParameters", new DefaultAttribute<>(new Gson().toJson(obj.getTypeParameters()), AttributeType.STRING));
         return map;
     }
 }
