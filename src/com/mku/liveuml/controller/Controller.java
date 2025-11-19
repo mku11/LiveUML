@@ -9,9 +9,7 @@ import com.mku.liveuml.model.diagram.UMLDiagram;
 import com.mku.liveuml.model.diagram.UMLParser;
 import com.mku.liveuml.model.diagram.UMLRelationship;
 import com.mku.liveuml.utils.*;
-import com.mku.liveuml.view.ClassesPane;
-import com.mku.liveuml.view.ContextMenu;
-import com.mku.liveuml.view.GraphPanel;
+import com.mku.liveuml.view.*;
 import com.mku.liveuml.view.MenuBar;
 import org.jungrapht.visualization.VisualizationViewer;
 
@@ -93,6 +91,7 @@ public class Controller {
         menuBar.setListener(MenuBar.Action.ToggleExpand, (e) -> toggleExpand());
 
         menuBar.setListener(MenuBar.Action.ImportSource, (e) -> promptImportSource());
+        menuBar.setListener(MenuBar.Action.ListSources, (e) -> showListSources());
         menuBar.setListener(MenuBar.Action.RefreshSources, (e) -> promptRefreshSources());
 
         menuBar.setListener(MenuBar.Action.ChooseViewer, (e) -> promptChooseViewer());
@@ -236,6 +235,36 @@ public class Controller {
                             + Resources.getResourceAsString("/help/help.txt"),
                     "About", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(getIconImage()));
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void showListSources() {
+        try {
+            JFrame frame = new JFrame();
+            frame.setTitle("Sources");
+            frame.setIconImage(getIconImage());
+            frame.pack();
+            SourcesListPane sourcesListScrollPane = new SourcesListPane();
+            Dimension size = new Dimension(400, 100);
+            sourcesListScrollPane.setOnMouseRightClick((object, mousePosition) -> {
+                SourcesListContextMenu contextMenu = new SourcesListContextMenu(object, diagram, graphPanel);
+                JPopupMenu menu = contextMenu.getContextMenu();
+                contextMenu.setOnDelete((source)->{
+                    diagram.getSources().remove(source);
+                    sourcesListScrollPane.setSources(diagram.getSources().toArray(new String[0]));
+                });
+                menu.show(mousePosition.component, mousePosition.x, mousePosition.y);
+            });
+            sourcesListScrollPane.setSources(diagram.getSources().toArray(new String[0]));
+            frame.add(sourcesListScrollPane);
+            frame.setLocationRelativeTo(graphPanel);
+            sourcesListScrollPane.setSize(size);
+            sourcesListScrollPane.setMinimumSize(size);
+            frame.setPreferredSize(size);
+            frame.setMinimumSize(size);
+            frame.setVisible(true);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

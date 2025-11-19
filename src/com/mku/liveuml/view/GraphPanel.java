@@ -445,8 +445,8 @@ public class GraphPanel extends JPanel {
             org.jungrapht.visualization.layout.model.Point point = viewer.getVisualizationModel().getLayoutModel().get(obj);
             EventQueue.invokeLater(() -> {
                 Shape shape = verticesBounds.get(obj);
-                int newX = (int) point.x - shape.getBounds().width / 2;
-                int newY = (int) point.y - shape.getBounds().height / 2;
+                int newX = (int) point.x - getVisualizationScrollPane().getWidth() / 2;
+                int newY = (int) point.y - getVisualizationScrollPane().getHeight() / 2;
                 visualizationScrollPane.getHorizontalScrollBar().setValue(newX);
                 visualizationScrollPane.getVerticalScrollBar().setValue(newY);
                 viewer.repaint();
