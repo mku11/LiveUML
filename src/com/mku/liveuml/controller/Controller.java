@@ -274,7 +274,7 @@ public class Controller {
     private void showLicense() {
         try {
             JOptionPane.showMessageDialog(frame, Config.APPNAME + " " + Config.APPVERSION + " \n"
-                            + Resources.getResourceAsString("/help/help.txt"),
+                            + Resources.getResourceAsString("/help/license.txt"),
                     "About", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(getIconImage()));
         } catch (IOException e) {
             throw new RuntimeException(e);
