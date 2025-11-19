@@ -50,6 +50,8 @@ public class ClassesPane extends JScrollPane {
         classes = new JList<>();
         classes.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
+                if(classes.getSelectedValuesList().size() == 0)
+                    return;
                 if (e.getButton() == MouseEvent.BUTTON1) {
                     if(e.getClickCount() == 2) {
                         if(onClassDoubleClick != null)
