@@ -38,29 +38,22 @@ public class Method {
     private int line;
     private final List<Modifier> modifiers = new LinkedList<>();
     private final List<AccessModifier> accessModifiers = new LinkedList<>();
-
-    private List<Parameter> parameters = new LinkedList<>();
-
+    private final List<Parameter> parameters = new LinkedList<>();
     public Method(String name) {
         this.name = name;
     }
-
     public String getName() {
         return name;
     }
-
     public void setName(String name) {
         this.name = name;
     }
-
     public void setReturnTypeName(String returnTypeName) {
         this.returnTypeName = returnTypeName;
     }
-
     public String getReturnTypePackageName() {
         return returnTypePackageName;
     }
-
     public void setReturnTypePackageName(String returnTypePackageName) {
         this.returnTypePackageName = returnTypePackageName;
     }
@@ -88,30 +81,24 @@ public class Method {
     public List<Modifier> getModifiers() {
         return Collections.unmodifiableList(modifiers);
     }
-
     public void setModifiers(List<Modifier> modifiers) {
         this.modifiers.clear();
         this.modifiers.addAll(modifiers);
     }
-
     public List<AccessModifier> getAccessModifiers() {
         return Collections.unmodifiableList(this.accessModifiers);
     }
-
     public void setAccessModifiers(List<AccessModifier> accessModifiers) {
         this.accessModifiers.clear();
         this.accessModifiers.addAll(accessModifiers);
     }
-
     public List<Parameter> getParameters() {
         return Collections.unmodifiableList(parameters);
     }
-
     public void setParameters(List<Parameter> parameters) {
         this.parameters.clear();
         this.parameters.addAll(parameters);
     }
-
     public boolean isReturnTypeVoid() {
         return !isReturnTypePrimitive() && returnTypeName == null;
     }

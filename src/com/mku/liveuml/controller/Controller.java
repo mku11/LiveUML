@@ -22,6 +22,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -80,7 +81,7 @@ public class Controller {
     }
 
     private void setMenuListeners() {
-        menuBar.setListener(MenuBar.Action.New, (e) -> createNewDiagram());
+        menuBar.setListener(MenuBar.Action.New, (e) -> promptNewDiagram());
         menuBar.setListener(MenuBar.Action.Open, (e) -> promptOpenDiagram());
         menuBar.setListener(MenuBar.Action.Save, (e) -> saveDiagram(diagram.getFilepath()));
         menuBar.setListener(MenuBar.Action.SaveAs, (e) -> saveDiagramAs());
@@ -111,7 +112,7 @@ public class Controller {
 
     private void refreshSources() {
         classesScrollPane.clear();
-        executor.submit(()-> {
+        executor.submit(() -> {
             setStatus("Refreshing sources");
             diagram.refresh();
             EventQueue.invokeLater(() -> {
@@ -129,12 +130,12 @@ public class Controller {
     private void promptExit() {
         int response = JOptionPane.showConfirmDialog(null, "Save before exit?", "Confirm",
                 JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-        if (response == JOptionPane.YES_OPTION) {
+        if (response == JOptionPane.CANCEL_OPTION) {
+            return;
+        } else if (response == JOptionPane.YES_OPTION) {
             saveDiagram(diagram.getFilepath());
-            frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
-        } else if (response == JOptionPane.NO_OPTION) {
-            frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
         }
+        frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
     }
 
     private void toggleExpand() {
@@ -142,12 +143,22 @@ public class Controller {
         menuBar.setLabel(MenuBar.Action.ToggleExpand, collapsed ? "Expand All" : "Collapse All");
     }
 
-    private void createNewDiagram() {
-        classesScrollPane.clear();
-        graphPanel.clear();
-        graphPanel.revalidate();
+    private void promptNewDiagram() {
+        if (diagram != null && diagram.getFilepath() != null) {
+            int response = JOptionPane.showConfirmDialog(null, "Save before creating new diagram?", "Confirm",
+                    JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (response == JOptionPane.CANCEL_OPTION) {
+                return;
+            } else if (response == JOptionPane.YES_OPTION) {
+                saveDiagram(diagram.getFilepath());
+            }
+        }
+        closeDiagram();
+        newDiagram();
+    }
+
+    private void newDiagram() {
         diagram = createDiagram();
-        setTitle(null);
         graphPanel.display(diagram);
     }
 
@@ -156,7 +167,7 @@ public class Controller {
                 new File(".").getAbsolutePath()));
         fc.setDialogTitle("Choose file to export");
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        if (diagram.getFilepath() != null) {
+        if (diagram != null && diagram.getFilepath() != null) {
             String filename = new File(diagram.getFilepath()).getName();
             filename = FileUtils.getFilenameWithoutExtension(filename);
             fc.setSelectedFile(new File(filename + ".png"));
@@ -177,10 +188,16 @@ public class Controller {
     private void exportImage(File file) {
         executor.submit(() -> {
             setStatus("Exporting image");
-            ImageGrabber imageGrabber = new ImageGrabber(graphPanel);
-            BufferedImage image = imageGrabber.getImage();
-            new ImageExporter().saveImage(file, image);
-            setStatus("Image exported", 3000);
+            try {
+                ImageGrabber imageGrabber = new ImageGrabber(graphPanel);
+                BufferedImage image = imageGrabber.getImage();
+                new ImageExporter().saveImage(file, image);
+                setStatus("Image exported", 3000);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(frame, "Error during import: " + ex.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
         });
     }
 
@@ -199,6 +216,17 @@ public class Controller {
     }
 
     private void promptCloseDiagram() {
+        int response = JOptionPane.showConfirmDialog(null, "Save before closing?", "Confirm",
+                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (response == JOptionPane.CANCEL_OPTION) {
+            return;
+        } else if (response == JOptionPane.YES_OPTION) {
+            saveDiagram(diagram.getFilepath());
+        }
+        closeDiagram();
+    }
+
+    private void closeDiagram() {
         classesScrollPane.clear();
         graphPanel.clear();
         graphPanel.revalidate();
@@ -217,6 +245,20 @@ public class Controller {
     }
 
     private void promptOpenDiagram() {
+        if (diagram != null && diagram.getFilepath() != null) {
+            int response = JOptionPane.showConfirmDialog(null, "Save before closing?", "Confirm",
+                    JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (response == JOptionPane.CANCEL_OPTION) {
+                return;
+            } else if (response == JOptionPane.YES_OPTION) {
+                saveDiagram(diagram.getFilepath());
+            }
+        }
+        closeDiagram();
+        promptOpenDiagramDialog();
+    }
+
+    private void promptOpenDiagramDialog() {
         JFileChooser fc = new JFileChooser(prefs.get("LAST_GRAPH_FILE",
                 new File(".").getAbsolutePath()));
         fc.setDialogTitle("Choose graph file to load");
@@ -231,7 +273,7 @@ public class Controller {
 
     private void showLicense() {
         try {
-            JOptionPane.showMessageDialog(null, Config.APPNAME + " " + Resources.getVersion() + " \n"
+            JOptionPane.showMessageDialog(frame, Config.APPNAME + " " + Config.APPVERSION + " \n"
                             + Resources.getResourceAsString("/help/help.txt"),
                     "About", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(getIconImage()));
         } catch (IOException e) {
@@ -249,7 +291,7 @@ public class Controller {
             sourcesListScrollPane.setOnMouseRightClick((object, mousePosition) -> {
                 SourcesListContextMenu contextMenu = new SourcesListContextMenu(object, diagram, graphPanel);
                 JPopupMenu menu = contextMenu.getContextMenu();
-                contextMenu.setOnDelete((source)->{
+                contextMenu.setOnDelete((source) -> {
                     diagram.getSources().remove(source);
                     sourcesListScrollPane.setSources(diagram.getSources().toArray(new String[0]));
                 });
@@ -270,7 +312,7 @@ public class Controller {
 
     private void showHelp() {
         try {
-            JOptionPane.showMessageDialog(null, Resources.getResourceAsString("/help/help.txt"),
+            JOptionPane.showMessageDialog(frame, Resources.getResourceAsString("/help/help.txt"),
                     "Help", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(getIconImage()));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -282,7 +324,8 @@ public class Controller {
             setStatus("Importing sources");
             prefs.put("LAST_SOURCE_FOLDER", dir.getPath());
             try {
-                diagram.importSourcesDir(dir);
+                diagram.getSources().add(dir.getAbsolutePath());
+                diagram.refresh();
                 EventQueue.invokeLater(() -> {
                     graphPanel.display(diagram);
                     graphPanel.revalidate();
@@ -292,9 +335,14 @@ public class Controller {
                     UMLClass[] classesArr = diagram.getGraph().vertexSet().toArray(new UMLClass[0]);
                     classesScrollPane.setClasses(classesArr);
                 });
-            } catch (Exception ex) {
+            } catch (Throwable ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error during import: " + ex,
+                if (ex.getCause() instanceof UMLParser.InvalidSourceException) {
+                    ex = ex.getCause();
+                }
+                if (ex instanceof UMLParser.InvalidSourceException)
+                    diagram.getSources().remove(dir.getAbsolutePath());
+                JOptionPane.showMessageDialog(frame, "Error during import source: " + ex.getMessage(),
                         "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
@@ -303,22 +351,28 @@ public class Controller {
     private void openDiagram(File file) {
         executor.submit(() -> {
             setStatus("Loading diagram");
-            diagram = createDiagram();
-            diagram.setFilePath(file.getPath());
-            prefs.put("LAST_GRAPH_FILE", file.getPath());
-            HashMap<UMLClass, Point2D.Double> verticesPositions = new HashMap<>();
-            classesScrollPane.clear();
-            graphPanel.clear();
-            new Importer().importGraph(file, diagram, verticesPositions);
-            EventQueue.invokeLater(() -> {
-                graphPanel.display(diagram, convertPointsToPositions(verticesPositions));
-                graphPanel.revalidate();
-                setTitle(FileUtils.getFilenameWithoutExtension(file.getName()));
-                setStatus("Diagram loaded", 3000);
-                addClassListener();
-                UMLClass[] classesArr = diagram.getGraph().vertexSet().toArray(new UMLClass[0]);
-                classesScrollPane.setClasses(classesArr);
-            });
+            try {
+                diagram = createDiagram();
+                diagram.setFilePath(file.getPath());
+                prefs.put("LAST_GRAPH_FILE", file.getPath());
+                HashMap<UMLClass, Point2D.Double> verticesPositions = new HashMap<>();
+                classesScrollPane.clear();
+                graphPanel.clear();
+                new Importer().importGraph(file, diagram, verticesPositions);
+                EventQueue.invokeLater(() -> {
+                    graphPanel.display(diagram, convertPointsToPositions(verticesPositions));
+                    graphPanel.revalidate();
+                    setTitle(FileUtils.getFilenameWithoutExtension(file.getName()));
+                    setStatus("Diagram loaded", 3000);
+                    addClassListener();
+                    UMLClass[] classesArr = diagram.getGraph().vertexSet().toArray(new UMLClass[0]);
+                    classesScrollPane.setClasses(classesArr);
+                });
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(frame, "Error during import: " + ex.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
         });
     }
 
@@ -415,19 +469,23 @@ public class Controller {
     }
 
     private void saveDiagram(String filepath) {
-        executor.submit(() -> {
-            if (filepath != null) {
-                File file = new File(filepath);
-                setStatus("Saving diagram");
+        if (filepath != null) {
+            File file = new File(filepath);
+            setStatus("Saving diagram");
+            try {
                 new Exporter().exportGraph(file, diagram, convertPositionsToPoints(graphPanel.getVertexPositions()));
                 EventQueue.invokeLater((() -> {
                     setTitle(FileUtils.getFilenameWithoutExtension(file.getName()));
                     setStatus("Diagram saved", 3000);
                 }));
-            } else {
-                saveDiagramAs();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(frame, "Error during export: " + ex.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
             }
-        });
+        } else {
+            saveDiagramAs();
+        }
     }
 
     private void setTitle(String name) {
@@ -455,7 +513,7 @@ public class Controller {
     private void saveDiagramAs() {
         JFileChooser fc = new JFileChooser(prefs.get("LAST_GRAPH_FILE",
                 new File(".").getAbsolutePath()));
-        if (diagram.getFilepath() != null)
+        if (diagram != null && diagram.getFilepath() != null)
             fc.setSelectedFile(new File(diagram.getFilepath()));
         else
             fc.setSelectedFile(new File("diagram"));
@@ -494,7 +552,7 @@ public class Controller {
         });
 
         viewer.getSelectedEdgeState().addItemListener((l) -> {
-            for(UMLRelationship rel : viewer.getSelectedEdges()) {
+            for (UMLRelationship rel : viewer.getSelectedEdges()) {
                 List<HashSet<?>> refs = diagram.getFinder().findRelReference(rel);
                 graphPanel.clearSelections();
                 graphPanel.updateRefs(refs);

@@ -109,11 +109,6 @@ public class UMLDiagram {
         createGraph();
     }
 
-    public void importSourcesDir(File dir) {
-        sources.add(dir.getAbsolutePath());
-        refresh();
-    }
-
     private void setupFolder(File sourceFolder) {
         if (reflectionTypeSolver == null) {
             reflectionTypeSolver = new ReflectionTypeSolver();

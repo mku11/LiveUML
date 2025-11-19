@@ -38,11 +38,11 @@ public abstract class UMLClass {
     private final HashMap<String, UMLRelationship> relationships = new HashMap<>();
     private final List<AccessModifier> accessModifiers = new LinkedList<>();
     private final List<Modifier> modifiers = new LinkedList<>();
+    private final List<Parameter> typeParameters = new ArrayList<>();
     private boolean compact; // TODO: move to view model layer
     private String fileSource;
     private String filePath;
     private int line;
-    private final List<Parameter> typeParameters = new ArrayList<>();
 
     protected UMLClass(String name) {
         this.name = name;

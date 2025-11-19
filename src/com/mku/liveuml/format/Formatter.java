@@ -50,9 +50,9 @@ public class Formatter {
     public static final String propertySelectedColor = "#6388E6";
     public static final String propertySelectedBackgroundColor = "#C1D1E3";
     public static final String unresolvedSymbolColor = "#E83F83";
-    private static String rightArrowQuote = "&#10219";
-    private static String leftArrowQuote = "&#10218";
-    private static String space = "&#10240";
+    private static final String rightArrowQuote = "&#10219";
+    private static final String leftArrowQuote = "&#10218";
+    private static final String space = "&#10240";
 
     /**
      * Do not use px for styles it causes exceptions within awt

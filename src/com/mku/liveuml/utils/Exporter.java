@@ -56,7 +56,7 @@ public class Exporter {
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file))) {
             exporter.exportGraph(diagram.getGraph(), writer);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            throw new RuntimeException(ex);
         }
     }
 
@@ -114,7 +114,6 @@ public class Exporter {
             for(Field f : fieldMethodMap.get(m)) {
                 HashMap<String, String> ownerMap = new HashMap<>();
                 flist.add(ownerMap);
-                ownerMap.put("methodName", m.getName());
                 ownerMap.put("methodOwner", m.getOwner());
                 ownerMap.put("fieldName", f == null ? null : f.getName());
                 ownerMap.put("fieldOwner", f == null ? null : f.getOwner());
@@ -148,7 +147,6 @@ public class Exporter {
             for (EnumConstant ec : enumConstMethodMap.get(m)) {
                 HashMap<String, String> ownerMap = new HashMap<>();
                 elist.add(ownerMap);
-                ownerMap.put("methodName", m.getName());
                 ownerMap.put("methodOwner", m.getOwner());
                 ownerMap.put("enumConstName", ec == null ? null : ec.getName());
                 ownerMap.put("enumConstOwner", ec == null ? null : ec.getOwner());
@@ -165,7 +163,6 @@ public class Exporter {
             for (Method mv : fieldMethodMap.get(m)) {
                 HashMap<String, String> ownerMap = new HashMap<>();
                 mlist.add(ownerMap);
-                ownerMap.put("methodName", m.getName());
                 ownerMap.put("methodOwner", m.getOwner());
                 ownerMap.put("methodName2", mv == null ? null : mv.getSignature());
                 ownerMap.put("methodOwner2", mv == null ? null : mv.getOwner());

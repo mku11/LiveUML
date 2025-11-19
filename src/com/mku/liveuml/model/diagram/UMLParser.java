@@ -34,7 +34,6 @@ import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithMembers;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
@@ -109,6 +108,7 @@ public class UMLParser {
 
     private void createFieldAggregationRelationship(Field field, UMLClass fieldOwner, UMLClass fieldType) {
         UMLRelationshipType relType = UMLRelationshipType.Aggregation;
+        // FIXME: detecting composition is not this simple
         if (field.getAccessModifiers().contains(AccessModifier.Private) && !hasPublicSetter(field, fieldOwner, fieldType))
             relType = UMLRelationshipType.Composition;
         UMLRelationship rel = new UMLRelationship(fieldOwner, fieldType, relType);
@@ -603,7 +603,7 @@ public class UMLParser {
     }
 
 
-    private void getObjects(HashSet<UMLClass> list, File projectDir) {
+    private void getObjects(HashSet<UMLClass> list, File source) {
         new DirExplorer((level, path, file) -> path.endsWith(".java"), (level, path, file) -> {
             System.out.println(path);
             System.out.println(Strings.repeat("=", path.length()));
@@ -616,6 +616,7 @@ public class UMLParser {
                         super.visit(n, arg);
                         System.out.println(n.isInterface() ? "Interface" : "Class: " + n.getName());
                         UMLClass obj = getOrCreateObject(n, file.getPath());
+                        validatePathPackageName(obj.getPackageName(), path);
                         list.add(obj);
                     }
                 }.visit(StaticJavaParser.parse(file), null);
@@ -631,6 +632,7 @@ public class UMLParser {
                         super.visit(n, arg);
                         System.out.println("Enum: " + n.getName());
                         UMLClass obj = getOrCreateEnum(n, file.getPath());
+                        validatePathPackageName(obj.getPackageName(), path);
                         list.add(obj);
                     }
                 }.visit(StaticJavaParser.parse(file), null);
@@ -638,7 +640,15 @@ public class UMLParser {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        }).explore(projectDir);
+        }).explore(source);
+    }
+
+    private void validatePathPackageName(String packageName, String path) {
+        if(!path.substring(1).replaceAll("/",".").startsWith(packageName))
+            throw new InvalidSourceException("This is does not seem to be a root source directory."
+                    + "\nMake sure your packages start from the same directory."
+                    + "\nSource file: " + path
+                    + "\nPackage name: " + packageName);
     }
 
 
@@ -1064,7 +1074,7 @@ public class UMLParser {
                 } catch (UnsolvedSymbolException ex) {
                     addUnresolvedSymbol(ex.getName(), obj);
                 }
-                parameter.modifiers = parseParameterModifiers(param);
+                parameter.setModifiers(parseParameterModifiers(param));
                 parameters.add(parameter);
                 if (!parameter.isPrimitiveType())
                     createParameterTypeRelationship(obj, method, parameter);
@@ -1264,7 +1274,7 @@ public class UMLParser {
                 } catch (UnsolvedSymbolException ex) {
                     addUnresolvedSymbol(ex.getName(), obj);
                 }
-                parameter.modifiers = parseParameterModifiers(param);
+                parameter.setModifiers(parseParameterModifiers(param));
                 parameters.add(parameter);
                 if (!parameter.isPrimitiveType())
                     createParameterTypeRelationship(obj, constructor, parameter);
@@ -1283,5 +1293,11 @@ public class UMLParser {
 
     public void removeNotifyProgress() {
         this.notifyProgress = null;
+    }
+
+    public class InvalidSourceException extends RuntimeException {
+        public InvalidSourceException(String s) {
+            super(s);
+        }
     }
 }

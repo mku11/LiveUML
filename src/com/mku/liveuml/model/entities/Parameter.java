@@ -34,6 +34,7 @@ public class Parameter {
     private String typeName;
     private String typePackageName;
     private final List<String> typeParents = new ArrayList<>();
+    private final List<Modifier> modifiers = new ArrayList<>();
     private boolean isArray;
     private boolean typeVariable;
     private boolean generic;
@@ -103,8 +104,6 @@ public class Parameter {
     public String toString() {
         return name;
     }
-
-    public List<Modifier> modifiers;
 
     public void setTypeVariable(boolean value) {
         this.typeVariable = value;

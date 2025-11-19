@@ -48,7 +48,7 @@ public class FileUtils {
             else
                 Runtime.getRuntime().exec(new String[]{execPath, filePath});
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Could not open editor: " + e);
+            JOptionPane.showMessageDialog(null, "Could not open editor: " + e.getMessage());
             throw new RuntimeException(e);
         }
     }

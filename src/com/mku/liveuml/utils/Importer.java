@@ -59,14 +59,14 @@ public class Importer {
             importer.importGraph(diagram.getGraph(), inputStreamReader);
             diagram.setClasses(diagram.getGraph().vertexSet());
             HashSet<String> sources = new HashSet<>();
-            for(UMLClass object : diagram.getGraph().vertexSet()) {
-                if(object.getFileSource() != null && !object.getFileSource().equals("null"))
+            for (UMLClass object : diagram.getGraph().vertexSet()) {
+                if (object.getFileSource() != null && !object.getFileSource().equals("null"))
                     sources.add(object.getFileSource());
             }
             diagram.setSources(sources);
             diagram.updateVertices(vertices);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            throw new RuntimeException(ex);
         }
     }
 
@@ -113,6 +113,15 @@ public class Importer {
             case "compact":
                 obj.setCompact(Boolean.parseBoolean(attribute.getValue()));
                 break;
+            case "modifiers":
+                obj.setModifiers(parseModifiers((List<String>) new Gson().fromJson(attribute.getValue(), List.class), obj, vertices));
+                break;
+            case "accessModifiers":
+                obj.setAccessModifiers(parseAccessModifiers((List<String>) new Gson().fromJson(attribute.getValue(), List.class), obj, vertices));
+                break;
+            case "typeParameters":
+                obj.setTypeParameters(parseTypeParameters((List<StringMap>) new Gson().fromJson(attribute.getValue(), List.class), obj, vertices));
+                break;
         }
     }
 
@@ -141,71 +150,79 @@ public class Importer {
                 break;
 
             case "fieldsAccessedByMethods":
-                HashMap<String, StringMap> accessedBy = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
+                HashMap<String, List<StringMap>> accessedBy = (HashMap<String, List<StringMap>>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.setFieldsAccessedByMethods(getFieldMethodMap(accessedBy, vertices));
                 break;
             case "methodsAccessingFields":
-                HashMap<String, StringMap> accessing = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
+                HashMap<String, List<StringMap>> accessing = (HashMap<String, List<StringMap>>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.setMethodsAccessingFields(getMethodFieldMap(accessing, vertices));
                 break;
 
             case "enumsAccessedByMethods":
-                HashMap<String, StringMap> accessedEnumConstsBy = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
+                HashMap<String, List<StringMap>> accessedEnumConstsBy = (HashMap<String, List<StringMap>>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.setEnumsAccessedByMethods(getEnumConstMethodMap(accessedEnumConstsBy, vertices));
                 break;
             case "methodsAccessingEnums":
-                HashMap<String, StringMap> accessingEnumConsts = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
+                HashMap<String, List<StringMap>> accessingEnumConsts = (HashMap<String, List<StringMap>>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.setMethodsAccessingEnums(getMethodEnumConstMap(accessingEnumConsts, vertices));
                 break;
 
             case "methodsAccessedByMethods":
-                HashMap<String, StringMap> calledBy = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
+                HashMap<String, List<StringMap>> calledBy = (HashMap<String, List<StringMap>>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.setMethodsAccessedByMethods(getMethodMethodMap(calledBy, vertices));
                 break;
             case "methodsAccesingMethods":
-                HashMap<String, StringMap> callTo = (HashMap<String, StringMap>) new Gson().fromJson(attribute.getValue(), HashMap.class);
+                HashMap<String, List<StringMap>> callTo = (HashMap<String, List<StringMap>>) new Gson().fromJson(attribute.getValue(), HashMap.class);
                 relationship.setMethodsAccesingMethods(getMethodMethodMap(callTo, vertices));
                 break;
         }
     }
 
 
-    private static HashMap<Field, HashSet<Method>> getFieldMethodMap(HashMap<String, StringMap> accessedBy, HashMap<String, UMLClass> vertices) {
+    private static HashMap<Field, HashSet<Method>> getFieldMethodMap(HashMap<String, List<StringMap>> accessedBy,
+                                                                     HashMap<String, UMLClass> vertices) {
         HashMap<Field, HashSet<Method>> fieldMethodHashMap = new HashMap<>();
         for (String fieldName : accessedBy.keySet()) {
             HashSet<Method> methods = new HashSet<>();
-
-            StringMap ownerMap = accessedBy.get(fieldName);
-            String fieldOwner = (String) ownerMap.get("fieldOwner");
-            String methodName = (String) ownerMap.getOrDefault("methodName", null);
-            String methodOwner = (String) ownerMap.getOrDefault("methodOwner", null);
-            if (!vertices.containsKey(fieldOwner)) {
-                continue;
-            }
-            UMLClass fieldOwnerObj = vertices.get(fieldOwner);
             Field field = null;
-            for (Field f : fieldOwnerObj.getFields()) {
-                if (f.getName().equals(fieldName)) {
-                    field = f;
-                    break;
-                }
-            }
-            if (field == null) {
-                continue;
-            }
+            for (StringMap ownerMap : accessedBy.get(fieldName)) {
+                String fieldOwner = (String) ownerMap.get("fieldOwner");
+                String methodName = (String) ownerMap.getOrDefault("methodName", null);
+                String methodOwner = (String) ownerMap.getOrDefault("methodOwner", null);
 
-            UMLClass methodOwnerObj = null;
-            if (vertices.containsKey(methodOwner)) {
-                methodOwnerObj = vertices.get(methodOwner);
-            }
-            Method method = null;
-            if (methodName != null && methodOwnerObj != null) {
-                for (Method m : methodOwnerObj.getMethods()) {
-                    if (m.getSignature().equals(methodName)) {
-                        method = m;
-                        break;
+                // key field
+                if (field == null) {
+                    if (!vertices.containsKey(fieldOwner)) {
+                        continue;
+                    }
+                    UMLClass fieldOwnerObj = vertices.get(fieldOwner);
+
+                    for (Field f : fieldOwnerObj.getFields()) {
+                        if (f.getName().equals(fieldName)) {
+                            field = f;
+                            break;
+                        }
+                    }
+                    if (field == null) {
+                        continue;
                     }
                 }
+
+                // value method
+                UMLClass methodOwnerObj = null;
+                if (vertices.containsKey(methodOwner)) {
+                    methodOwnerObj = vertices.get(methodOwner);
+                }
+                Method method = null;
+                if (methodName != null && methodOwnerObj != null) {
+                    for (Method m : methodOwnerObj.getMethods()) {
+                        if (m.getSignature().equals(methodName)) {
+                            method = m;
+                            break;
+                        }
+                    }
+                }
+                methods.add(method);
             }
             fieldMethodHashMap.put(field, methods);
         }
@@ -213,42 +230,48 @@ public class Importer {
     }
 
 
-    private static HashMap<Method, HashSet<Field>> getMethodFieldMap(HashMap<String, StringMap> map, HashMap<String, UMLClass> vertices) {
+    private static HashMap<Method, HashSet<Field>> getMethodFieldMap(HashMap<String, List<StringMap>> map,
+                                                                     HashMap<String, UMLClass> vertices) {
         HashMap<Method, HashSet<Field>> methodFieldHashMap = new HashMap<>();
         for (String methodName : map.keySet()) {
             HashSet<Field> fields = new HashSet<>();
-
-            StringMap ownerMap = map.get(methodName);
-            String methodOwner = (String) ownerMap.get("methodOwner");
-            String fieldName = (String) ownerMap.getOrDefault("fieldName", null);
-            String fieldOwner = (String) ownerMap.getOrDefault("fieldOwner", null);
-            if (!vertices.containsKey(methodOwner)) {
-                continue;
-            }
-            UMLClass methodOwnerObj = vertices.get(methodOwner);
             Method method = null;
-            for (Method m : methodOwnerObj.getMethods()) {
-                if (m.getSignature().equals(methodName)) {
-                    method = m;
-                    break;
-                }
-            }
-            if (method == null) {
-                continue;
-            }
+            for (StringMap ownerMap : map.get(methodName)) {
+                String methodOwner = (String) ownerMap.get("methodOwner");
+                String fieldName = (String) ownerMap.getOrDefault("fieldName", null);
+                String fieldOwner = (String) ownerMap.getOrDefault("fieldOwner", null);
 
-            UMLClass fieldOwnerObj = null;
-            if (vertices.containsKey(fieldOwner)) {
-                fieldOwnerObj = vertices.get(fieldOwner);
-            }
-            Field field = null;
-            if (fieldName != null && fieldOwnerObj != null) {
-                for (Field f : fieldOwnerObj.getFields()) {
-                    if (f.getName().equals(fieldName)) {
-                        field = f;
-                        break;
+                // key method
+                if (method == null) {
+                    if (!vertices.containsKey(methodOwner)) {
+                        continue;
+                    }
+                    UMLClass methodOwnerObj = vertices.get(methodOwner);
+                    for (Method m : methodOwnerObj.getMethods()) {
+                        if (m.getSignature().equals(methodName)) {
+                            method = m;
+                            break;
+                        }
+                    }
+                    if (method == null)
+                        continue;
+                }
+
+                // fields methods
+                UMLClass fieldOwnerObj = null;
+                if (vertices.containsKey(fieldOwner)) {
+                    fieldOwnerObj = vertices.get(fieldOwner);
+                }
+                Field field = null;
+                if (fieldName != null && fieldOwnerObj != null) {
+                    for (Field f : fieldOwnerObj.getFields()) {
+                        if (f.getName().equals(fieldName)) {
+                            field = f;
+                            break;
+                        }
                     }
                 }
+                fields.add(field);
             }
             methodFieldHashMap.put(method, fields);
         }
@@ -256,126 +279,145 @@ public class Importer {
     }
 
 
-    private static HashMap<EnumConstant, HashSet<Method>> getEnumConstMethodMap(HashMap<String, StringMap> accessedBy, HashMap<String, UMLClass> vertices) {
+    private static HashMap<EnumConstant, HashSet<Method>> getEnumConstMethodMap(HashMap<String, List<StringMap>> accessedBy,
+                                                                                HashMap<String, UMLClass> vertices) {
         HashMap<EnumConstant, HashSet<Method>> enumConstMethodHashMap = new HashMap<>();
         for (String enumConstName : accessedBy.keySet()) {
             HashSet<Method> methods = new HashSet<>();
-
-            StringMap ownerMap = accessedBy.get(enumConstName);
-            String enumConstOwner = (String) ownerMap.get("enumConstOwner");
-            String methodName = (String) ownerMap.getOrDefault("methodName", null);
-            String methodOwner = (String) ownerMap.getOrDefault("methodOwner", null);
-            if (!vertices.containsKey(enumConstOwner)) {
-                continue;
-            }
-            UMLClass enumConstOwnerObj = vertices.get(enumConstOwner);
             EnumConstant enumConstant = null;
-            for (EnumConstant ec : enumConstOwnerObj.getEnumConstants()) {
-                if (ec.getName().equals(enumConstName)) {
-                    enumConstant = ec;
-                    break;
-                }
-            }
-            if (enumConstant == null) {
-                continue;
-            }
 
-            UMLClass methodOwnerObj = null;
-            if (vertices.containsKey(methodOwner)) {
-                methodOwnerObj = vertices.get(methodOwner);
-            }
-            Method method = null;
-            if (methodName != null && methodOwnerObj != null) {
-                for (Method m : methodOwnerObj.getMethods()) {
-                    if (m.getSignature().equals(methodName)) {
-                        method = m;
-                        break;
+            for (StringMap ownerMap : accessedBy.get(enumConstName)) {
+                String enumConstOwner = (String) ownerMap.get("enumConstOwner");
+                String methodName = (String) ownerMap.getOrDefault("methodName", null);
+                String methodOwner = (String) ownerMap.getOrDefault("methodOwner", null);
+                if (enumConstant == null) {
+                    if (!vertices.containsKey(enumConstOwner)) {
+                        continue;
+                    }
+                    UMLClass enumConstOwnerObj = vertices.get(enumConstOwner);
+                    for (EnumConstant ec : enumConstOwnerObj.getEnumConstants()) {
+                        if (ec.getName().equals(enumConstName)) {
+                            enumConstant = ec;
+                            break;
+                        }
+                    }
+                    if (enumConstant == null)
+                        continue;
+                }
+
+                // value methods
+                UMLClass methodOwnerObj = null;
+                if (vertices.containsKey(methodOwner)) {
+                    methodOwnerObj = vertices.get(methodOwner);
+                }
+                Method method = null;
+                if (methodName != null && methodOwnerObj != null) {
+                    for (Method m : methodOwnerObj.getMethods()) {
+                        if (m.getSignature().equals(methodName)) {
+                            method = m;
+                            break;
+                        }
                     }
                 }
+                methods.add(method);
             }
             enumConstMethodHashMap.put(enumConstant, methods);
         }
         return enumConstMethodHashMap;
     }
 
-    private static HashMap<Method, HashSet<EnumConstant>> getMethodEnumConstMap(HashMap<String, StringMap> map, HashMap<String, UMLClass> vertices) {
+    private static HashMap<Method, HashSet<EnumConstant>> getMethodEnumConstMap(HashMap<String, List<StringMap>> map,
+                                                                                HashMap<String, UMLClass> vertices) {
         HashMap<Method, HashSet<EnumConstant>> methodFieldHashMap = new HashMap<>();
         for (String methodName : map.keySet()) {
             HashSet<EnumConstant> enumConstants = new HashSet<>();
-
-            StringMap ownerMap = map.get(methodName);
-            String methodOwner = (String) ownerMap.get("methodOwner");
-            String enumConstName = (String) ownerMap.getOrDefault("enumConstName", null);
-            String enumConstOwner = (String) ownerMap.getOrDefault("enumConstOwner", null);
-            if (!vertices.containsKey(methodOwner)) {
-                continue;
-            }
-            UMLClass methodOwnerObj = vertices.get(methodOwner);
             Method method = null;
-            for (Method m : methodOwnerObj.getMethods()) {
-                if (m.getSignature().equals(methodName)) {
-                    method = m;
-                    break;
-                }
-            }
-            if (method == null) {
-                continue;
-            }
+            for (StringMap ownerMap : map.get(methodName)) {
+                String methodOwner = (String) ownerMap.get("methodOwner");
+                String enumConstName = (String) ownerMap.getOrDefault("enumConstName", null);
+                String enumConstOwner = (String) ownerMap.getOrDefault("enumConstOwner", null);
 
-            UMLClass enumConstOwnerObj = null;
-            if (vertices.containsKey(enumConstOwner)) {
-                enumConstOwnerObj = vertices.get(enumConstOwner);
-            }
-            EnumConstant enumConst = null;
-            if (enumConstName != null && enumConstOwnerObj != null) {
-                for (EnumConstant ec : enumConstOwnerObj.getEnumConstants()) {
-                    if (ec.getName().equals(enumConstName)) {
-                        enumConst = ec;
-                        break;
+                // key method
+                if (method == null) {
+                    if (!vertices.containsKey(methodOwner)) {
+                        continue;
+                    }
+                    UMLClass methodOwnerObj = vertices.get(methodOwner);
+
+                    for (Method m : methodOwnerObj.getMethods()) {
+                        if (m.getSignature().equals(methodName)) {
+                            method = m;
+                            break;
+                        }
+                    }
+                    if (method == null) {
+                        continue;
                     }
                 }
+
+                // value enum constants
+                UMLClass enumConstOwnerObj = null;
+                if (vertices.containsKey(enumConstOwner)) {
+                    enumConstOwnerObj = vertices.get(enumConstOwner);
+                }
+                EnumConstant enumConst = null;
+                if (enumConstName != null && enumConstOwnerObj != null) {
+                    for (EnumConstant ec : enumConstOwnerObj.getEnumConstants()) {
+                        if (ec.getName().equals(enumConstName)) {
+                            enumConst = ec;
+                            break;
+                        }
+                    }
+                }
+                enumConstants.add(enumConst);
             }
             methodFieldHashMap.put(method, enumConstants);
         }
         return methodFieldHashMap;
     }
 
-    private static HashMap<Method, HashSet<Method>> getMethodMethodMap(HashMap<String, StringMap> map, HashMap<String, UMLClass> vertices) {
+    private static HashMap<Method, HashSet<Method>> getMethodMethodMap(HashMap<String, List<StringMap>> map, HashMap<String, UMLClass> vertices) {
         HashMap<Method, HashSet<Method>> methodMethodHashMap = new HashMap<>();
         for (String methodName : map.keySet()) {
-            HashSet<Method> methods = new HashSet<>();
-
-            StringMap ownerMap = map.get(methodName);
-            String methodOwner = (String) ownerMap.get("methodOwner");
-            String methodName2 = (String) ownerMap.getOrDefault("methodName2", null);
-            String methodOwner2 = (String) ownerMap.getOrDefault("methodOwner2", null);
-            if (!vertices.containsKey(methodOwner)) {
-                continue;
-            }
-            UMLClass methodOwnerObj = vertices.get(methodOwner);
             Method method = null;
-            for (Method m : methodOwnerObj.getMethods()) {
-                if (m.getSignature().equals(methodName)) {
-                    method = m;
-                    break;
-                }
-            }
-            if (method == null) {
-                continue;
-            }
+            HashSet<Method> methods = new HashSet<>();
+            for (StringMap ownerMap : map.get(methodName)) {
 
-            UMLClass methodOwnerObj2 = null;
-            if (vertices.containsKey(methodOwner2)) {
-                methodOwnerObj2 = vertices.get(methodOwner2);
-            }
-            Method method2 = null;
-            if (methodName2 != null && methodOwnerObj2 != null) {
-                for (Method m2 : methodOwnerObj2.getMethods()) {
-                    if (m2.getSignature().equals(methodName2)) {
-                        method2 = m2;
-                        break;
+                // key method
+                if (method == null) {
+                    String methodOwner = (String) ownerMap.get("methodOwner");
+                    if (!vertices.containsKey(methodOwner)) {
+                        continue;
+                    }
+                    UMLClass methodOwnerObj = vertices.get(methodOwner);
+
+                    for (Method m : methodOwnerObj.getMethods()) {
+                        if (m.getSignature().equals(methodName)) {
+                            method = m;
+                            break;
+                        }
+                    }
+                    if (method == null)
+                        continue;
+                }
+
+                // value method
+                String methodName2 = (String) ownerMap.getOrDefault("methodName2", null);
+                String methodOwner2 = (String) ownerMap.getOrDefault("methodOwner2", null);
+                UMLClass methodOwnerObj2 = null;
+                if (vertices.containsKey(methodOwner2)) {
+                    methodOwnerObj2 = vertices.get(methodOwner2);
+                }
+                Method method2 = null;
+                if (methodName2 != null && methodOwnerObj2 != null) {
+                    for (Method m2 : methodOwnerObj2.getMethods()) {
+                        if (m2.getSignature().equals(methodName2)) {
+                            method2 = m2;
+                            break;
+                        }
                     }
                 }
+                methods.add(method2);
             }
             methodMethodHashMap.put(method, methods);
         }
@@ -469,7 +511,7 @@ public class Importer {
                     break;
                 }
             }
-            if(enumConstant == null) {
+            if (enumConstant == null) {
                 enumConstant = new EnumConstant(name, num);
                 enumConstant.setOwner(obj.toString());
             }
@@ -498,9 +540,9 @@ public class Importer {
         return methods;
     }
 
-    private static List<Method> parseMethods(List<StringMap> map, UMLClass obj, HashMap<String, UMLClass> vertices) {
+    private static List<Method> parseMethods(List<StringMap> list, UMLClass obj, HashMap<String, UMLClass> vertices) {
         List<Method> methods = new ArrayList<>();
-        for (StringMap mmap : map) {
+        for (StringMap mmap : list) {
             String ownerName = (String) mmap.getOrDefault("owner", null);
             if (obj == null && !vertices.containsKey(ownerName))
                 continue;
@@ -564,12 +606,46 @@ public class Importer {
         parameter.setTypeParents((List<String>) map.getOrDefault("typeParents", null));
         List<String> modifiers = (List<String>) map.getOrDefault("modifiers", null);
         if (modifiers != null) {
-            for (String modifier : modifiers) {
-                parameter.modifiers.add(Modifier.valueOf(modifier));
-            }
+            List<Modifier> lModifiers = new ArrayList<>();
+            for (String modifier : modifiers)
+                lModifiers.add(Modifier.valueOf(modifier));
+            parameter.setModifiers(lModifiers);
         }
         parameter.setArray((boolean) map.getOrDefault("isArray", false));
+        parameter.setTypeVariable((boolean) map.getOrDefault("typeVariable", false));
+        parameter.setGeneric((boolean) map.getOrDefault("generic", false));
+        parameter.setUpperBound((boolean) map.getOrDefault("upperBound", false));
+        parameter.setLowerBound((boolean) map.getOrDefault("lowerBound", false));
+        List<String> bounds = (List<String>) map.getOrDefault("bounds", null);
+        parameter.setBounds(bounds);
+        List<String> boundsFullNames = (List<String>) map.getOrDefault("boundsFullNames", null);
+        parameter.setBounds(boundsFullNames);
         return parameter;
+    }
+
+    private List<Modifier> parseModifiers(List<String> list, UMLClass obj, HashMap<String, UMLClass> vertices) {
+        List<Modifier> typeParameters = new ArrayList<>();
+        for (String typeParameter : list) {
+            typeParameters.add(Enum.valueOf(Modifier.class, typeParameter));
+        }
+        return typeParameters;
+    }
+
+    private List<AccessModifier> parseAccessModifiers(List<String> list, UMLClass obj, HashMap<String, UMLClass> vertices) {
+        List<AccessModifier> typeParameters = new ArrayList<>();
+        for (String typeParameter : list) {
+            typeParameters.add(Enum.valueOf(AccessModifier.class, typeParameter));
+        }
+        return typeParameters;
+    }
+
+    private List<Parameter> parseTypeParameters(List<StringMap> list, UMLClass obj, HashMap<String, UMLClass> vertices) {
+        List<Parameter> typeParameters = new ArrayList<>();
+        for (StringMap mmap : list) {
+            Parameter parameter = parseParameter(mmap);
+            typeParameters.add(parameter);
+        }
+        return typeParameters;
     }
 
 }
