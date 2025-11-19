@@ -69,7 +69,7 @@ public class Formatter {
 
     public String getUmlAsHtml(UMLClass object, boolean compact, UMLDiagram diagram) {
         boolean classSelected = isClassSelected(object, diagram);
-        String stereotype = getFormattedStereoTypes(object);
+        String stereotypes = getFormattedStereoTypes(object);
         String typeParams = getFormattedTypeParameters(object);
         String formattedHtml = classHtmlTemplate
                 .replaceAll(Pattern.quote("${name}"),
@@ -80,8 +80,8 @@ public class Formatter {
                 .replaceAll(Pattern.quote("${class-background-color}"),
                         Matcher.quoteReplacement(classSelected ?
                                 classSelectedHeaderBackgroundColor : classHeaderBackgroundColor));
-        formattedHtml = formattedHtml.replaceAll(Pattern.quote("${stereotype}"),
-                Matcher.quoteReplacement(stereotype.length() > 0 ? "<div>" + stereotype + "</div>" : ""));
+        formattedHtml = formattedHtml.replaceAll(Pattern.quote("${stereotypes}"),
+                Matcher.quoteReplacement(stereotypes.length() > 0 ? "<div>" + stereotypes + "</div>" : ""));
         formattedHtml = formattedHtml.replaceAll(Pattern.quote("${type-params}"),
                 Matcher.quoteReplacement(typeParams.length() > 0 ? "<div>" + typeParams + "</div>" : ""));
 
@@ -155,6 +155,7 @@ public class Formatter {
                         .replaceAll(Pattern.quote("${property-background-color}"),
                                 Matcher.quoteReplacement(selectedEnums.contains(enumConst) ?
                                         propertySelectedBackgroundColor : propertyBackgroundColor));
+                property = property.replaceAll(Pattern.quote("${stereotypes}"), Matcher.quoteReplacement(""));
                 enums.append(property).append("\n");
             }
         }
