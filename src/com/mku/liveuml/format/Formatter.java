@@ -261,16 +261,10 @@ public class Formatter {
         String formattedField = getFieldQualifier(field) + " ";
         if (isHtml) {
             String textdecoration = "none";
-            String fontStyle = "normal";
-            if (field.getModifiers().contains(Modifier.Abstract)) {
-                fontStyle = "italics";
-            }
             if (field.getModifiers().contains(Modifier.Static)) {
                 textdecoration = "underline";
             }
             formattedField += "<font style='text-decoration: " + textdecoration + "';";
-            formattedField += "fontStyle: ";
-            formattedField += fontStyle + ";'>";
         }
         formattedField += field.getName();
         if (isHtml) {
