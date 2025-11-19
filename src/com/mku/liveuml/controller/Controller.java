@@ -241,10 +241,9 @@ public class Controller {
 
     private void showListSources() {
         try {
-            JFrame frame = new JFrame();
-            frame.setTitle("Sources");
-            frame.setIconImage(getIconImage());
-            frame.pack();
+            JDialog dialog = new JDialog(this.frame, "Sources", true);
+            dialog.setIconImage(getIconImage());
+            dialog.pack();
             SourcesListPane sourcesListScrollPane = new SourcesListPane();
             Dimension size = new Dimension(400, 100);
             sourcesListScrollPane.setOnMouseRightClick((object, mousePosition) -> {
@@ -257,13 +256,13 @@ public class Controller {
                 menu.show(mousePosition.component, mousePosition.x, mousePosition.y);
             });
             sourcesListScrollPane.setSources(diagram.getSources().toArray(new String[0]));
-            frame.add(sourcesListScrollPane);
-            frame.setLocationRelativeTo(graphPanel);
+            dialog.add(sourcesListScrollPane);
+            dialog.setLocationRelativeTo(graphPanel);
             sourcesListScrollPane.setSize(size);
             sourcesListScrollPane.setMinimumSize(size);
-            frame.setPreferredSize(size);
-            frame.setMinimumSize(size);
-            frame.setVisible(true);
+            dialog.setPreferredSize(size);
+            dialog.setMinimumSize(size);
+            dialog.setVisible(true);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
