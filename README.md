@@ -22,7 +22,7 @@ I tried to put more flair with the dark mode from FlatLaf and added more feature
 - Classes list for easier selection
 - Compact display option for UML classes  
 - Find class, field, and method references  
-- Open text editor at specific class, field, method (Notepad++, IDEA, and Eclipse supported)  
+- Open text editor at specific class, field, method (Notepad++, IntelliJ IDEA, and Eclipse supported)  
 - Save/Load UML Diagram  
 - Export as Image (experimental)  
   
