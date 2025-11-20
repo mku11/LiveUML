@@ -181,7 +181,7 @@ public class UMLParser {
                             if (calleeMethod == null) {
                                 calleeMethod = getInitializer(caller, n);
                             }
-                            if (calleeMethod != null) {
+                            if (callerMethod != null && calleeMethod != null) {
                                 createMethodCallRelationship(caller, callerMethod, callee, calleeMethod);
                             }
                         }
