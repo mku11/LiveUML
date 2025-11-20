@@ -1,6 +1,6 @@
 # LiveUML
 [![License: MIT](https://img.shields.io/github/license/mku11/LiveUML.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.9.2-blue)](https://github.com/mku11/LiveUML/releases)
+[![Version](https://img.shields.io/badge/version-0.9.3-blue)](https://github.com/mku11/LiveUML/releases)
 
 Generate UML Class Diagrams from Java source code.  
 This is a tool I use to validate my design and technical specs during development.  
@@ -17,6 +17,7 @@ I tried to put more flair with the dark mode from FlatLaf and added more feature
 - Support for modifiers by stereotypes
 - Highlight fields and methods in relationship
 - Partial support for generics
+- No support for anonymous classes
 - Allow multiple source roots
 - Allow change UML objects position
 - Classes list for easier selection
