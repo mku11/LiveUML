@@ -74,19 +74,19 @@ public class Exporter {
         exporter.registerAttribute("methodsAccessingClass", GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING);
     }
 
-    private Map<String, Attribute> getEdgeAttrs(UMLRelationship UMLRelationship) {
+    private Map<String, Attribute> getEdgeAttrs(UMLRelationship rel) {
         HashMap<String, Attribute> map = new HashMap<>();
-        map.put("type", new DefaultAttribute<>(UMLRelationship.getType().name(), AttributeType.STRING));
-        map.put("from", new DefaultAttribute<>(UMLRelationship.getFrom().toString(), AttributeType.STRING));
-        map.put("to", new DefaultAttribute<>(UMLRelationship.getTo().toString(), AttributeType.STRING));
-        map.put("fieldsAccessingClass", new DefaultAttribute<>(new Gson().toJson(getFieldsOwnerMap(UMLRelationship.getFieldsAccessingClass())), AttributeType.STRING));
-        map.put("methodsAccessingClass", new DefaultAttribute<>(new Gson().toJson(getMethodOwnerMap(UMLRelationship.getMethodsAccessingClass())), AttributeType.STRING));
-        map.put("fieldsAccessedByMethods", new DefaultAttribute<>(new Gson().toJson(getFieldMethodOwnerMap(UMLRelationship.getFieldsAccessedByMethods())), AttributeType.STRING));
-        map.put("methodsAccessingFields", new DefaultAttribute<>(new Gson().toJson(getMethodFieldOwnerMap(UMLRelationship.getMethodsAccessingFields())), AttributeType.STRING));
-        map.put("enumsAccessedByMethods", new DefaultAttribute<>(new Gson().toJson(getEnumConstMethodOwnerMap(UMLRelationship.getEnumsAccessedByMethods())), AttributeType.STRING));
-        map.put("methodsAccessingEnums", new DefaultAttribute<>(new Gson().toJson(getMethodEnumConstOwnerMap(UMLRelationship.getMethodsAccessingEnums())), AttributeType.STRING));
-        map.put("methodsAccessedByMethods", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(UMLRelationship.getMethodsAccessedByMethods())), AttributeType.STRING));
-        map.put("methodsAccesingMethods", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(UMLRelationship.getMethodsAccesingMethods())), AttributeType.STRING));
+        map.put("type", new DefaultAttribute<>(rel.getType().name(), AttributeType.STRING));
+        map.put("from", new DefaultAttribute<>(rel.getFrom().toString(), AttributeType.STRING));
+        map.put("to", new DefaultAttribute<>(rel.getTo().toString(), AttributeType.STRING));
+        map.put("fieldsAccessingClass", new DefaultAttribute<>(new Gson().toJson(getFieldsOwnerMap(rel.getFieldsAccessingClass())), AttributeType.STRING));
+        map.put("methodsAccessingClass", new DefaultAttribute<>(new Gson().toJson(getMethodOwnerMap(rel.getMethodsAccessingClass())), AttributeType.STRING));
+        map.put("fieldsAccessedByMethods", new DefaultAttribute<>(new Gson().toJson(getFieldMethodOwnerMap(rel.getFieldsAccessedByMethods())), AttributeType.STRING));
+        map.put("methodsAccessingFields", new DefaultAttribute<>(new Gson().toJson(getMethodFieldOwnerMap(rel.getMethodsAccessingFields())), AttributeType.STRING));
+        map.put("enumsAccessedByMethods", new DefaultAttribute<>(new Gson().toJson(getEnumConstMethodOwnerMap(rel.getEnumsAccessedByMethods())), AttributeType.STRING));
+        map.put("methodsAccessingEnums", new DefaultAttribute<>(new Gson().toJson(getMethodEnumConstOwnerMap(rel.getMethodsAccessingEnums())), AttributeType.STRING));
+        map.put("methodsAccessedByMethods", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(rel.getMethodsAccessedByMethods())), AttributeType.STRING));
+        map.put("methodsAccesingMethods", new DefaultAttribute<>(new Gson().toJson(getMethodMethodOwnerMap(rel.getMethodsAccesingMethods())), AttributeType.STRING));
         return map;
     }
 
