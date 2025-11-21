@@ -1,13 +1,14 @@
 # LiveUML
-[![License: MIT](https://img.shields.io/github/license/mku11/LiveUML.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.9.3-blue)](https://github.com/mku11/LiveUML/releases)
-[![GitHub Releases](https://img.shields.io/github/downloads/mku11/LiveUML/latest/total?logo=github)](https://github.com/mku11/LiveUML/releases)
 Generate UML Class Diagrams from Java source code.  
 This is a tool I use to validate my design and technical specs during development.  
 It's still in its infancy but it's been very helpful for what it offers.  
 I tried to put more flair with the dark mode from FlatLaf and added more features.  
 
 ![alt text](https://github.com/mku11/LiveUML/blob/main/screenshots/Screenshot.png)  
+
+[![License: MIT](https://img.shields.io/github/license/mku11/LiveUML.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.9.3-blue)](https://github.com/mku11/LiveUML/releases)
+[![GitHub Releases](https://img.shields.io/github/downloads/mku11/LiveUML/latest/total?logo=github)](https://github.com/mku11/LiveUML/releases)  
 
 # Features
 - Create UML Diagrams from Java source code
