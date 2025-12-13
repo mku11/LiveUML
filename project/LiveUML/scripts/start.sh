@@ -1,3 +1,3 @@
 #!/bin/bash
 
-java -cp "./*;libs/*" com.mku.liveuml.Main
+java -cp "./*;libs/*;LiveUML/*" com.mku.liveuml.Main

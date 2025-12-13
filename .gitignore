@@ -8,3 +8,6 @@ out
 **/.idea/vcs.xml
 **/.idea/tasks.xml
 **/.idea/compiler.xml
+/output
+app_package
+project/LiveUML/libs
