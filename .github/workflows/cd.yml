@@ -1,0 +1,77 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
+
+# Build, Package, and Release
+# This workflow should only run in the main branch
+
+# Note: if you have cache misses then make sure this workflow runs in the main branch first for the same cache keys.
+name: CD.BuildPackageRelease
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+
+jobs: 
+
+  java_build:
+    strategy:
+      matrix:
+        java_version: [11]
+        os: [windows-latest]
+    name: build.java.${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    steps:
+    
+    # Git
+    - name: Checkout sources
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.ref }}
+    
+    # Toolchains and Build envs
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: ${{ matrix.java_version }}
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v5
+    
+    # Caches
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+    
+    # Gradle Build Java App
+    - if: runner.os == 'Windows'
+      name: Build Java App on Windows
+      shell: cmd
+      run: cd .\project\LiveUML && gradlew.bat build -x test -i && package.bat 
+            
+    # Upload Java App
+    - if: ${{ matrix.os == 'windows-latest' }}
+      name: Upload Java App
+      uses: actions/upload-artifact@v4
+      with:
+        name: live-uml
+        path: output/*
+        
+    # Release
+    - if: github.ref_type == 'tag'
+      name: Release
+      uses: softprops/action-gh-release@v2
+      with:
+        draft: true
+        files: output/*
